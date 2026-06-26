@@ -1,0 +1,673 @@
+// Taichinh.vn — Personal Finance Platform for Vietnam
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── AUTH & USERS ───────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  EDITOR
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?
+  role          UserRole  @default(USER)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  goldAlerts      GoldPriceAlert[]
+  goldPortfolios  GoldPortfolio[]
+  sessions        Session[]
+  aiContents      AiGeneratedContent[] @relation("AiContentAuthor")
+
+  @@index([email])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ─── GOLD MODULE ────────────────────────────────────────────────
+
+enum GoldBrandCode {
+  SJC
+  DOJI
+  PNJ
+  BAO_TIN
+  VIETTIN
+  WORLD
+  OTHER
+}
+
+enum GoldPurity {
+  K9999
+  K24
+  K18
+  RING
+  WORLD_OZ
+}
+
+model GoldType {
+  id          String        @id @default(cuid())
+  code        String        @unique // e.g. SJL1L10, XAUUSD
+  name        String
+  nameVi      String
+  brand       GoldBrandCode
+  purity      GoldPurity
+  unit        String        @default("VND/lượng") // or USD/oz
+  currency    String        @default("VND")
+  externalId  String?       // giavang.now type code
+  isActive    Boolean       @default(true)
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  prices          GoldPrice[]
+  priceHistory    GoldPriceHistory[]
+  alerts          GoldPriceAlert[]
+  portfolioItems  GoldPortfolioItem[]
+
+  @@index([brand, purity])
+  @@map("gold_types")
+}
+
+model GoldPrice {
+  id         String   @id @default(cuid())
+  goldTypeId String
+  buyPrice   Decimal  @db.Decimal(18, 2)
+  sellPrice  Decimal  @db.Decimal(18, 2)
+  changeBuy  Decimal  @default(0) @db.Decimal(18, 2)
+  changeSell Decimal  @default(0) @db.Decimal(18, 2)
+  source     String   @default("giavang.now")
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  goldType GoldType @relation(fields: [goldTypeId], references: [id], onDelete: Cascade)
+
+  @@index([goldTypeId, recordedAt(sort: Desc)])
+  @@map("gold_prices")
+}
+
+model GoldPriceHistory {
+  id         String   @id @default(cuid())
+  goldTypeId String
+  buyPrice   Decimal  @db.Decimal(18, 2)
+  sellPrice  Decimal  @db.Decimal(18, 2)
+  openBuy    Decimal? @db.Decimal(18, 2)
+  highBuy    Decimal? @db.Decimal(18, 2)
+  lowBuy     Decimal? @db.Decimal(18, 2)
+  closeBuy   Decimal? @db.Decimal(18, 2)
+  openSell   Decimal? @db.Decimal(18, 2)
+  highSell   Decimal? @db.Decimal(18, 2)
+  lowSell    Decimal? @db.Decimal(18, 2)
+  closeSell  Decimal? @db.Decimal(18, 2)
+  volume     Decimal? @db.Decimal(18, 2)
+  interval   String   @default("daily") // daily, hourly
+  recordedAt DateTime
+  createdAt  DateTime @default(now())
+
+  goldType GoldType @relation(fields: [goldTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([goldTypeId, recordedAt, interval])
+  @@index([goldTypeId, recordedAt(sort: Desc)])
+  @@map("gold_price_history")
+}
+
+enum AlertCondition {
+  ABOVE
+  BELOW
+  CHANGE_PERCENT
+}
+
+model GoldPriceAlert {
+  id          String         @id @default(cuid())
+  userId      String
+  goldTypeId  String
+  condition   AlertCondition
+  targetPrice Decimal        @db.Decimal(18, 2)
+  isActive    Boolean        @default(true)
+  triggeredAt DateTime?
+  notifyEmail Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goldType GoldType @relation(fields: [goldTypeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@map("gold_price_alerts")
+}
+
+model GoldPortfolio {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String   @default("Danh mục vàng")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items GoldPortfolioItem[]
+
+  @@index([userId])
+  @@map("gold_portfolios")
+}
+
+model GoldPortfolioItem {
+  id           String   @id @default(cuid())
+  portfolioId  String
+  goldTypeId   String
+  quantity     Decimal  @db.Decimal(10, 4) // lượng
+  purchasePrice Decimal @db.Decimal(18, 2)
+  purchasedAt  DateTime
+  note         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  portfolio GoldPortfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  goldType  GoldType      @relation(fields: [goldTypeId], references: [id])
+
+  @@index([portfolioId])
+  @@map("gold_portfolio_items")
+}
+
+// ─── FOREX MODULE ───────────────────────────────────────────────
+
+enum CurrencyCode {
+  USD
+  EUR
+  GBP
+  JPY
+  CNY
+  KRW
+}
+
+enum BankCode {
+  VIETCOMBANK
+  BIDV
+  AGRIBANK
+  TECHCOMBANK
+  MB_BANK
+  ACB
+  VP_BANK
+  OTHER
+}
+
+model Bank {
+  id        String   @id @default(cuid())
+  code      BankCode @unique
+  name      String
+  nameVi    String
+  logoUrl   String?
+  website   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  exchangeRates        ExchangeRate[]
+  exchangeRateHistory  ExchangeRateHistory[]
+  interestRates        BankInterestRate[]
+  interestRateHistory  BankInterestRateHistory[]
+
+  @@map("banks")
+}
+
+model ExchangeRate {
+  id           String       @id @default(cuid())
+  bankId       String
+  currency     CurrencyCode
+  buyRate      Decimal      @db.Decimal(18, 4)
+  sellRate     Decimal      @db.Decimal(18, 4)
+  transferRate Decimal?     @db.Decimal(18, 4)
+  changeBuy    Decimal      @default(0) @db.Decimal(18, 4)
+  changeSell   Decimal      @default(0) @db.Decimal(18, 4)
+  source       String       @default("mock")
+  recordedAt   DateTime     @default(now())
+  createdAt    DateTime     @default(now())
+
+  bank Bank @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  @@index([bankId, currency, recordedAt(sort: Desc)])
+  @@map("exchange_rates")
+}
+
+model ExchangeRateHistory {
+  id         String       @id @default(cuid())
+  bankId     String
+  currency   CurrencyCode
+  buyRate    Decimal      @db.Decimal(18, 4)
+  sellRate   Decimal      @db.Decimal(18, 4)
+  recordedAt DateTime
+  createdAt  DateTime     @default(now())
+
+  bank Bank @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  @@unique([bankId, currency, recordedAt])
+  @@index([bankId, currency, recordedAt(sort: Desc)])
+  @@map("exchange_rate_history")
+}
+
+// ─── INTEREST RATE MODULE ───────────────────────────────────────
+
+enum TermPeriod {
+  DEMAND // Không kỳ hạn
+  W1
+  M1
+  M3
+  M6
+  M9
+  M12
+  M18
+  M24
+  M36
+}
+
+model BankInterestRate {
+  id         String     @id @default(cuid())
+  bankId     String
+  term       TermPeriod
+  rate       Decimal    @db.Decimal(6, 3) // % per year
+  minAmount  Decimal?   @db.Decimal(18, 0)
+  source     String     @default("mock")
+  recordedAt DateTime   @default(now())
+  createdAt  DateTime   @default(now())
+
+  bank Bank @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  @@index([bankId, term, recordedAt(sort: Desc)])
+  @@map("bank_interest_rates")
+}
+
+model BankInterestRateHistory {
+  id         String     @id @default(cuid())
+  bankId     String
+  term       TermPeriod
+  rate       Decimal    @db.Decimal(6, 3)
+  recordedAt DateTime
+  createdAt  DateTime   @default(now())
+
+  bank Bank @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  @@unique([bankId, term, recordedAt])
+  @@index([bankId, term, recordedAt(sort: Desc)])
+  @@map("bank_interest_rate_history")
+}
+
+// ─── STOCKS MODULE ──────────────────────────────────────────────
+
+enum MarketCode {
+  HOSE
+  HNX
+  UPCOM
+}
+
+model StockIndex {
+  id         String     @id @default(cuid())
+  code       String     @unique // VNINDEX, HNXINDEX, UPCOM
+  name       String
+  market     MarketCode
+  value      Decimal    @db.Decimal(18, 2)
+  change     Decimal    @default(0) @db.Decimal(18, 2)
+  changePct  Decimal    @default(0) @db.Decimal(8, 4)
+  volume     Decimal?   @db.Decimal(20, 0)
+  valueTraded Decimal?  @db.Decimal(20, 0)
+  recordedAt DateTime   @default(now())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  history StockIndexHistory[]
+
+  @@map("stock_indices")
+}
+
+model StockIndexHistory {
+  id         String   @id @default(cuid())
+  indexId    String
+  value      Decimal  @db.Decimal(18, 2)
+  change     Decimal  @default(0) @db.Decimal(18, 2)
+  changePct  Decimal  @default(0) @db.Decimal(8, 4)
+  volume     Decimal? @db.Decimal(20, 0)
+  recordedAt DateTime
+  createdAt  DateTime @default(now())
+
+  index StockIndex @relation(fields: [indexId], references: [id], onDelete: Cascade)
+
+  @@unique([indexId, recordedAt])
+  @@index([indexId, recordedAt(sort: Desc)])
+  @@map("stock_index_history")
+}
+
+model Stock {
+  id        String     @id @default(cuid())
+  symbol    String     @unique
+  name      String
+  market    MarketCode
+  sector    String?
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  quotes StockQuote[]
+
+  @@index([market])
+  @@map("stocks")
+}
+
+model StockQuote {
+  id         String   @id @default(cuid())
+  stockId    String
+  price      Decimal  @db.Decimal(18, 2)
+  change     Decimal  @default(0) @db.Decimal(18, 2)
+  changePct  Decimal  @default(0) @db.Decimal(8, 4)
+  volume     Decimal  @db.Decimal(20, 0)
+  valueTraded Decimal @db.Decimal(20, 0)
+  high       Decimal? @db.Decimal(18, 2)
+  low        Decimal? @db.Decimal(18, 2)
+  open       Decimal? @db.Decimal(18, 2)
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  stock Stock @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  @@index([stockId, recordedAt(sort: Desc)])
+  @@index([changePct(sort: Desc)])
+  @@index([volume(sort: Desc)])
+  @@map("stock_quotes")
+}
+
+// ─── FUEL MODULE ────────────────────────────────────────────────
+
+enum FuelTypeCode {
+  RON95
+  E5
+  DIESEL
+}
+
+model FuelPrice {
+  id         String       @id @default(cuid())
+  fuelType   FuelTypeCode
+  price      Decimal      @db.Decimal(18, 0) // VND/lít
+  change     Decimal      @default(0) @db.Decimal(18, 0)
+  region     String       @default("national")
+  source     String       @default("mock")
+  recordedAt DateTime     @default(now())
+  createdAt  DateTime     @default(now())
+
+  @@index([fuelType, recordedAt(sort: Desc)])
+  @@map("fuel_prices")
+}
+
+model FuelPriceHistory {
+  id         String       @id @default(cuid())
+  fuelType   FuelTypeCode
+  price      Decimal      @db.Decimal(18, 0)
+  region     String       @default("national")
+  recordedAt DateTime
+  createdAt  DateTime     @default(now())
+
+  @@unique([fuelType, region, recordedAt])
+  @@index([fuelType, recordedAt(sort: Desc)])
+  @@map("fuel_price_history")
+}
+
+// ─── NEWS MODULE ────────────────────────────────────────────────
+
+enum NewsCategoryCode {
+  GOLD
+  STOCKS
+  BANKING
+  REAL_ESTATE
+  ECONOMY
+  GENERAL
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model NewsArticle {
+  id              String           @id @default(cuid())
+  slug            String           @unique
+  title           String
+  excerpt         String?
+  content         String           @db.Text
+  category        NewsCategoryCode
+  source          String?
+  sourceUrl       String?
+  featuredImage   String?
+  status          ArticleStatus    @default(DRAFT)
+  isAiGenerated   Boolean          @default(false)
+  seoTitle        String?
+  seoDescription  String?
+  ogImage         String?
+  publishedAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  faqs SeoFaq[]
+
+  @@index([category, status, publishedAt(sort: Desc)])
+  @@index([slug])
+  @@map("news_articles")
+}
+
+// ─── SEO ────────────────────────────────────────────────────────
+
+enum SeoPageType {
+  GOLD_TODAY
+  GOLD_BRAND
+  GOLD_PURITY
+  FX_CURRENCY
+  INTEREST_BANK
+  STOCK_INDEX
+  FUEL_TYPE
+  CUSTOM
+}
+
+model SeoPage {
+  id              String      @id @default(cuid())
+  slug            String      @unique
+  pageType        SeoPageType
+  title           String
+  metaDescription String
+  h1              String
+  canonicalUrl    String?
+  ogTitle         String?
+  ogDescription   String?
+  ogImage         String?
+  structuredData  Json?
+  isAutoGenerated Boolean     @default(true)
+  isIndexed       Boolean     @default(true)
+  viewCount       Int         @default(0)
+  lastGeneratedAt DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  faqs SeoFaq[]
+
+  @@index([pageType, isIndexed])
+  @@map("seo_pages")
+}
+
+model SeoFaq {
+  id         String   @id @default(cuid())
+  question   String
+  answer     String   @db.Text
+  sortOrder  Int      @default(0)
+  seoPageId  String?
+  articleId  String?
+  createdAt  DateTime @default(now())
+
+  seoPage SeoPage?     @relation(fields: [seoPageId], references: [id], onDelete: Cascade)
+  article NewsArticle? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([seoPageId])
+  @@map("seo_faqs")
+}
+
+// ─── MONETIZATION ───────────────────────────────────────────────
+
+enum AdType {
+  ADSENSE
+  BANNER
+  AFFILIATE_BANK
+  AFFILIATE_STOCK
+  AFFILIATE_GOLD
+  NATIVE
+}
+
+enum AdPosition {
+  HEADER
+  SIDEBAR
+  IN_CONTENT
+  FOOTER
+  STICKY
+}
+
+model AdCampaign {
+  id          String     @id @default(cuid())
+  name        String
+  adType      AdType
+  position    AdPosition
+  htmlCode    String?    @db.Text
+  imageUrl    String?
+  targetUrl   String?
+  affiliateId String?
+  isActive    Boolean    @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  impressions Int        @default(0)
+  clicks      Int        @default(0)
+  revenue     Decimal    @default(0) @db.Decimal(18, 2)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([isActive, position])
+  @@map("ad_campaigns")
+}
+
+// ─── AI CONTENT ─────────────────────────────────────────────────
+
+enum AiContentType {
+  DAILY_SEO_ARTICLE
+  NEWS_SUMMARY
+  PRICE_ANALYSIS
+  FAQ_GENERATION
+  EEAT_CONTENT
+}
+
+model AiGeneratedContent {
+  id          String        @id @default(cuid())
+  type        AiContentType
+  prompt      String        @db.Text
+  content     String        @db.Text
+  metadata    Json?
+  authorId    String?
+  published   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+
+  author User? @relation("AiContentAuthor", fields: [authorId], references: [id])
+
+  @@index([type, createdAt(sort: Desc)])
+  @@map("ai_generated_content")
+}
+
+// ─── OPS & MONITORING ───────────────────────────────────────────
+
+enum CronJobStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model CronJobLog {
+  id          String        @id @default(cuid())
+  jobName     String
+  status      CronJobStatus
+  startedAt   DateTime      @default(now())
+  finishedAt  DateTime?
+  durationMs  Int?
+  recordsSync Int           @default(0)
+  error       String?       @db.Text
+  metadata    Json?
+
+  @@index([jobName, startedAt(sort: Desc)])
+  @@map("cron_job_logs")
+}
+
+model ApiSyncLog {
+  id         String   @id @default(cuid())
+  source     String
+  endpoint   String
+  statusCode Int?
+  success    Boolean
+  latencyMs  Int?
+  error      String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([source, createdAt(sort: Desc)])
+  @@map("api_sync_logs")
+}
+
+model TrafficStat {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  pagePath  String
+  views     Int      @default(0)
+  uniqueVisitors Int @default(0)
+  avgTimeOnPage  Int @default(0) // seconds
+  bounceRate     Decimal @default(0) @db.Decimal(5, 2)
+  createdAt DateTime @default(now())
+
+  @@unique([date, pagePath])
+  @@index([date(sort: Desc)])
+  @@map("traffic_stats")
+}
+
+model RevenueStat {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  adType    AdType
+  revenue   Decimal  @db.Decimal(18, 2)
+  clicks    Int      @default(0)
+  impressions Int    @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([date, adType])
+  @@index([date(sort: Desc)])
+  @@map("revenue_stats")
+}
+
+// ─── SITE SETTINGS ──────────────────────────────────────────────
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}

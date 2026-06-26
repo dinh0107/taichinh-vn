@@ -1,0 +1,67 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://taichinh:taichinh_secret@postgres:5432/taichinh_vn?schema=public
+      REDIS_URL: redis://redis:6379
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      GOLD_API_BASE_URL: https://giavang.now/api
+      CRON_SECRET: dev-cron-secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: taichinh
+      POSTGRES_PASSWORD: taichinh_secret
+      POSTGRES_DB: taichinh_vn
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taichinh -d taichinh_vn"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  cron:
+    image: alpine:3.19
+    depends_on:
+      - app
+    environment:
+      CRON_SECRET: dev-cron-secret
+      APP_URL: http://app:3000
+    volumes:
+      - ./docker/cron/crontab:/etc/crontabs/root:ro
+    command: crond -f -l 2
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,6 @@
+# Sync gold prices every 5 minutes
+*/5 * * * * wget -q -O /dev/null --header="Authorization: Bearer ${CRON_SECRET}" "${APP_URL}/api/cron/sync-gold" 2>&1
+
+# Placeholder — enable when modules ready
+# */10 * * * * wget -q -O /dev/null --header="Authorization: Bearer ${CRON_SECRET}" "${APP_URL}/api/cron/sync-forex"
+# */15 * * * * wget -q -O /dev/null --header="Authorization: Bearer ${CRON_SECRET}" "${APP_URL}/api/cron/sync-stocks"
