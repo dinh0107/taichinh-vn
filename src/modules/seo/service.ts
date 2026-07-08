@@ -1,11 +1,12 @@
 import prisma from "@/lib/db";
-import type { SeoPageType } from "@prisma/client";
+import type { Prisma, SeoPageType } from "@prisma/client";
 import {
   getSeoTemplate,
   parseSeoConfig,
   SEO_TEMPLATES,
   type SeoPageConfig,
 } from "@/modules/admin/seo-templates";
+import { logger } from "@/lib/logger";
 
 export type ResolvedSeoPage = {
   id?: string;
@@ -24,8 +25,17 @@ export type ResolvedSeoPage = {
   faqs: { question: string; answer: string }[];
 };
 
+type SeoPageWithFaqs = Prisma.SeoPageGetPayload<{
+  include: { faqs: { orderBy: { sortOrder: "asc" } } };
+}>;
+
 export async function getAllSeoSlugs(): Promise<string[]> {
-  const db = await prisma.seoPage.findMany({ select: { slug: true } });
+  let db: { slug: string }[] = [];
+  try {
+    db = await prisma.seoPage.findMany({ select: { slug: true } });
+  } catch (error) {
+    logger.warn({ error }, "SEO slug lookup failed; falling back to templates");
+  }
   const set = new Set<string>([
     ...SEO_TEMPLATES.map((t) => t.slug),
     ...db.map((p) => p.slug),
@@ -34,10 +44,15 @@ export async function getAllSeoSlugs(): Promise<string[]> {
 }
 
 export async function resolveSeoPage(slug: string): Promise<ResolvedSeoPage | null> {
-  const db = await prisma.seoPage.findUnique({
-    where: { slug },
-    include: { faqs: { orderBy: { sortOrder: "asc" } } },
-  });
+  let db: SeoPageWithFaqs | null = null;
+  try {
+    db = await prisma.seoPage.findUnique({
+      where: { slug },
+      include: { faqs: { orderBy: { sortOrder: "asc" } } },
+    });
+  } catch (error) {
+    logger.warn({ error, slug }, "SEO page lookup failed; falling back to templates");
+  }
 
   if (db) {
     return {
