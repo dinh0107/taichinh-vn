@@ -1,7 +1,7 @@
 import prisma from "@/lib/db";
 import { SETTING_DEFAULTS, type SiteSettings } from "./settings-shared";
 
-const SECRET_KEYS = ["cron_secret", "openai_api_key"] as const;
+const SECRET_KEYS = ["cron_secret", "openai_api_key", "gsc_private_key"] as const;
 
 export async function getSiteSettings(): Promise<SiteSettings> {
   const rows = await prisma.siteSetting.findMany();

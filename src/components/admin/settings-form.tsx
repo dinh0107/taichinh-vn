@@ -87,9 +87,11 @@ function Toggle({
 export function SettingsForm({
   initial,
   secretFlags,
+  gscEnabled = false,
 }: {
   initial: SiteSettings;
   secretFlags: Record<string, boolean>;
+  gscEnabled?: boolean;
 }) {
   const [state, formAction, isPending] = useActionState(saveSettings, initialState);
   const lastShown = useRef<SaveSettingsState | null>(null);
@@ -210,6 +212,35 @@ export function SettingsForm({
             </div>
           </div>
         </AdminCard>
+
+        {gscEnabled && (
+          <AdminCard title="Google Search Console" action={<KeyRound className="h-4 w-4 text-slate-400" />}>
+            <div className="space-y-4 p-5">
+              <Field
+                label="GSC Property URL"
+                name="gsc_property_url"
+                defaultValue={initial.gsc_property_url}
+                placeholder="https://taichinh.vn/"
+                hint="URL property trong GSC (URL-prefix phải có dấu / cuối)."
+              />
+              <Field
+                label="Service Account Email"
+                name="gsc_client_email"
+                defaultValue={initial.gsc_client_email}
+                placeholder="gsc-sync@project-id.iam.gserviceaccount.com"
+              />
+              <Field
+                label="Service Account Private Key"
+                name="gsc_private_key"
+                type="password"
+                placeholder={
+                  secretFlags.gsc_private_key ? "••••••••  (đã thiết lập)" : "-----BEGIN PRIVATE KEY-----..."
+                }
+                hint="Để trống nếu không đổi. Cần GSC_ENABLED=true trong .env."
+              />
+            </div>
+          </AdminCard>
+        )}
       </div>
     </form>
   );

@@ -1,17 +1,34 @@
-import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { SavingsCalculator } from "@/modules/interest/components/savings-calculator";
 import { getInterestRatesByBank } from "@/modules/interest/service";
+import {
+  DataPanel,
+  DataTable,
+  DataTableBody,
+  DataTableHead,
+  DataTableRow,
+  DataTableTd,
+  DataTableTh,
+  PageMain,
+  ProseSection,
+  SectionHeading,
+} from "@/components/ui/market-ui";
+import { ModuleJsonLd } from "@/components/seo/module-json-ld";
+import { buildPageMetadataSync, MODULE_FAQS } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
 import { Landmark, Trophy } from "lucide-react";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "Lãi suất ngân hàng",
-  description:
-    "So sánh lãi suất tiết kiệm Vietcombank, BIDV, Agribank, MB Bank, ACB, Techcombank, VPBank. Tính lãi tiền gửi nhanh.",
-};
+const PAGE_TITLE = "Lãi suất ngân hàng";
+const PAGE_DESC =
+  "So sánh lãi suất tiết kiệm Vietcombank, BIDV, Agribank, MB Bank, ACB, Techcombank, VPBank. Tính lãi tiền gửi nhanh.";
+
+export const metadata = buildPageMetadataSync({
+  title: PAGE_TITLE,
+  description: PAGE_DESC,
+  path: "/lai-suat",
+});
 
 const MOCK_BANKS = [
   { name: "Vietcombank", rates: [0.1, 4.6, 4.75, 5.5, 6.2] },
@@ -24,6 +41,12 @@ const MOCK_BANKS = [
 ];
 const TERMS = ["KKH", "1 tháng", "3 tháng", "6 tháng", "12 tháng"];
 
+const MEDALS = [
+  "from-amber-400 to-amber-600",
+  "from-slate-300 to-slate-400",
+  "from-orange-300 to-orange-500",
+];
+
 export default async function InterestPage() {
   const dbBanks = await getInterestRatesByBank();
   const BANKS = dbBanks.length > 0 ? dbBanks : MOCK_BANKS;
@@ -31,10 +54,16 @@ export default async function InterestPage() {
   const ranked = [...BANKS]
     .sort((a, b) => b.rates[4] - a.rates[4])
     .slice(0, 3);
-  const medals = ["from-amber-400 to-amber-600", "from-slate-300 to-slate-400", "from-orange-300 to-orange-500"];
 
   return (
     <>
+      <ModuleJsonLd
+        path="/lai-suat"
+        serviceName={PAGE_TITLE}
+        serviceDescription={PAGE_DESC}
+        breadcrumbLabel="Lãi suất"
+        faqs={[...MODULE_FAQS.interest]}
+      />
       <PageHeader
         title="Lãi suất ngân hàng"
         description="So sánh lãi suất tiết kiệm các kỳ hạn tại 7 ngân hàng lớn và tính tiền lãi nhanh chóng."
@@ -43,15 +72,12 @@ export default async function InterestPage() {
         badge={`Kỳ hạn 12 tháng cao nhất ${best12.toFixed(2)}%`}
       />
 
-      <div className="container-page space-y-8 py-10">
-        {/* Top 3 best rates */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-amber-500" />
-            <h2 className="text-lg font-bold text-slate-900">
-              Lãi suất cao nhất (12 tháng)
-            </h2>
-          </div>
+      <PageMain>
+        <section className="space-y-4">
+          <SectionHeading
+            title="Lãi suất cao nhất (12 tháng)"
+            icon={Trophy}
+          />
           <div className="grid gap-4 sm:grid-cols-3">
             {ranked.map((b, i) => (
               <div
@@ -61,7 +87,7 @@ export default async function InterestPage() {
                 <div
                   className={cn(
                     "absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white",
-                    medals[i]
+                    MEDALS[i]
                   )}
                 >
                   {i + 1}
@@ -78,81 +104,65 @@ export default async function InterestPage() {
 
         <SavingsCalculator />
 
-        {/* Full comparison table */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold text-slate-900">
-            So sánh lãi suất các ngân hàng
-          </h2>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500">
-                    <th className="px-5 py-3.5 text-left font-semibold">
-                      Ngân hàng
-                    </th>
-                    {TERMS.map((t) => (
-                      <th
-                        key={t}
-                        className="px-5 py-3.5 text-right font-semibold"
-                      >
-                        {t}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {BANKS.map((bank) => (
-                    <tr key={bank.name} className="hover:bg-amber-50/40">
-                      <td className="px-5 py-4 font-semibold text-slate-900">
-                        {bank.name}
-                      </td>
-                      {bank.rates.map((rate, i) => {
-                        const isBest = i === 4 && rate === best12;
-                        return (
-                          <td
-                            key={i}
-                            className={cn(
-                              "px-5 py-4 text-right font-bold tabular-nums",
-                              isBest ? "text-emerald-700" : "text-slate-600"
-                            )}
-                          >
-                            {isBest && (
-                              <span className="mr-1.5 inline-block rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">
-                                Cao nhất
-                              </span>
-                            )}
-                            {rate.toFixed(2)}%
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <section className="space-y-4">
+          <SectionHeading title="So sánh lãi suất các ngân hàng" />
+          <DataPanel>
+            <DataTable>
+              <DataTableHead>
+                <DataTableTh>Ngân hàng</DataTableTh>
+                {TERMS.map((t) => (
+                  <DataTableTh key={t} align="right">
+                    {t}
+                  </DataTableTh>
+                ))}
+              </DataTableHead>
+              <DataTableBody>
+                {BANKS.map((bank) => (
+                  <DataTableRow key={bank.name}>
+                    <DataTableTd className="font-semibold text-slate-900">
+                      {bank.name}
+                    </DataTableTd>
+                    {bank.rates.map((rate, i) => {
+                      const isBest = i === 4 && rate === best12;
+                      return (
+                        <DataTableTd
+                          key={i}
+                          align="right"
+                          className={cn(
+                            "font-bold tabular-nums",
+                            isBest ? "text-emerald-700" : "text-slate-600"
+                          )}
+                        >
+                          {isBest && (
+                            <span className="mr-1.5 inline-block rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">
+                              Cao nhất
+                            </span>
+                          )}
+                          {rate.toFixed(2)}%
+                        </DataTableTd>
+                      );
+                    })}
+                  </DataTableRow>
+                ))}
+              </DataTableBody>
+            </DataTable>
+          </DataPanel>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
-          <h2 className="text-xl font-bold text-slate-900">
-            Gửi tiết kiệm ngân hàng nào lãi cao nhất?
-          </h2>
-          <div className="mt-3 space-y-3 text-sm leading-relaxed text-slate-600">
-            <p>
-              Bảng so sánh lãi suất huy động giúp bạn lựa chọn ngân hàng phù hợp
-              theo từng kỳ hạn. Hiện tại, các ngân hàng tư nhân như VPBank, MB
-              Bank thường có lãi suất nhỉnh hơn nhóm ngân hàng quốc doanh
-              (Vietcombank, BIDV, Agribank).
-            </p>
-            <p>
-              Sử dụng công cụ tính lãi phía trên để ước tính số tiền nhận được khi
-              đáo hạn. Lãi suất thực tế có thể thay đổi theo chính sách từng thời
-              kỳ và số tiền gửi.
-            </p>
-          </div>
-        </section>
-      </div>
+        <ProseSection title="Gửi tiết kiệm ngân hàng nào lãi cao nhất?">
+          <p>
+            Bảng so sánh lãi suất huy động giúp bạn lựa chọn ngân hàng phù hợp
+            theo từng kỳ hạn. Hiện tại, các ngân hàng tư nhân như VPBank, MB
+            Bank thường có lãi suất nhỉnh hơn nhóm ngân hàng quốc doanh
+            (Vietcombank, BIDV, Agribank).
+          </p>
+          <p>
+            Sử dụng công cụ tính lãi phía trên để ước tính số tiền nhận được khi
+            đáo hạn. Lãi suất thực tế có thể thay đổi theo chính sách từng thời
+            kỳ và số tiền gửi.
+          </p>
+        </ProseSection>
+      </PageMain>
     </>
   );
 }

@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { SiteChrome } from "@/components/layout/site-chrome";
 import { getSiteSettings } from "@/modules/admin/settings-service";
 import { SETTING_DEFAULTS } from "@/modules/admin/settings-shared";
+import { getSiteBaseUrl } from "@/lib/seo/site-url";
 import "./globals.css";
 
 async function loadSettings() {
@@ -17,8 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const s = await loadSettings();
   const name = s.site_name || "TaiChinh.vn";
   const description = s.site_description || SETTING_DEFAULTS.site_description;
-  const url =
-    s.site_url || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const url = await getSiteBaseUrl();
 
   return {
     metadataBase: new URL(url),
@@ -57,7 +57,7 @@ export default async function RootLayout({
 
   return (
     <html lang="vi">
-      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased flex flex-col">
+      <body className="min-h-screen bg-finance-50 text-finance-900 antialiased flex flex-col">
         <SiteChrome
           siteName={s.site_name || "TaiChinh.vn"}
           siteDescription={s.site_description || SETTING_DEFAULTS.site_description}

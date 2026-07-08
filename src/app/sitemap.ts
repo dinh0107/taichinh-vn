@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
-import { SEO_GOLD_SLUGS } from "@/modules/gold/types";
+import { getPublishedArticleSlugs } from "@/modules/news/service";
+import { getSiteBaseUrl } from "@/lib/seo/site-url";
+import { getIndexedSeoPaths } from "@/modules/admin/seo-service";
 
-const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "https://taichinh.vn";
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const BASE = await getSiteBaseUrl();
 
-export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages = [
     "",
     "/gia-vang",
@@ -14,28 +16,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/tin-tuc",
   ];
 
-  const seoGoldPages = SEO_GOLD_SLUGS.map((s) => `/${s.slug}`);
+  const seoPaths = await getIndexedSeoPaths();
 
-  const fxSlugs = ["usd", "eur", "gbp", "jpy", "cny", "krw"].map(
-    (c) => `/ty-gia-${c}-hom-nay`
-  );
+  const articleSlugs = await getPublishedArticleSlugs();
+  const articlePages = articleSlugs.map((slug) => `/tin-tuc/${slug}`);
 
-  const bankSlugs = [
-    "vietcombank",
-    "bidv",
-    "agribank",
-    "mb-bank",
-    "acb",
-    "techcombank",
-    "vpbank",
-  ].map((b) => `/lai-suat-${b}`);
+  const combined = [
+    ...staticPages,
+    ...seoPaths.map((p) => (p.startsWith("/") ? p : `/${p}`)),
+    ...articlePages,
+  ];
 
-  const all = [...staticPages, ...seoGoldPages, ...fxSlugs, ...bankSlugs];
+  const unique = [...new Set(combined)];
 
-  return all.map((path) => ({
+  return unique.map((path) => ({
     url: `${BASE}${path}`,
     lastModified: new Date(),
-    changeFrequency: path.includes("hom-nay") ? "hourly" as const : "daily" as const,
-    priority: path === "" ? 1 : path.includes("gia-vang") ? 0.9 : 0.7,
+    changeFrequency: path.includes("hom-nay") ? ("hourly" as const) : ("daily" as const),
+    priority: path === "" ? 1 : path.includes("gia-vang") || path.includes("hom-nay") ? 0.9 : 0.7,
   }));
 }

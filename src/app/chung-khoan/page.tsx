@@ -1,15 +1,26 @@
-import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { getStockIndices } from "@/modules/stocks/service";
-import { TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
+import {
+  DataPanel,
+  MetricCard,
+  PageMain,
+  ProseSection,
+} from "@/components/ui/market-ui";
+import { ModuleJsonLd } from "@/components/seo/module-json-ld";
+import { buildPageMetadataSync, MODULE_FAQS } from "@/lib/seo/metadata";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "Chứng khoán Việt Nam",
-  description: "VNINDEX, HNXINDEX, UPCOM — top tăng/giảm, thanh khoản.",
-};
+const PAGE_TITLE = "Chứng khoán Việt Nam";
+const PAGE_DESC = "VNINDEX, HNXINDEX, UPCOM — top tăng/giảm, thanh khoản.";
+
+export const metadata = buildPageMetadataSync({
+  title: PAGE_TITLE,
+  description: PAGE_DESC,
+  path: "/chung-khoan",
+});
 
 const MOCK_INDICES = [
   { code: "VNINDEX", value: 1285.42, change: 12.35, pct: 0.97 },
@@ -39,67 +50,41 @@ export default async function StocksPage() {
 
   return (
     <>
+      <ModuleJsonLd
+        path="/chung-khoan"
+        serviceName={PAGE_TITLE}
+        serviceDescription={PAGE_DESC}
+        breadcrumbLabel="Chứng khoán"
+        faqs={[...MODULE_FAQS.stocks]}
+      />
       <PageHeader
         title="Chứng khoán Việt Nam"
         description="Chỉ số VNINDEX, HNX, UPCOM cùng top cổ phiếu tăng/giảm mạnh và thanh khoản cao nhất."
-        breadcrumb={[
-          { label: "Trang chủ", href: "/" },
-          { label: "Chứng khoán" },
-        ]}
+        breadcrumb={[{ label: "Trang chủ", href: "/" }, { label: "Chứng khoán" }]}
         icon={TrendingUp}
         badge="Phiên giao dịch hôm nay"
       />
-      <div className="container-page space-y-8 py-10">
+
+      <PageMain>
         <div className="grid gap-4 md:grid-cols-3">
-          {indices.map((idx) => {
-            const up = idx.change >= 0;
-            return (
-              <div
-                key={idx.code}
-                className="card-hover relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-              >
-                <div
-                  className={cn(
-                    "absolute inset-x-0 top-0 h-1",
-                    up ? "bg-emerald-400" : "bg-red-400"
-                  )}
-                />
-                <p className="text-sm font-semibold text-slate-500">
-                  {idx.code}
-                </p>
-                <p className="mt-2 text-3xl font-extrabold tabular-nums text-slate-900">
-                  {idx.value.toLocaleString("vi-VN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
-                <p
-                  className={cn(
-                    "mt-1 inline-flex items-center gap-1 text-sm font-semibold",
-                    up ? "text-emerald-600" : "text-red-600"
-                  )}
-                >
-                  {up ? (
-                    <TrendingUp className="h-4 w-4" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4" />
-                  )}
-                  {up ? "+" : ""}
-                  {idx.change.toFixed(2)} ({idx.pct.toFixed(2)}%)
-                </p>
-              </div>
-            );
-          })}
+          {indices.map((idx) => (
+            <MetricCard
+              key={idx.code}
+              label={idx.code}
+              value={idx.value.toLocaleString("vi-VN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+              sub={`${idx.change >= 0 ? "+" : ""}${idx.change.toFixed(2)} điểm (${idx.pct.toFixed(2)}%)`}
+              accent={idx.change >= 0 ? "emerald" : "rose"}
+            />
+          ))}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           <TopList title="Tăng mạnh nhất" items={gainers} positive />
           <TopList title="Giảm mạnh nhất" items={losers} positive={false} />
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-3">
-              <BarChart3 className="h-4 w-4 text-sky-600" />
-              <h3 className="font-bold text-slate-900">Thanh khoản cao nhất</h3>
-            </div>
+          <DataPanel title="Thanh khoản cao nhất">
             <div className="divide-y divide-slate-100">
               {liquid.map((it) => (
                 <div
@@ -113,26 +98,20 @@ export default async function StocksPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </DataPanel>
         </div>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
-          <h2 className="text-xl font-bold text-slate-900">
-            Thị trường chứng khoán Việt Nam hôm nay
-          </h2>
-          <div className="mt-3 space-y-3 text-sm leading-relaxed text-slate-600">
-            <p>
-              Cập nhật nhanh ba chỉ số chính của thị trường: VN-Index (HOSE),
-              HNX-Index và UPCOM. Bảng xếp hạng top cổ phiếu tăng/giảm mạnh và
-              thanh khoản cao nhất giúp nhà đầu tư nắm bắt dòng tiền trong phiên.
-            </p>
-            <p>
-              Dữ liệu mang tính tham khảo, không phải khuyến nghị đầu tư. Nhà đầu
-              tư nên cân nhắc kỹ trước khi ra quyết định.
-            </p>
-          </div>
-        </section>
-      </div>
+        <ProseSection title="Thị trường chứng khoán Việt Nam hôm nay">
+          <p>
+            Cập nhật nhanh ba chỉ số chính của thị trường: VN-Index (HOSE),
+            HNX-Index và UPCOM. Bảng xếp hạng top cổ phiếu tăng/giảm mạnh và thanh
+            khoản cao nhất giúp nhà đầu tư nắm bắt dòng tiền trong phiên.
+          </p>
+          <p>
+            Dữ liệu mang tính tham khảo, không phải khuyến nghị đầu tư.
+          </p>
+        </ProseSection>
+      </PageMain>
     </>
   );
 }
@@ -147,15 +126,18 @@ function TopList({
   positive: boolean;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-3">
-        {positive ? (
-          <TrendingUp className="h-4 w-4 text-emerald-600" />
-        ) : (
-          <TrendingDown className="h-4 w-4 text-red-600" />
-        )}
-        <h3 className="font-bold text-slate-900">{title}</h3>
-      </div>
+    <DataPanel
+      title={
+        <span className="flex items-center gap-2">
+          {positive ? (
+            <TrendingUp className="h-4 w-4 text-emerald-600" />
+          ) : (
+            <TrendingDown className="h-4 w-4 text-red-600" />
+          )}
+          {title}
+        </span>
+      }
+    >
       <div className="divide-y divide-slate-100">
         {items.map((it) => (
           <div
@@ -167,10 +149,8 @@ function TopList({
               <span className="text-sm text-slate-600">{it.price}</span>
               <span
                 className={cn(
-                  "w-16 rounded-full px-2 py-0.5 text-right text-xs font-bold",
-                  positive
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-red-50 text-red-700"
+                  "min-w-14 rounded-full px-2 py-0.5 text-right text-xs font-bold",
+                  positive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
                 )}
               >
                 {positive ? "+" : ""}
@@ -180,6 +160,6 @@ function TopList({
           </div>
         ))}
       </div>
-    </div>
+    </DataPanel>
   );
 }

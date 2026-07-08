@@ -103,9 +103,10 @@ export async function createArticle(
     return { ok: false, fieldErrors: zodToFieldErrors(parsed.error) };
   }
   const data = parsed.data;
+  let slug = "";
 
   try {
-    const slug = await uniqueSlug(data.slug || data.title);
+    slug = await uniqueSlug(data.slug || data.title);
     await prisma.newsArticle.create({
       data: {
         slug,
@@ -130,6 +131,7 @@ export async function createArticle(
 
   revalidatePath("/admin/bai-viet");
   revalidatePath("/tin-tuc");
+  revalidatePath(`/tin-tuc/${slug}`);
   redirect("/admin/bai-viet");
 }
 
@@ -145,12 +147,15 @@ export async function updateArticle(
     return { ok: false, fieldErrors: zodToFieldErrors(parsed.error) };
   }
   const data = parsed.data;
+  let slug = "";
+  let previousSlug = "";
 
   try {
     const current = await prisma.newsArticle.findUnique({ where: { id } });
     if (!current) return { ok: false, error: "Không tìm thấy bài viết." };
 
-    const slug = await uniqueSlug(data.slug || data.title, id);
+    previousSlug = current.slug;
+    slug = await uniqueSlug(data.slug || data.title, id);
     await prisma.newsArticle.update({
       where: { id },
       data: {
@@ -180,6 +185,10 @@ export async function updateArticle(
 
   revalidatePath("/admin/bai-viet");
   revalidatePath("/tin-tuc");
+  revalidatePath(`/tin-tuc/${slug}`);
+  if (previousSlug && previousSlug !== slug) {
+    revalidatePath(`/tin-tuc/${previousSlug}`);
+  }
   redirect("/admin/bai-viet");
 }
 
@@ -189,7 +198,13 @@ export async function deleteArticle(formData: FormData): Promise<void> {
   const id = formData.get("id");
   if (typeof id !== "string" || !id) return;
 
+  let slug = "";
   try {
+    const article = await prisma.newsArticle.findUnique({
+      where: { id },
+      select: { slug: true },
+    });
+    slug = article?.slug ?? "";
     await prisma.newsArticle.delete({ where: { id } });
   } catch (e) {
     logger.error({ e }, "Delete article failed");
@@ -198,4 +213,5 @@ export async function deleteArticle(formData: FormData): Promise<void> {
 
   revalidatePath("/admin/bai-viet");
   revalidatePath("/tin-tuc");
+  if (slug) revalidatePath(`/tin-tuc/${slug}`);
 }

@@ -1,12 +1,20 @@
 # TaiChinh.vn — Nền tảng Tài chính Cá nhân Việt Nam
 
-Next.js 15 · TypeScript · PostgreSQL · Prisma · Redis · Docker
+Next.js 15 · TypeScript · MySQL · Prisma · Redis
+
+## Yêu cầu
+
+- Node.js 20+
+- MySQL 8.0+ (cài local hoặc dùng instance cloud)
+- Redis 7+ (tùy chọn — app vẫn chạy được nếu không có Redis)
 
 ## Quick Start
 
 ```bash
 cp .env.example .env
-docker compose up -d postgres redis
+# Tạo database MySQL trước, ví dụ:
+#   CREATE DATABASE taichinh_vn CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# Chỉnh DATABASE_URL trong .env cho đúng MySQL của bạn
 npm install
 npx prisma migrate dev
 npx prisma db seed
@@ -14,6 +22,15 @@ npm run dev
 ```
 
 Mở http://localhost:3000
+
+## Production
+
+```bash
+npm run build
+npm run start
+```
+
+Chạy `npx prisma migrate deploy` trước khi start trên server. Cron jobs gọi các endpoint `/api/cron/*` (xem [Cron Jobs](docs/CRON_JOBS.md)) — cấu hình qua system cron, Task Scheduler, hoặc Vercel Cron.
 
 ## Modules
 
@@ -42,12 +59,6 @@ Mở http://localhost:3000
 - [SEO Strategy](docs/SEO_STRATEGY.md)
 - [Security Checklist](docs/SECURITY.md)
 - [Monitoring](docs/MONITORING.md)
-
-## Docker Production
-
-```bash
-docker compose up -d --build
-```
 
 ## License
 

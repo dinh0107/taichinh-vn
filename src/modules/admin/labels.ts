@@ -4,6 +4,7 @@ import type {
   AdType,
   AdPosition,
   SeoPageType,
+  GscIndexStatus,
   CronJobStatus,
   UserRole,
 } from "@prisma/client";
@@ -59,6 +60,19 @@ export const SEO_PAGE_TYPE_LABELS: Record<SeoPageType, string> = {
   STOCK_INDEX: "Chứng khoán",
   FUEL_TYPE: "Giá xăng",
   CUSTOM: "Khác",
+};
+
+export const GSC_INDEX_STATUS_LABELS: Record<
+  GscIndexStatus,
+  { label: string; tone: "emerald" | "amber" | "red" | "slate" | "sky" | "violet" }
+> = {
+  UNKNOWN: { label: "Chưa kiểm tra", tone: "slate" },
+  INDEXED: { label: "Đã index (GSC)", tone: "emerald" },
+  NOT_INDEXED: { label: "Chưa index", tone: "red" },
+  CRAWLED_NOT_INDEXED: { label: "Đã crawl, chưa index", tone: "amber" },
+  DUPLICATE: { label: "Trùng lặp", tone: "violet" },
+  BLOCKED: { label: "Bị chặn", tone: "red" },
+  ERROR: { label: "Lỗi API", tone: "red" },
 };
 
 export function cronStatusToUi(

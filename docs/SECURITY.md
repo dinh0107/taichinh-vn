@@ -10,7 +10,6 @@
 
 ## API Security
 
-- [x] Rate limiting via Nginx (30 req/s API, 100 req/s pages)
 - [x] Input validation with Zod on all API endpoints
 - [ ] CORS whitelist for public API
 - [ ] API key authentication for external consumers (future)
@@ -18,10 +17,8 @@
 
 ## Infrastructure
 
-- [x] Docker non-root user (`nextjs:1001`)
-- [x] Nginx security headers (X-Frame-Options, X-Content-Type-Options, etc.)
 - [x] `poweredByHeader: false` in Next.js
-- [ ] HTTPS/TLS via Let's Encrypt (production)
+- [ ] HTTPS/TLS (production reverse proxy / hosting)
 - [ ] Database connection over SSL
 - [ ] Redis password authentication (production)
 - [ ] Secrets in environment variables, never in code

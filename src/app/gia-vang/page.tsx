@@ -14,10 +14,12 @@ import {
   buildGoldSeoMetadata,
   generateGoldFaqs,
 } from "@/lib/seo/schema";
-import { absoluteUrl, formatNumber, formatUsd } from "@/lib/utils";
+import { canonicalUrl } from "@/lib/seo/site-url";
+import { formatNumber, formatUsd } from "@/lib/utils";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
-import { ChevronRight, Clock } from "lucide-react";
-import Link from "next/link";
+import { MetricCard, PageMain, ProseSection } from "@/components/ui/market-ui";
+import { PageHeader } from "@/components/layout/page-header";
+import { ChevronRight, Coins } from "lucide-react";
 
 export const revalidate = 300;
 
@@ -28,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: seo.title,
     description: seo.description,
     openGraph: seo.openGraph,
-    alternates: { canonical: absoluteUrl("/gia-vang") },
+    alternates: { canonical: await canonicalUrl("/gia-vang") },
   };
 }
 
@@ -38,11 +40,13 @@ export default async function GoldPage() {
   const faqs = generateGoldFaqs(prices);
   const sjc = prices.find((p) => p.code === "SJL1L10");
   const world = prices.find((p) => p.code === "XAUUSD");
+  const homeUrl = await canonicalUrl("/");
+  const pageUrl = await canonicalUrl("/gia-vang");
 
   const jsonLd = [
     buildBreadcrumbSchema([
-      { name: "Trang chủ", url: absoluteUrl("/") },
-      { name: "Giá vàng", url: absoluteUrl("/gia-vang") },
+      { name: "Trang chủ", url: homeUrl },
+      { name: "Giá vàng", url: pageUrl },
     ]),
     buildFinancialServiceSchema(
       "Giá vàng Việt Nam",
@@ -56,47 +60,36 @@ export default async function GoldPage() {
     <>
       <JsonLdScript data={jsonLd} />
 
-      {/* Page header */}
-      <div className="border-b border-slate-200 bg-white">
-        <div className="container-page py-8">
-          <nav className="flex items-center gap-1 text-xs text-slate-400">
-            <Link href="/" className="hover:text-amber-600">
-              Trang chủ
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-slate-600">Giá vàng</span>
-          </nav>
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">
-            Giá vàng hôm nay
-          </h1>
-          <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
-            <Clock className="h-4 w-4" />
-            Cập nhật {new Date().toLocaleString("vi-VN")} — SJC, DOJI, PNJ, 9999,
-            24K & vàng thế giới
-          </p>
+      <PageHeader
+        title="Giá vàng hôm nay"
+        description="Cập nhật SJC, DOJI, PNJ, 9999, 24K và vàng thế giới."
+        breadcrumb={[{ label: "Trang chủ", href: "/" }, { label: "Giá vàng" }]}
+        icon={Coins}
+        badge={`Cập nhật ${new Date().toLocaleString("vi-VN")}`}
+      />
 
-          {/* Highlight stats */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <StatBox
-              label="Vàng SJC (bán ra)"
-              value={sjc ? formatNumber(sjc.sell) + " đ" : "—"}
-              sub={sjc ? `Mua ${formatNumber(sjc.buy)} đ` : ""}
-            />
-            <StatBox
-              label="Vàng thế giới"
-              value={world ? formatUsd(world.buy) : "—"}
-              sub="XAU/USD per oz"
-            />
-            <StatBox
-              label="Chênh lệch mua/bán SJC"
-              value={sjc ? formatNumber(sjc.sell - sjc.buy) + " đ" : "—"}
-              sub="Spread hiện tại"
-            />
-          </div>
+      <PageMain>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <MetricCard
+            label="Vàng SJC (bán ra)"
+            value={sjc ? `${formatNumber(sjc.sell)} đ` : "—"}
+            sub={sjc ? `Mua ${formatNumber(sjc.buy)} đ` : undefined}
+            accent="amber"
+          />
+          <MetricCard
+            label="Vàng thế giới"
+            value={world ? formatUsd(world.buy) : "—"}
+            sub="XAU/USD per oz"
+            accent="sky"
+          />
+          <MetricCard
+            label="Chênh lệch mua/bán SJC"
+            value={sjc ? `${formatNumber(sjc.sell - sjc.buy)} đ` : "—"}
+            sub="Spread hiện tại"
+            accent="emerald"
+          />
         </div>
-      </div>
 
-      <div className="container-page space-y-8 py-10">
         <GoldPriceTable prices={prices} />
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -116,11 +109,8 @@ export default async function GoldPage() {
           <GoldComparePanel prices={prices} />
         </div>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <h2 className="text-xl font-bold text-slate-900">
-            Câu hỏi thường gặp
-          </h2>
-          <div className="mt-5 divide-y divide-slate-100">
+        <ProseSection title="Câu hỏi thường gặp">
+          <div className="divide-y divide-slate-100">
             {faqs.map((faq, i) => (
               <details key={i} className="group py-4">
                 <summary className="flex cursor-pointer items-center justify-between font-semibold text-slate-800 marker:content-none group-open:text-amber-700">
@@ -133,30 +123,8 @@ export default async function GoldPage() {
               </details>
             ))}
           </div>
-        </section>
-      </div>
+        </ProseSection>
+      </PageMain>
     </>
-  );
-}
-
-function StatBox({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-amber-50/60 to-white p-5">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-        {label}
-      </p>
-      <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-slate-900">
-        {value}
-      </p>
-      {sub && <p className="mt-0.5 text-xs text-slate-500">{sub}</p>}
-    </div>
   );
 }

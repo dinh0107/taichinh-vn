@@ -74,10 +74,12 @@ const TEXT_KEYS = [
   "gold_api_endpoint",
   "redis_url",
   "adsense_publisher_id",
+  "gsc_property_url",
+  "gsc_client_email",
 ] as const;
 
 // Secret fields: only overwritten when a new non-empty value is provided.
-const SECRET_KEYS = ["cron_secret", "openai_api_key"] as const;
+const SECRET_KEYS = ["cron_secret", "openai_api_key", "gsc_private_key"] as const;
 
 const BOOL_KEYS = [
   "enable_adsense",

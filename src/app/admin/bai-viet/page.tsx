@@ -146,6 +146,16 @@ export default async function AdminArticlesPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1.5">
+                          {a.status === "PUBLISHED" && (
+                            <Link
+                              href={`/tin-tuc/${a.slug}`}
+                              target="_blank"
+                              className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-emerald-600"
+                              title="Xem trang công khai"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          )}
                           <Link
                             href={`/admin/bai-viet/${a.id}`}
                             className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"

@@ -26,4 +26,6 @@ export const SETTING_DEFAULTS: SiteSettings = {
   ai_auto_write: "true",
   ai_auto_summarize: "true",
   ai_auto_faq: "true",
+  gsc_property_url: "https://taichinh.vn/",
+  gsc_client_email: "",
 };

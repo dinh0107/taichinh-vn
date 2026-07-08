@@ -3,7 +3,7 @@
 ## Logging Stack
 
 ```
-Application (Pino) → stdout → Docker logs → (future: Loki/Grafana)
+Application (Pino) → stdout → process manager / hosting logs → (future: Loki/Grafana)
 ```
 
 ### Log Levels
@@ -68,10 +68,10 @@ Application (Pino) → stdout → Docker logs → (future: Loki/Grafana)
 
 | Metric | Tool |
 |--------|------|
-| CPU/Memory | Docker stats / Prometheus |
-| PostgreSQL connections | pg_stat_activity |
+| CPU/Memory | Host metrics / Prometheus |
+| MySQL connections | `SHOW STATUS LIKE 'Threads_connected'` |
 | Redis memory | INFO memory |
-| Disk usage | df / Docker volume |
+| Disk usage | df / volume monitor |
 
 ## Recommended Production Stack
 
@@ -109,15 +109,15 @@ External services (recommended):
 - UptimeRobot / Better Uptime — ping `/api/health` every 5 min
 - Alert via Telegram/Slack on downtime
 
-## Docker Logs
+## Application Logs
 
 ```bash
-# View app logs
-docker compose logs -f app
+# Development
+npm run dev
 
-# View cron logs
-docker compose logs -f cron
+# Production (PM2 example)
+pm2 logs taichinh-vn
 
-# Export logs
-docker compose logs app --since 1h > app.log
+# Export recent logs (PM2)
+pm2 logs taichinh-vn --lines 1000 --nostream > app.log
 ```

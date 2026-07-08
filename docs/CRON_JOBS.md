@@ -3,15 +3,15 @@
 ## Architecture
 
 ```
-┌─────────────┐     POST /api/cron/*     ┌──────────────┐
-│ Alpine Cron │ ────────────────────────▶│  Next.js App │
-│  Container  │   Bearer CRON_SECRET     │              │
-└─────────────┘                          └──────┬───────┘
+┌──────────────────┐     POST /api/cron/*     ┌──────────────┐
+│ Cron scheduler   │ ────────────────────────▶│  Next.js App │
+│ (cron / GH Act.) │   Bearer CRON_SECRET     │              │
+└──────────────────┘                          └──────┬───────┘
                                                │
                     ┌──────────────────────────┼──────────────────┐
                     ▼                          ▼                  ▼
               ┌──────────┐            ┌────────────┐      ┌──────────┐
-              │ External │            │ PostgreSQL │      │  Redis   │
+              │ External │            │   MySQL    │      │  Redis   │
               │   APIs   │            │            │      │  Cache   │
               └──────────┘            └────────────┘      └──────────┘
 ```
@@ -32,10 +32,10 @@
 
 ## Job Lifecycle
 
-1. Cron container fires HTTP POST with `Authorization: Bearer {CRON_SECRET}`
+1. Cron scheduler fires HTTP POST with `Authorization: Bearer {CRON_SECRET}`
 2. Endpoint creates `CronJobLog` with status `RUNNING`
 3. Fetches external data via adapter
-4. Upserts to PostgreSQL
+4. Upserts to MySQL
 5. Invalidates Redis cache (`gold:*`, etc.)
 6. Updates `CronJobLog` to `SUCCESS` or `FAILED`
 7. On failure: log error, alert (future: Slack/Telegram)

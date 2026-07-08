@@ -3,24 +3,33 @@
 @theme inline {
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
     sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Segoe UI Mono", Consolas, monospace;
 
-  --color-brand-50: #fffbeb;
-  --color-brand-100: #fef3c7;
-  --color-brand-200: #fde68a;
-  --color-brand-300: #fcd34d;
-  --color-brand-400: #fbbf24;
-  --color-brand-500: #f59e0b;
-  --color-brand-600: #d97706;
-  --color-brand-700: #b45309;
+  --color-finance-ink: #0b0f17;
+  --color-finance-900: #111827;
+  --color-finance-800: #1e293b;
+  --color-finance-700: #334155;
+  --color-finance-600: #475569;
+  --color-finance-500: #64748b;
+  --color-finance-400: #94a3b8;
+  --color-finance-300: #cbd5e1;
+  --color-finance-200: #e2e8f0;
+  --color-finance-100: #eef1f6;
+  --color-finance-50: #f4f6f9;
 
-  --color-ink-700: #1e293b;
-  --color-ink-800: #0f172a;
-  --color-ink-900: #020617;
+  --color-gold-400: #d4b84a;
+  --color-gold-500: #c9a227;
+  --color-gold-600: #a8861f;
 }
 
 :root {
-  --background: #f8fafc;
+  --background: #f4f6f9;
   --foreground: #0f172a;
+  --accent: #c9a227;
+  --surface: #ffffff;
+  --border: #dde3ec;
+  --finance-up: #059669;
+  --finance-down: #dc2626;
 }
 
 html {
@@ -35,18 +44,16 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Premium scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 9999px;
-  border: 2px solid var(--background);
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
@@ -60,88 +67,148 @@ body {
   scrollbar-width: none;
 }
 
-/* Reusable utilities */
 @utility container-page {
   margin-inline: auto;
-  max-width: 80rem;
-  padding-inline: 1rem;
+  max-width: 78rem;
+  padding-inline: 1.25rem;
 }
 
-/* Decorative grid background for hero */
-.bg-grid {
+.bg-finance-grid {
   background-image:
-    linear-gradient(to right, rgba(148, 163, 184, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
-.bg-gold-radial {
+.bg-finance-hero {
   background:
-    radial-gradient(
-      ellipse 80% 60% at 50% -10%,
-      rgba(245, 158, 11, 0.25),
-      transparent 70%
-    );
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(201, 162, 39, 0.12), transparent 55%),
+    linear-gradient(180deg, #0b0f17 0%, #111827 100%);
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+.bg-finance-panel {
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
 }
 
-.animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.5) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
-@keyframes float-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.animate-pulse-live {
+  animation: pulse-live 2s ease-in-out infinite;
 }
 
-.animate-float-up {
-  animation: float-up 0.5s ease-out both;
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out both;
 }
 
 .card-hover {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .card-hover:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 12px 28px -8px rgba(15, 23, 42, 0.18),
-    0 4px 10px -4px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 4px 24px -4px rgba(15, 23, 42, 0.1);
+  border-color: #c9a22744;
 }
 
-/* CKEditor (article content) */
+.section-rule {
+  height: 2px;
+  width: 40px;
+  background: var(--accent);
+}
+
+.data-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.label-caps {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* CKEditor */
 .ck-tcvn .ck.ck-editor__main > .ck-editor__editable {
   min-height: 360px;
-  border-bottom-left-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
 }
 .ck-tcvn .ck.ck-toolbar {
-  border-top-left-radius: 0.5rem;
-  border-top-right-radius: 0.5rem;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
 }
+.prose-tcvn p + p {
+  margin-top: 0.75rem;
+}
+
+.article-prose {
+  color: #334155;
+  font-size: 1.0625rem;
+  line-height: 1.8;
+}
+.article-prose h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.article-prose h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+.article-prose p { margin-bottom: 1rem; }
+.article-prose ul, .article-prose ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+.article-prose ul { list-style-type: disc; }
+.article-prose ol { list-style-type: decimal; }
+.article-prose li { margin-bottom: 0.35rem; }
+.article-prose a {
+  color: #1d4ed8;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.article-prose a:hover { color: #1e40af; }
+.article-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  margin: 1.5rem 0;
+}
+.article-prose blockquote {
+  margin: 1.5rem 0;
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+  color: #64748b;
+}
+.article-prose table {
+  width: 100%;
+  margin: 1.25rem 0;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.article-prose th, .article-prose td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+}
+.article-prose th {
+  background: var(--finance-50);
+  font-weight: 600;
+}
+
 .ck-tcvn .ck-editor__editable_inline:focus {
-  border-color: var(--color-amber-400, #fbbf24);
+  border-color: var(--accent);
 }

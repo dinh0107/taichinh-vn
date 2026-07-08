@@ -4,9 +4,6 @@
 taichinh-vn/
 ├── .github/workflows/          # CI/CD pipelines
 │   └── ci-cd.yml
-├── docker/
-│   ├── nginx/nginx.conf        # Reverse proxy, rate limit, gzip
-│   └── cron/crontab            # Scheduled sync jobs
 ├── docs/                       # Architecture documentation
 ├── prisma/
 │   ├── schema.prisma           # Full database schema (all modules)
@@ -59,8 +56,6 @@ taichinh-vn/
 │   │   ├── fuel/
 │   │   └── news/
 │   └── types/                  # Shared TypeScript types
-├── docker-compose.yml
-├── Dockerfile
 ├── next.config.ts
 └── package.json
 ```

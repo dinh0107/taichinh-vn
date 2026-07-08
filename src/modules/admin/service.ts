@@ -1,6 +1,7 @@
 import prisma from "@/lib/db";
 import { formatRelativeTime } from "@/lib/time";
 import { cronStatusToUi } from "@/modules/admin/labels";
+import { isGscEnabled } from "@/lib/gsc/feature";
 import type { CronJobStatus } from "@prisma/client";
 
 export type ModuleStatus = "ok" | "warning" | "error" | "empty";
@@ -42,6 +43,7 @@ const CRON_JOB_DEFS = [
   { name: "sync-stocks", schedule: "*/15 9-15 * * 1-5", syncKey: "stocks" },
   { name: "ai-write-articles", schedule: "0 7 * * *", syncKey: null },
   { name: "generate-sitemap", schedule: "0 2 * * *", syncKey: null },
+  { name: "sync-gsc", schedule: "0 3 * * *", syncKey: null },
 ] as const;
 
 const MODULE_DEFS = [
@@ -442,26 +444,6 @@ export async function getArticleStats() {
   return { total, published, aiCount, totalViews: 0 };
 }
 
-export async function getSeoPages() {
-  return prisma.seoPage.findMany({
-    orderBy: { viewCount: "desc" },
-    select: {
-      slug: true,
-      title: true,
-      pageType: true,
-      isIndexed: true,
-      viewCount: true,
-    },
-  });
-}
-
-export async function getSeoStats() {
-  const pages = await getSeoPages();
-  const indexed = pages.filter((p) => p.isIndexed).length;
-  const totalClicks = pages.reduce((s, p) => s + p.viewCount, 0);
-  return { total: pages.length, indexed, totalClicks, avgPosition: null as number | null };
-}
-
 export async function getAdCampaigns() {
   return prisma.adCampaign.findMany({
     orderBy: { revenue: "desc" },
@@ -514,7 +496,9 @@ export async function getCronOverview() {
     take: 200,
   });
 
-  const jobs = CRON_JOB_DEFS.map((def) => {
+  const jobs = CRON_JOB_DEFS.filter(
+    (def) => def.name !== "sync-gsc" || isGscEnabled()
+  ).map((def) => {
     const runs = logs.filter((l) => l.jobName === def.name);
     const latest = runs[0];
     const uiStatus = latest ? cronStatusToUi(latest.status) : ("success" as const);

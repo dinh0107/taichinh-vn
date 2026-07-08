@@ -1,4 +1,5 @@
-import { Search, Globe, FileCheck2, Link2, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { Plus, Search, Globe, FileCheck2, Link2, Eye, Pencil } from "lucide-react";
 import {
   AdminPageTitle,
   AdminCard,
@@ -6,8 +7,16 @@ import {
   StatCard,
   EmptyState,
 } from "@/components/admin/ui";
-import { getSeoPages, getSeoStats } from "@/modules/admin/service";
+import { DeleteSeoButton } from "@/components/admin/delete-seo-button";
+import { ToggleSeoIndexButton } from "@/components/admin/toggle-seo-index-button";
+import {
+  SyncSeoButton,
+  RevalidateSitemapButton,
+  SyncGscButton,
+} from "@/components/admin/sync-seo-button";
+import { getSeoPagesList, getSeoStats } from "@/modules/admin/seo-service";
 import { SEO_PAGE_TYPE_LABELS } from "@/modules/admin/labels";
+import { isGscEnabled } from "@/lib/gsc/feature";
 import type { SeoPageType } from "@prisma/client";
 
 const TYPE_TONE: Record<SeoPageType, "amber" | "sky" | "violet" | "slate"> = {
@@ -21,49 +30,112 @@ const TYPE_TONE: Record<SeoPageType, "amber" | "sky" | "violet" | "slate"> = {
   CUSTOM: "slate",
 };
 
-export default async function AdminSeoPage() {
-  const [pages, stats] = await Promise.all([getSeoPages(), getSeoStats()]);
+export default async function AdminSeoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; type?: string }>;
+}) {
+  const sp = await searchParams;
+  const gscOn = isGscEnabled();
+  const type =
+    sp.type && sp.type in SEO_PAGE_TYPE_LABELS
+      ? (sp.type as SeoPageType)
+      : undefined;
+
+  const [pages, stats] = await Promise.all([
+    getSeoPagesList({ q: sp.q, type }),
+    getSeoStats(),
+  ]);
 
   return (
     <div className="space-y-6">
       <AdminPageTitle
         title="SEO Landing Pages"
-        description="Trang đích tự sinh theo từ khóa và hiệu suất tìm kiếm."
+        description={
+          gscOn
+            ? "Quản lý trang đích, sitemap và trạng thái index từ Google Search Console."
+            : "Quản lý trang đích, meta, FAQ và sitemap. (GSC tạm tắt — chưa có API key.)"
+        }
         action={
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-700">
-            <RefreshCw className="h-4 w-4" /> Tạo lại sitemap
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <RevalidateSitemapButton />
+            {gscOn && <SyncGscButton />}
+            <SyncSeoButton />
+            <Link
+              href="/admin/seo/moi"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+            >
+              <Plus className="h-4 w-4" /> Trang mới
+            </Link>
+          </div>
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Tổng landing page"
+          label="Trong database"
           value={String(stats.total)}
           icon={Globe}
           accent="sky"
         />
         <StatCard
-          label="Đã index"
-          value={`${stats.indexed}/${stats.total}`}
+          label="Template chuẩn"
+          value={String(stats.templateTotal)}
           icon={FileCheck2}
-          accent="emerald"
+          accent="amber"
         />
         <StatCard
-          label="Tổng lượt xem"
+          label="Cho phép index"
+          value={`${stats.indexed}/${stats.total || stats.templateTotal}`}
+          icon={Search}
+          accent="emerald"
+          delta="Sitemap + noindex"
+          positive
+        />
+        <StatCard
+          label="Lượt xem trang"
           value={stats.totalClicks.toLocaleString()}
           icon={Link2}
           accent="violet"
         />
-        <StatCard
-          label="Vị trí trung bình (GSC)"
-          value={stats.avgPosition != null ? String(stats.avgPosition) : "—"}
-          icon={Search}
-          accent="amber"
-        />
       </div>
 
-      <AdminCard title="Danh sách landing page">
+      <AdminCard title="Bộ lọc">
+        <form className="flex flex-wrap items-end gap-3 p-5" method="get">
+          <label className="min-w-[200px] flex-1">
+            <span className="mb-1 block text-xs font-medium text-slate-500">Tìm kiếm</span>
+            <input
+              name="q"
+              defaultValue={sp.q ?? ""}
+              placeholder="slug hoặc tiêu đề..."
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-amber-400"
+            />
+          </label>
+          <label className="min-w-[160px]">
+            <span className="mb-1 block text-xs font-medium text-slate-500">Loại</span>
+            <select
+              name="type"
+              defaultValue={sp.type ?? ""}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-amber-400"
+            >
+              <option value="">Tất cả</option>
+              {Object.entries(SEO_PAGE_TYPE_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="submit"
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+          >
+            Lọc
+          </button>
+        </form>
+      </AdminCard>
+
+      <AdminCard title={`Danh sách (${pages.length})`}>
         {pages.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -71,31 +143,52 @@ export default async function AdminSeoPage() {
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-5 py-3 text-left font-semibold">Slug</th>
                   <th className="px-5 py-3 text-left font-semibold">Loại</th>
-                  <th className="px-5 py-3 text-center font-semibold">Index</th>
-                  <th className="px-5 py-3 text-right font-semibold">
-                    Lượt xem
-                  </th>
+                  <th className="px-5 py-3 text-center font-semibold">Nguồn</th>
+                  <th className="px-5 py-3 text-center font-semibold">Cho phép</th>
+                  <th className="px-5 py-3 text-right font-semibold">Lượt xem</th>
+                  <th className="px-5 py-3 text-right font-semibold">Hành động</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pages.map((p) => (
-                  <tr key={p.slug} className="hover:bg-slate-50/60">
+                  <tr key={p.id} className="hover:bg-slate-50/60">
                     <td className="px-5 py-3.5">
                       <p className="font-medium text-slate-900">/{p.slug}</p>
-                      <p className="text-xs text-slate-400">{p.title}</p>
+                      <p className="max-w-xs truncate text-xs text-slate-400">{p.title}</p>
                     </td>
                     <td className="px-5 py-3.5">
                       <Badge tone={TYPE_TONE[p.pageType]}>
                         {SEO_PAGE_TYPE_LABELS[p.pageType]}
                       </Badge>
                     </td>
+                    <td className="px-5 py-3.5 text-center text-xs text-slate-500">
+                      {p.isAutoGenerated ? "Template" : "Thủ công"}
+                    </td>
                     <td className="px-5 py-3.5 text-center">
-                      <Badge tone={p.isIndexed ? "emerald" : "slate"}>
-                        {p.isIndexed ? "Đã index" : "Chưa"}
-                      </Badge>
+                      <ToggleSeoIndexButton id={p.id} isIndexed={p.isIndexed} />
                     </td>
                     <td className="px-5 py-3.5 text-right font-bold tabular-nums text-slate-700">
                       {p.viewCount.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link
+                          href={`/${p.slug}`}
+                          target="_blank"
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-emerald-600"
+                          title="Xem trang công khai"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                        <Link
+                          href={`/admin/seo/${p.id}`}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                          title="Sửa"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                        <DeleteSeoButton id={p.id} title={p.title} />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -103,9 +196,16 @@ export default async function AdminSeoPage() {
             </table>
           </div>
         ) : (
-          <EmptyState message="Chưa có landing page SEO trong database." />
+          <EmptyState message="Chưa có landing page. Nhấn «Đồng bộ template» để tạo bộ trang chuẩn." />
         )}
       </AdminCard>
+
+      <p className="text-xs text-slate-400">
+        <Globe className="mr-1 inline h-3.5 w-3.5" />
+        «Cho phép» = đưa vào sitemap và không gắn noindex. Kiểm tra index trên Google: dùng Search
+        Console thủ công hoặc bật GSC API sau (
+        <code className="text-slate-500">GSC_ENABLED=true</code>).
+      </p>
     </div>
   );
 }

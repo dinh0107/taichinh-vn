@@ -119,6 +119,34 @@ export function generateGoldFaqs(prices: GoldPriceItem[]): { question: string; a
   ];
 }
 
+export function buildNewsArticleSchema(input: {
+  title: string;
+  description: string;
+  url: string;
+  image?: string | null;
+  publishedAt?: Date | null;
+}): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: input.title,
+    description: input.description,
+    url: input.url,
+    datePublished: input.publishedAt?.toISOString(),
+    dateModified: input.publishedAt?.toISOString(),
+    image: input.image ? [input.image] : undefined,
+    publisher: {
+      "@type": "Organization",
+      name: "TaiChinh.vn",
+      url: absoluteUrl("/"),
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": input.url,
+    },
+  };
+}
+
 export function buildGoldSeoMetadata(
   title: string,
   prices: GoldPriceItem[]

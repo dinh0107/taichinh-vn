@@ -3,7 +3,7 @@
 ## Cache Layers
 
 ```
-Request → Next.js ISR (revalidate) → Redis Cache → PostgreSQL → External API
+Request → Next.js ISR (revalidate) → Redis Cache → MySQL → External API
 ```
 
 ## Key Naming Convention
@@ -70,7 +70,7 @@ async function getData(key: string, fetcher: () => Promise<T>, ttl: number) {
 ## Stale-While-Revalidate
 
 For gold prices, if Redis is down:
-1. Try PostgreSQL (last synced data)
+1. Try MySQL (last synced data)
 2. Fall back to mock data (development)
 3. Never block the page — always serve something
 

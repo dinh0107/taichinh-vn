@@ -3,6 +3,7 @@ import { AdminPageTitle, AdminCard } from "@/components/admin/ui";
 import { BrandAssetUploader } from "@/components/admin/brand-asset-uploader";
 import { SettingsForm } from "@/components/admin/settings-form";
 import { getSiteSettings, getSecretFlags } from "@/modules/admin/settings-service";
+import { isGscEnabled } from "@/lib/gsc/feature";
 
 export default async function AdminSettingsPage() {
   const [settings, secretFlags] = await Promise.all([
@@ -39,7 +40,11 @@ export default async function AdminSettingsPage() {
         </div>
       </AdminCard>
 
-      <SettingsForm initial={settings} secretFlags={secretFlags} />
+      <SettingsForm
+        initial={settings}
+        secretFlags={secretFlags}
+        gscEnabled={isGscEnabled()}
+      />
     </div>
   );
 }
