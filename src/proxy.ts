@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const SESSION_COOKIE = "tcvn_admin_session";
+const ACCESS_COOKIE = "tcvn_admin_access";
+const REFRESH_COOKIE = "tcvn_admin_refresh";
+const LEGACY_SESSION_COOKIE = "tcvn_admin_session";
 
 /**
  * Lightweight gate for the admin area: if there's no session cookie, redirect to
@@ -9,7 +11,11 @@ const SESSION_COOKIE = "tcvn_admin_session";
  * each Server Action (defense in depth).
  */
 export function proxy(request: NextRequest) {
-  const hasSession = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
+  const hasSession = Boolean(
+    request.cookies.get(ACCESS_COOKIE)?.value ||
+      request.cookies.get(REFRESH_COOKIE)?.value ||
+      request.cookies.get(LEGACY_SESSION_COOKIE)?.value
+  );
 
   if (!hasSession) {
     const loginUrl = new URL("/dang-nhap", request.url);
