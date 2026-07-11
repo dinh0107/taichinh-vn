@@ -3,7 +3,7 @@ import { PageMain } from "@/components/ui/market-ui";
 import { ArticleCard } from "@/components/news/article-card";
 import { getPublishedArticles } from "@/modules/news/service";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
-import { buildPageMetadataSync, MODULE_FAQS } from "@/lib/seo/metadata";
+import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { Newspaper } from "lucide-react";
 
 export const revalidate = 300;
@@ -12,11 +12,13 @@ const PAGE_TITLE = "Tin tức tài chính";
 const PAGE_DESC =
   "Tin tức giá vàng, chứng khoán, ngân hàng, bất động sản — tự động cập nhật.";
 
-export const metadata = buildPageMetadataSync({
-  title: PAGE_TITLE,
-  description: PAGE_DESC,
-  path: "/tin-tuc",
-});
+export async function generateMetadata() {
+  return buildPageMetadata({
+    title: PAGE_TITLE,
+    description: PAGE_DESC,
+    path: "/tin-tuc",
+  });
+}
 
 export default async function NewsPage() {
   const articles = await getPublishedArticles();

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/market-ui";
 import { ChangeBadge } from "@/components/ui/change-badge";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
-import { buildPageMetadataSync, MODULE_FAQS } from "@/lib/seo/metadata";
+import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { formatNumber } from "@/lib/utils";
 import { DollarSign } from "lucide-react";
 
@@ -25,11 +25,13 @@ const PAGE_TITLE = "Tỷ giá ngoại tệ hôm nay";
 const PAGE_DESC =
   "Tỷ giá USD, EUR, GBP, JPY, CNY, KRW tại Vietcombank, BIDV, Agribank, Techcombank. Công cụ quy đổi tiền tệ nhanh.";
 
-export const metadata = buildPageMetadataSync({
-  title: PAGE_TITLE,
-  description: PAGE_DESC,
-  path: "/ty-gia",
-});
+export async function generateMetadata() {
+  return buildPageMetadata({
+    title: PAGE_TITLE,
+    description: PAGE_DESC,
+    path: "/ty-gia",
+  });
+}
 
 type Rate = { buy: number; sell: number; ch: number };
 

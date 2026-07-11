@@ -5,7 +5,6 @@
  * iisnode sets PORT to a named pipe (e.g. \\.\pipe\...).
  * Do NOT Number(PORT) or listen on 127.0.0.1:3000 — that causes EACCES.
  */
-const path = require("node:path");
 const { createServer } = require("node:http");
 const { parse } = require("node:url");
 const next = require("next");

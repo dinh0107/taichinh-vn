@@ -1,4 +1,4 @@
-import { PrismaClient, BankCode, GoldBrandCode, GoldPurity } from "@prisma/client";
+import { PrismaClient, BankCode } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { GOLD_API_CODES } from "../src/modules/gold/types";
 

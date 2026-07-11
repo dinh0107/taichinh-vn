@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/market-ui";
 import { ChangeBadge } from "@/components/ui/change-badge";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
-import { buildPageMetadataSync, MODULE_FAQS } from "@/lib/seo/metadata";
+import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { Fuel } from "lucide-react";
 
 export const revalidate = 300;
@@ -23,11 +23,13 @@ export const revalidate = 300;
 const PAGE_TITLE = "Giá xăng dầu hôm nay";
 const PAGE_DESC = "Giá xăng RON95, E5, Diesel — lịch sử biến động.";
 
-export const metadata = buildPageMetadataSync({
-  title: PAGE_TITLE,
-  description: PAGE_DESC,
-  path: "/gia-xang",
-});
+export async function generateMetadata() {
+  return buildPageMetadata({
+    title: PAGE_TITLE,
+    description: PAGE_DESC,
+    path: "/gia-xang",
+  });
+}
 
 const FUEL_ACCENTS = {
   RON95: "rose",

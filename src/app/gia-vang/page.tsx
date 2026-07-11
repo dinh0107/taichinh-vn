@@ -19,29 +19,47 @@ import { formatNumber, formatUsd } from "@/lib/utils";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { MetricCard, PageMain, ProseSection } from "@/components/ui/market-ui";
 import { PageHeader } from "@/components/layout/page-header";
+import { getSiteSettings } from "@/modules/admin/settings-service";
 import { ChevronRight, Coins } from "lucide-react";
 
 export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const prices = await getCurrentGoldPrices();
-  const seo = buildGoldSeoMetadata("Giá vàng hôm nay", prices);
+  const [prices, s] = await Promise.all([
+    getCurrentGoldPrices(),
+    getSiteSettings(),
+  ]);
+  const siteName = s.site_name || "TaiChinh.vn";
+  const v = s.brand_asset_version || "0";
+  const icon = `/logo-icon.png?v=${v}`;
+  const seo = buildGoldSeoMetadata("Giá vàng hôm nay", prices, siteName);
   return {
-    title: seo.title,
+    title: { absolute: seo.title },
     description: seo.description,
-    openGraph: seo.openGraph,
+    openGraph: {
+      ...seo.openGraph,
+      images: [{ url: `/brand-wordmark.png?v=${v}`, alt: siteName }],
+    },
     alternates: { canonical: await canonicalUrl("/gia-vang") },
+    icons: {
+      icon: [{ url: icon, type: "image/png" }],
+      apple: [{ url: icon, type: "image/png" }],
+    },
   };
 }
 
 export default async function GoldPage() {
-  const prices = await getCurrentGoldPrices();
-  const history = await getGoldHistory("SJL1L10", "30d");
+  const [prices, history, settings] = await Promise.all([
+    getCurrentGoldPrices(),
+    getGoldHistory("SJL1L10", "30d"),
+    getSiteSettings(),
+  ]);
   const faqs = generateGoldFaqs(prices);
   const sjc = prices.find((p) => p.code === "SJL1L10");
   const world = prices.find((p) => p.code === "XAUUSD");
   const homeUrl = await canonicalUrl("/");
   const pageUrl = await canonicalUrl("/gia-vang");
+  const siteName = settings.site_name || "TaiChinh.vn";
 
   const jsonLd = [
     buildBreadcrumbSchema([
@@ -50,7 +68,8 @@ export default async function GoldPage() {
     ]),
     buildFinancialServiceSchema(
       "Giá vàng Việt Nam",
-      "Dịch vụ tra cứu giá vàng SJC, DOJI, PNJ realtime"
+      "Dịch vụ tra cứu giá vàng SJC, DOJI, PNJ realtime",
+      siteName
     ),
     buildGoldPriceSchema(prices),
     buildFaqSchema(faqs),

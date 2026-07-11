@@ -20,6 +20,7 @@ import {
   getPublishedArticleSlugs,
   getRelatedArticles,
 } from "@/modules/news/service";
+import { getSiteSettings } from "@/modules/admin/settings-service";
 import { ArticleCoverImage } from "@/components/news/article-cover-image";
 
 export const revalidate = 300;
@@ -33,26 +34,41 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const article = await getPublishedArticleBySlug(slug);
+  const [article, s] = await Promise.all([
+    getPublishedArticleBySlug(slug),
+    getSiteSettings(),
+  ]);
   if (!article) return { title: "Không tìm thấy" };
 
+  const siteName = s.site_name || "TaiChinh.vn";
+  const v = s.brand_asset_version || "0";
+  const icon = `/logo-icon.png?v=${v}`;
   const title = article.seoTitle || article.title;
+  const fullTitle = title.includes(siteName) ? title : `${title} | ${siteName}`;
   const description =
     article.seoDescription ||
     article.excerpt ||
-    `${article.title} — Tin tức tài chính TaiChinh.vn`;
-  const image = article.ogImage || article.featuredImage || "/brand-wordmark.png";
+    `${article.title} — Tin tức tài chính ${siteName}`;
+  const image =
+    article.ogImage ||
+    article.featuredImage ||
+    `/brand-wordmark.png?v=${v}`;
 
   return {
-    title,
+    title: { absolute: fullTitle },
     description,
     openGraph: {
-      title,
+      title: fullTitle,
       description,
       type: "article",
       locale: "vi_VN",
+      siteName,
       publishedTime: article.publishedAt?.toISOString(),
       images: [{ url: image }],
+    },
+    icons: {
+      icon: [{ url: icon, type: "image/png" }],
+      apple: [{ url: icon, type: "image/png" }],
     },
     alternates: { canonical: absoluteUrl(`/tin-tuc/${slug}`) },
   };
@@ -60,10 +76,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ArticleDetailPage({ params }: Props) {
   const { slug } = await params;
-  const article = await getPublishedArticleBySlug(slug);
+  const [article, settings] = await Promise.all([
+    getPublishedArticleBySlug(slug),
+    getSiteSettings(),
+  ]);
   if (!article) notFound();
 
   const related = await getRelatedArticles(slug, article.category);
+  const siteName = settings.site_name || "TaiChinh.vn";
   const publishedLabel = article.publishedAt
     ? `${formatDateVi(article.publishedAt)} · ${formatRelativeTime(article.publishedAt)}`
     : formatRelativeTime(article.publishedAt);
@@ -80,6 +100,7 @@ export default async function ArticleDetailPage({ params }: Props) {
       url: absoluteUrl(`/tin-tuc/${slug}`),
       image: article.ogImage || article.featuredImage,
       publishedAt: article.publishedAt,
+      siteName,
     }),
     ...(article.faqs.length > 0 ? [buildFaqSchema(article.faqs)] : []),
   ];

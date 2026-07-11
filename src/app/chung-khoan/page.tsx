@@ -7,7 +7,7 @@ import {
   ProseSection,
 } from "@/components/ui/market-ui";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
-import { buildPageMetadataSync, MODULE_FAQS } from "@/lib/seo/metadata";
+import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,11 +16,13 @@ export const revalidate = 300;
 const PAGE_TITLE = "Chứng khoán Việt Nam";
 const PAGE_DESC = "VNINDEX, HNXINDEX, UPCOM — top tăng/giảm, thanh khoản.";
 
-export const metadata = buildPageMetadataSync({
-  title: PAGE_TITLE,
-  description: PAGE_DESC,
-  path: "/chung-khoan",
-});
+export async function generateMetadata() {
+  return buildPageMetadata({
+    title: PAGE_TITLE,
+    description: PAGE_DESC,
+    path: "/chung-khoan",
+  });
+}
 
 const MOCK_INDICES = [
   { code: "VNINDEX", value: 1285.42, change: 12.35, pct: 0.97 },

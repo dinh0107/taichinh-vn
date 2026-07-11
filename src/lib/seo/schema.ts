@@ -33,7 +33,8 @@ export function buildFaqSchema(faqs: { question: string; answer: string }[]): Js
 
 export function buildFinancialServiceSchema(
   name: string,
-  description: string
+  description: string,
+  siteName = "TaiChinh.vn"
 ): JsonLd {
   return {
     "@context": "https://schema.org",
@@ -47,7 +48,7 @@ export function buildFinancialServiceSchema(
     },
     provider: {
       "@type": "Organization",
-      name: "TaiChinh.vn",
+      name: siteName,
       url: absoluteUrl("/"),
     },
   };
@@ -125,7 +126,9 @@ export function buildNewsArticleSchema(input: {
   url: string;
   image?: string | null;
   publishedAt?: Date | null;
+  siteName?: string;
 }): JsonLd {
+  const siteName = input.siteName || "TaiChinh.vn";
   return {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -137,7 +140,7 @@ export function buildNewsArticleSchema(input: {
     image: input.image ? [input.image] : undefined,
     publisher: {
       "@type": "Organization",
-      name: "TaiChinh.vn",
+      name: siteName,
       url: absoluteUrl("/"),
     },
     mainEntityOfPage: {
@@ -149,23 +152,25 @@ export function buildNewsArticleSchema(input: {
 
 export function buildGoldSeoMetadata(
   title: string,
-  prices: GoldPriceItem[]
+  prices: GoldPriceItem[],
+  siteName = "TaiChinh.vn"
 ) {
   const sjc = prices.find((p) => p.code === "SJL1L10");
   const dateStr = new Date().toLocaleDateString("vi-VN");
   const priceText = sjc
     ? `SJC mua ${new Intl.NumberFormat("vi-VN").format(sjc.buy)}đ, bán ${new Intl.NumberFormat("vi-VN").format(sjc.sell)}đ`
     : "";
+  const fullTitle = `${title} — Cập nhật ${dateStr} | ${siteName}`;
 
   return {
-    title: `${title} — Cập nhật ${dateStr}`,
+    title: fullTitle,
     description: `Cập nhật ${title.toLowerCase()} mới nhất ${dateStr}. ${priceText}. So sánh SJC, DOJI, PNJ, vàng 9999, 24K. Biểu đồ lịch sử, cảnh báo giá.`,
     openGraph: {
-      title: `${title} | TaiChinh.vn`,
+      title: fullTitle,
       description: `${title} — ${priceText}. Dữ liệu realtime, biểu đồ, so sánh thương hiệu.`,
       type: "website" as const,
       locale: "vi_VN",
-      siteName: "TaiChinh.vn",
+      siteName,
     },
   };
 }

@@ -6,6 +6,8 @@ import {
   type JsonLd,
 } from "@/lib/seo/schema";
 import { canonicalUrl, canonicalUrlSync } from "@/lib/seo/site-url";
+import { getSiteSettings } from "@/modules/admin/settings-service";
+import { SETTING_DEFAULTS } from "@/modules/admin/settings-shared";
 
 type PageMetaInput = {
   title: string;
@@ -14,6 +16,58 @@ type PageMetaInput = {
   ogType?: "website" | "article";
 };
 
+function brandMeta(siteName: string, version: string) {
+  const icon = `/logo-icon.png?v=${version}`;
+  const wordmark = `/brand-wordmark.png?v=${version}`;
+  return {
+    siteName,
+    icon,
+    wordmark,
+    icons: {
+      icon: [{ url: icon, type: "image/png" as const }],
+      shortcut: icon,
+      apple: [{ url: icon, type: "image/png" as const }],
+    },
+  };
+}
+
+function fullPageTitle(title: string, siteName: string): string {
+  if (title.includes(siteName) || title.includes(" | ")) return title;
+  return `${title} | ${siteName}`;
+}
+
+/** Shared metadata for module pages — uses admin site_name + favicon version. */
+export async function buildPageMetadata({
+  title,
+  description,
+  path,
+  ogType = "website",
+}: PageMetaInput): Promise<Metadata> {
+  const s = await getSiteSettings();
+  const siteName = s.site_name || SETTING_DEFAULTS.site_name;
+  const v = s.brand_asset_version || "0";
+  const brand = brandMeta(siteName, v);
+  const fullTitle = fullPageTitle(title, siteName);
+  const url = await canonicalUrl(path);
+
+  return {
+    title: { absolute: fullTitle },
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: fullTitle,
+      description,
+      type: ogType,
+      locale: "vi_VN",
+      url,
+      siteName: brand.siteName,
+      images: [{ url: brand.wordmark, width: 1024, height: 410, alt: siteName }],
+    },
+    icons: brand.icons,
+  };
+}
+
+/** @deprecated Prefer buildPageMetadata (async) so admin brand settings apply. */
 export function buildPageMetadataSync({
   title,
   description,
@@ -35,37 +89,21 @@ export function buildPageMetadataSync({
   };
 }
 
-export async function buildPageMetadata({
-  title,
-  description,
-  path,
-  ogType = "website",
-}: PageMetaInput): Promise<Metadata> {
-  const url = await canonicalUrl(path);
-  return {
-    title,
-    description,
-    alternates: { canonical: url },
-    openGraph: {
-      title,
-      description,
-      type: ogType,
-      locale: "vi_VN",
-      url,
-    },
-  };
-}
-
 export function buildModulePageJsonLd(input: {
   serviceName: string;
   serviceDescription: string;
   path: string;
   breadcrumbLabel: string;
   faqs?: { question: string; answer: string }[];
+  siteName?: string;
 }): JsonLd[] {
   const pageUrl = canonicalUrlSync(input.path);
   const schemas: JsonLd[] = [
-    buildFinancialServiceSchema(input.serviceName, input.serviceDescription),
+    buildFinancialServiceSchema(
+      input.serviceName,
+      input.serviceDescription,
+      input.siteName
+    ),
   ];
   if (input.path !== "/") {
     schemas.unshift(
@@ -84,7 +122,7 @@ export function buildModulePageJsonLd(input: {
 export const MODULE_FAQS = {
   home: [
     {
-      question: "TaiChinh.vn cung cấp dữ liệu gì?",
+      question: "Website cung cấp dữ liệu gì?",
       answer:
         "Giá vàng SJC/DOJI/PNJ, tỷ giá ngoại tệ, lãi suất ngân hàng, chỉ số chứng khoán và giá xăng dầu — cập nhật liên tục, miễn phí.",
     },
@@ -131,7 +169,7 @@ export const MODULE_FAQS = {
   fuel: [
     {
       question: "Giá xăng RON95 hôm nay?",
-      answer: "Xem mức giá niêm yết mới nhất tại bảng Giá xăng dầu trên TaiChinh.vn.",
+      answer: "Xem mức giá niêm yết mới nhất tại bảng Giá xăng dầu.",
     },
     {
       question: "Giá xăng điều chỉnh bao lâu một lần?",
@@ -140,7 +178,7 @@ export const MODULE_FAQS = {
   ],
   news: [
     {
-      question: "Tin tức trên TaiChinh.vn có đáng tin không?",
+      question: "Tin tức trên website có đáng tin không?",
       answer:
         "Nội dung tổng hợp từ nguồn công khai, mang tính tham khảo — không phải khuyến nghị đầu tư.",
     },

@@ -11,6 +11,7 @@ import {
   incrementSeoPageView,
   resolveSeoPage,
 } from "@/modules/seo/service";
+import { getSiteSettings } from "@/modules/admin/settings-service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -26,15 +27,25 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const page = await resolveSeoPage(slug);
+  const [page, s] = await Promise.all([
+    resolveSeoPage(slug),
+    getSiteSettings(),
+  ]);
   if (!page) return { title: "Không tìm thấy" };
 
+  const siteName = s.site_name || "TaiChinh.vn";
+  const v = s.brand_asset_version || "0";
+  const icon = `/logo-icon.png?v=${v}`;
   const url = page.canonicalUrl ?? canonicalUrlSync(`/${slug}`);
-  const title = page.ogTitle || page.title;
+  const rawTitle = page.ogTitle || page.title;
+  const title =
+    rawTitle.includes(siteName) || rawTitle.includes(" | ")
+      ? rawTitle
+      : `${rawTitle} | ${siteName}`;
   const description = page.ogDescription || page.metaDescription;
 
   const meta: Metadata = {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: url },
     openGraph: {
@@ -43,7 +54,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
       locale: "vi_VN",
       url,
-      ...(page.ogImage ? { images: [{ url: page.ogImage }] } : {}),
+      siteName,
+      images: page.ogImage
+        ? [{ url: page.ogImage }]
+        : [{ url: `/brand-wordmark.png?v=${v}`, alt: siteName }],
+    },
+    icons: {
+      icon: [{ url: icon, type: "image/png" }],
+      apple: [{ url: icon, type: "image/png" }],
     },
   };
 
@@ -56,7 +74,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function SeoLandingPage({ params }: Props) {
   const { slug } = await params;
-  const page = await resolveSeoPage(slug);
+  const [page, s] = await Promise.all([
+    resolveSeoPage(slug),
+    getSiteSettings(),
+  ]);
   if (!page) notFound();
 
   void incrementSeoPageView(slug);
@@ -64,6 +85,7 @@ export default async function SeoLandingPage({ params }: Props) {
   const pageUrl = page.canonicalUrl ?? canonicalUrlSync(`/${slug}`);
   const homeUrl = canonicalUrlSync("/");
   const goldHubUrl = canonicalUrlSync("/gia-vang");
+  const siteName = s.site_name || "TaiChinh.vn";
 
   const jsonLd = [
     buildBreadcrumbSchema([
@@ -73,7 +95,7 @@ export default async function SeoLandingPage({ params }: Props) {
         : []),
       { name: page.title, url: pageUrl },
     ]),
-    buildFinancialServiceSchema(page.title, page.metaDescription),
+    buildFinancialServiceSchema(page.title, page.metaDescription, siteName),
     ...(page.faqs.length > 0 ? [buildFaqSchema(page.faqs)] : []),
   ];
 

@@ -29,23 +29,27 @@ export function BrandAssetUploader({
 }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(uploadBrandAsset, initialState);
-  const [version, setVersion] = useState<number>(initialVersion);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
   const lastShown = useRef<UploadState | null>(null);
+
+  const version = state.ok && state.version ? state.version : initialVersion;
+  // After success, ignore local preview until user picks a new file
+  const showLocalPreview = Boolean(previewUrl && !(state.ok && state.version));
+
   useEffect(() => {
     if (state === initialState || lastShown.current === state) return;
     lastShown.current = state;
+
     if (state.ok && state.version) {
-      setVersion(state.version);
-      setPreviewUrl(null);
-      setFileName(null);
       if (inputRef.current) inputRef.current.value = "";
       toast.success(state.message ?? "Tải lên thành công");
       router.refresh();
-    } else if (!state.ok && state.error) {
+      return;
+    }
+
+    if (!state.ok && state.error) {
       toast.error(state.error);
     }
   }, [state, router]);
@@ -69,8 +73,11 @@ export function BrandAssetUploader({
   }
 
   const baseSrc = src.split("?")[0];
-  const displaySrc =
-    previewUrl ?? (version > 0 ? `${baseSrc}?v=${version}` : baseSrc);
+  const displaySrc = showLocalPreview
+    ? previewUrl!
+    : version > 0
+      ? `${baseSrc}?v=${version}`
+      : baseSrc;
 
   return (
     <form action={formAction} className="space-y-3">
@@ -105,12 +112,12 @@ export function BrandAssetUploader({
               className="hidden"
             />
           </label>
-          {fileName && (
+          {showLocalPreview && fileName && (
             <p className="truncate text-xs text-slate-500" title={fileName}>
               {fileName}
             </p>
           )}
-          {hint && !fileName && (
+          {hint && !showLocalPreview && (
             <p className="text-xs text-slate-400">{hint}</p>
           )}
         </div>
@@ -119,7 +126,7 @@ export function BrandAssetUploader({
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={isPending || !fileName}
+          disabled={isPending || !showLocalPreview}
           className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <UploadCloud className={cn("h-4 w-4", isPending && "animate-pulse")} />

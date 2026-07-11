@@ -344,7 +344,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     });
   }
 
-  const weekTotal = trafficWeek.reduce((s, d) => s + d.value, 0);
   const prevWeekHalf = trafficWeek.slice(0, 3).reduce((s, d) => s + d.value, 0);
   const currWeekHalf = trafficWeek.slice(4).reduce((s, d) => s + d.value, 0);
   const trafficDeltaObj = pctChange(currWeekHalf, prevWeekHalf);
@@ -397,7 +396,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     });
   }
 
-  activity.sort((a, b) => 0); // already roughly ordered by query
+  // Keep insertion order from queries above
 
   return {
     pageviewsToday,
@@ -586,7 +585,10 @@ export async function getSystemLogs() {
 
   lines.sort((a, b) => b.at.getTime() - a.at.getTime());
 
-  return lines.slice(0, 30).map(({ at: _, ...rest }) => rest);
+  return lines.slice(0, 30).map(({ at, ...rest }) => {
+    void at;
+    return rest;
+  });
 }
 
 export { CRON_JOB_DEFS };

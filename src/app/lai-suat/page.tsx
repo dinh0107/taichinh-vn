@@ -14,7 +14,7 @@ import {
   SectionHeading,
 } from "@/components/ui/market-ui";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
-import { buildPageMetadataSync, MODULE_FAQS } from "@/lib/seo/metadata";
+import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
 import { Landmark, Trophy } from "lucide-react";
 
@@ -24,11 +24,13 @@ const PAGE_TITLE = "Lãi suất ngân hàng";
 const PAGE_DESC =
   "So sánh lãi suất tiết kiệm Vietcombank, BIDV, Agribank, MB Bank, ACB, Techcombank, VPBank. Tính lãi tiền gửi nhanh.";
 
-export const metadata = buildPageMetadataSync({
-  title: PAGE_TITLE,
-  description: PAGE_DESC,
-  path: "/lai-suat",
-});
+export async function generateMetadata() {
+  return buildPageMetadata({
+    title: PAGE_TITLE,
+    description: PAGE_DESC,
+    path: "/lai-suat",
+  });
+}
 
 const MOCK_BANKS = [
   { name: "Vietcombank", rates: [0.1, 4.6, 4.75, 5.5, 6.2] },
