@@ -1,4 +1,5 @@
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, AlertCircle } from "lucide-react";
+import Link from "next/link";
 import { AdminPageTitle, AdminCard } from "@/components/admin/ui";
 import { BrandAssetUploader } from "@/components/admin/brand-asset-uploader";
 import { SettingsForm } from "@/components/admin/settings-form";
@@ -45,11 +46,29 @@ export default async function AdminSettingsPage() {
         </div>
       </AdminCard>
 
-      {homePage && (
+      {homePage ? (
         <HomeArticleEditor
           pageId={homePage.id}
           initialContent={homePage.content}
         />
+      ) : (
+        <AdminCard title="Bài viết trang chủ">
+          <div className="flex items-start gap-3 p-5 text-sm text-amber-800">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-medium">Chưa tạo được trang SEO «home».</p>
+              <p className="mt-1 text-amber-700/90">
+                Vào{" "}
+                <Link href="/admin/seo" className="underline">
+                  Admin → SEO
+                </Link>{" "}
+                bấm «Đồng bộ template», rồi quay lại đây. Nếu vẫn lỗi, kiểm tra cột{" "}
+                <code className="rounded bg-amber-100 px-1">content</code> trên bảng{" "}
+                <code className="rounded bg-amber-100 px-1">seo_pages</code>.
+              </p>
+            </div>
+          </div>
+        </AdminCard>
       )}
 
       <SettingsForm
