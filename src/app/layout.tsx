@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import { SiteChrome } from "@/components/layout/site-chrome";
+import { SiteScripts } from "@/components/layout/site-scripts";
 import { getSiteSettings } from "@/modules/admin/settings-service";
 import { SETTING_DEFAULTS } from "@/modules/admin/settings-shared";
 import { getSiteBaseUrl } from "@/lib/seo/site-url";
@@ -85,6 +86,10 @@ export default async function RootLayout({
         >
           {children}
         </SiteChrome>
+        <SiteScripts
+          headHtml={s.head_scripts || ""}
+          bodyHtml={s.body_scripts || ""}
+        />
         <Toaster position="top-right" richColors closeButton />
       </body>
     </html>

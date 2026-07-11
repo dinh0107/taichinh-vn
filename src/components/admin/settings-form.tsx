@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Save, Globe, KeyRound, Megaphone, Bot } from "lucide-react";
+import { Save, Globe, KeyRound, Megaphone, Bot, Code2 } from "lucide-react";
 import { AdminCard } from "@/components/admin/ui";
 import { saveSettings } from "@/modules/admin/settings-actions";
 import type {
@@ -22,6 +22,8 @@ function Field({
   type = "text",
   placeholder,
   textarea,
+  rows = 4,
+  mono,
 }: {
   label: string;
   name: string;
@@ -30,19 +32,24 @@ function Field({
   type?: string;
   placeholder?: string;
   textarea?: boolean;
+  rows?: number;
+  mono?: boolean;
 }) {
-  const cls =
-    "w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100";
+  const cls = cn(
+    "w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100",
+    mono && "font-mono text-xs leading-relaxed"
+  );
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
       {textarea ? (
         <textarea
           name={name}
-          rows={4}
+          rows={rows}
           defaultValue={defaultValue}
           placeholder={placeholder}
           className={cn(cls, "resize-y")}
+          spellCheck={mono ? false : undefined}
         />
       ) : (
         <input
@@ -252,6 +259,38 @@ export function SettingsForm({
           </AdminCard>
         )}
       </div>
+
+      <AdminCard
+        title="Script Google / Tracking"
+        action={<Code2 className="h-4 w-4 text-slate-400" />}
+      >
+        <div className="space-y-4 p-5">
+          <p className="text-xs leading-relaxed text-slate-500">
+            Dán nguyên thẻ script từ Google (Tag Manager, Analytics, Ads, Search Console
+            HTML tag…). Chỉ chạy trên trang công khai — không chạy trong Admin / Đăng nhập.
+          </p>
+          <Field
+            label="Script trong &lt;head&gt;"
+            name="head_scripts"
+            defaultValue={initial.head_scripts}
+            textarea
+            rows={8}
+            mono
+            placeholder={`<!-- Google Tag Manager -->\n<script>(function(w,d,s,l,i){...})(window,document,'script','dataLayer','GTM-XXXX');</script>\n<!-- End Google Tag Manager -->`}
+            hint="GTM / gtag.js / AdSense head — dán nguyên cụm HTML Google cung cấp."
+          />
+          <Field
+            label="Script cuối &lt;body&gt;"
+            name="body_scripts"
+            defaultValue={initial.body_scripts}
+            textarea
+            rows={6}
+            mono
+            placeholder={`<!-- Google Tag Manager (noscript) -->\n<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXX" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`}
+            hint="Thường là thẻ noscript của GTM hoặc widget chat."
+          />
+        </div>
+      </AdminCard>
 
       <div className="flex justify-end border-t border-slate-100 pt-4">
         <button

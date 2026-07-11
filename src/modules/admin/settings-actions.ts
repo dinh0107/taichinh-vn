@@ -101,6 +101,8 @@ const TEXT_KEYS = [
   "adsense_publisher_id",
   "gsc_property_url",
   "gsc_client_email",
+  "head_scripts",
+  "body_scripts",
 ] as const;
 
 // Secret fields: only overwritten when a new non-empty value is provided.

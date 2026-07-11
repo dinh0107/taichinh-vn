@@ -29,4 +29,8 @@ export const SETTING_DEFAULTS: SiteSettings = {
   ai_auto_faq: "true",
   gsc_property_url: "https://taichinh.vn/",
   gsc_client_email: "",
+  /** Raw HTML for <head> — GTM/GA/AdSense head snippets. */
+  head_scripts: "",
+  /** Raw HTML before </body> — GTM noscript, chat widgets, etc. */
+  body_scripts: "",
 };
