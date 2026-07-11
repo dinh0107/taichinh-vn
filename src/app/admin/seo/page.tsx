@@ -15,9 +15,10 @@ import {
   SyncGscButton,
 } from "@/components/admin/sync-seo-button";
 import { getSeoPagesList, getSeoStats } from "@/modules/admin/seo-service";
-import { SEO_PAGE_TYPE_LABELS } from "@/modules/admin/labels";
+import { SEO_PAGE_TYPE_LABELS, GSC_INDEX_STATUS_LABELS } from "@/modules/admin/labels";
 import { isGscEnabled } from "@/lib/gsc/feature";
 import type { SeoPageType } from "@prisma/client";
+import { formatRelativeTime } from "@/lib/time";
 
 const TYPE_TONE: Record<SeoPageType, "amber" | "sky" | "violet" | "slate"> = {
   GOLD_TODAY: "amber",
@@ -51,11 +52,7 @@ export default async function AdminSeoPage({
     <div className="space-y-6">
       <AdminPageTitle
         title="SEO Landing Pages"
-        description={
-          gscOn
-            ? "Quản lý trang đích, sitemap và trạng thái index từ Google Search Console."
-            : "Quản lý trang đích, meta, FAQ và sitemap. (GSC tạm tắt — chưa có API key.)"
-        }
+        description="Quản lý trang đích, sitemap và trạng thái index từ Google Search Console."
         action={
           <div className="flex flex-wrap items-center gap-2">
             <RevalidateSitemapButton />
@@ -92,12 +89,27 @@ export default async function AdminSeoPage({
           delta="Sitemap + noindex"
           positive
         />
-        <StatCard
-          label="Lượt xem trang"
-          value={stats.totalClicks.toLocaleString()}
-          icon={Link2}
-          accent="violet"
-        />
+        {gscOn ? (
+          <StatCard
+            label="GSC đã index"
+            value={`${stats.gscIndexed}/${stats.total || 0}`}
+            icon={Link2}
+            accent="violet"
+            delta={
+              stats.lastGscSync
+                ? `Đồng bộ ${formatRelativeTime(stats.lastGscSync)}`
+                : "Chưa đồng bộ GSC"
+            }
+            positive={stats.gscIndexed > 0}
+          />
+        ) : (
+          <StatCard
+            label="Lượt xem trang"
+            value={stats.totalClicks.toLocaleString()}
+            icon={Link2}
+            accent="violet"
+          />
+        )}
       </div>
 
       <AdminCard title="Bộ lọc">
@@ -145,12 +157,17 @@ export default async function AdminSeoPage({
                   <th className="px-5 py-3 text-left font-semibold">Loại</th>
                   <th className="px-5 py-3 text-center font-semibold">Nguồn</th>
                   <th className="px-5 py-3 text-center font-semibold">Cho phép</th>
+                  {gscOn && (
+                    <th className="px-5 py-3 text-center font-semibold">GSC index</th>
+                  )}
                   <th className="px-5 py-3 text-right font-semibold">Lượt xem</th>
                   <th className="px-5 py-3 text-right font-semibold">Hành động</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {pages.map((p) => (
+                {pages.map((p) => {
+                  const gsc = GSC_INDEX_STATUS_LABELS[p.gscIndexStatus] ?? GSC_INDEX_STATUS_LABELS.UNKNOWN;
+                  return (
                   <tr key={p.id} className="hover:bg-slate-50/60">
                     <td className="px-5 py-3.5">
                       <p className="font-medium text-slate-900">/{p.slug}</p>
@@ -167,6 +184,16 @@ export default async function AdminSeoPage({
                     <td className="px-5 py-3.5 text-center">
                       <ToggleSeoIndexButton id={p.id} isIndexed={p.isIndexed} />
                     </td>
+                    {gscOn && (
+                      <td className="px-5 py-3.5 text-center">
+                        <Badge tone={gsc.tone}>{gsc.label}</Badge>
+                        {p.gscPosition != null && p.gscPosition > 0 && (
+                          <p className="mt-1 text-[10px] text-slate-400">
+                            Pos {p.gscPosition.toFixed(1)}
+                          </p>
+                        )}
+                      </td>
+                    )}
                     <td className="px-5 py-3.5 text-right font-bold tabular-nums text-slate-700">
                       {p.viewCount.toLocaleString()}
                     </td>
@@ -191,7 +218,8 @@ export default async function AdminSeoPage({
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -202,9 +230,12 @@ export default async function AdminSeoPage({
 
       <p className="text-xs text-slate-400">
         <Globe className="mr-1 inline h-3.5 w-3.5" />
-        «Cho phép» = đưa vào sitemap và không gắn noindex. Kiểm tra index trên Google: dùng Search
-        Console thủ công hoặc bật GSC API sau (
-        <code className="text-slate-500">GSC_ENABLED=true</code>).
+        «Cho phép» = sitemap / noindex. Cột «GSC index» = trạng thái thật từ Google Search
+        Console — cấu hình key tại{" "}
+        <Link href="/admin/cai-dat" className="text-amber-700 underline">
+          Cài đặt
+        </Link>
+        , rồi bấm «Đồng bộ GSC».
       </p>
     </div>
   );

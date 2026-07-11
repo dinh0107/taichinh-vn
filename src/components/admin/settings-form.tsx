@@ -236,7 +236,7 @@ export function SettingsForm({
                 placeholder={
                   secretFlags.gsc_private_key ? "••••••••  (đã thiết lập)" : "-----BEGIN PRIVATE KEY-----..."
                 }
-                hint="Để trống nếu không đổi. Cần GSC_ENABLED=true trong .env."
+                hint="Để trống nếu không đổi. Service account cần quyền trên property GSC."
               />
             </div>
           </AdminCard>
