@@ -16,6 +16,7 @@ import {
 } from "@/components/admin/sync-seo-button";
 import { getSeoPagesList, getSeoStats } from "@/modules/admin/seo-service";
 import { SEO_PAGE_TYPE_LABELS, GSC_INDEX_STATUS_LABELS } from "@/modules/admin/labels";
+import { pageArticleDefBySlug } from "@/modules/admin/page-articles";
 import { isGscEnabled } from "@/lib/gsc/feature";
 import type { SeoPageType } from "@prisma/client";
 import { formatRelativeTime } from "@/lib/time";
@@ -52,7 +53,7 @@ export default async function AdminSeoPage({
     <div className="space-y-6">
       <AdminPageTitle
         title="SEO Landing Pages"
-        description="Quản lý trang đích, sitemap và trạng thái index từ Google Search Console."
+        description="Soạn nội dung chi tiết từng trang, quản lý landing SEO, sitemap và GSC index. Bấm Đồng bộ template để tạo sẵn trang chủ / giá vàng / tỷ giá…"
         action={
           <div className="flex flex-wrap items-center gap-2">
             <RevalidateSitemapButton />
@@ -167,15 +168,22 @@ export default async function AdminSeoPage({
               <tbody className="divide-y divide-slate-100">
                 {pages.map((p) => {
                   const gsc = GSC_INDEX_STATUS_LABELS[p.gscIndexStatus] ?? GSC_INDEX_STATUS_LABELS.UNKNOWN;
+                  const hub = pageArticleDefBySlug(p.slug);
+                  const publicHref = hub?.path ?? `/${p.slug}`;
                   return (
                   <tr key={p.id} className="hover:bg-slate-50/60">
                     <td className="px-5 py-3.5">
-                      <p className="font-medium text-slate-900">/{p.slug}</p>
+                      <p className="font-medium text-slate-900">{publicHref}</p>
                       <p className="max-w-xs truncate text-xs text-slate-400">{p.title}</p>
+                      {p.hasContent && (
+                        <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
+                          Đã có bài
+                        </p>
+                      )}
                     </td>
                     <td className="px-5 py-3.5">
                       <Badge tone={TYPE_TONE[p.pageType]}>
-                        {SEO_PAGE_TYPE_LABELS[p.pageType]}
+                        {hub ? "Trang module" : SEO_PAGE_TYPE_LABELS[p.pageType]}
                       </Badge>
                     </td>
                     <td className="px-5 py-3.5 text-center text-xs text-slate-500">
@@ -200,7 +208,7 @@ export default async function AdminSeoPage({
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link
-                          href={`/${p.slug}`}
+                          href={publicHref}
                           target="_blank"
                           className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-emerald-600"
                           title="Xem trang công khai"

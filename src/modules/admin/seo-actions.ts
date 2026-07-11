@@ -9,7 +9,8 @@ import { logger } from "@/lib/logger";
 import { requireAdmin } from "@/lib/auth";
 import { SeoPageType } from "@prisma/client";
 import { syncSeoTemplatesFromCatalog } from "./seo-service";
-import { SEO_TEMPLATES } from "./seo-templates";
+import { SEO_TEMPLATES, isModuleHubSlug } from "./seo-templates";
+import { pageArticleDefBySlug } from "./page-articles";
 import { syncGscToDatabase } from "./gsc-sync";
 import { isGscEnabled } from "@/lib/gsc/feature";
 
@@ -46,6 +47,7 @@ const seoSchema = z.object({
     .or(z.literal("")),
   isIndexed: z.boolean().optional(),
   faqPayload: z.string().trim().optional(),
+  content: z.string().optional(),
 });
 
 function zodToFieldErrors(error: z.ZodError): Record<string, string> {
@@ -89,6 +91,7 @@ function parseForm(formData: FormData) {
     ogImage: formData.get("ogImage") ?? "",
     isIndexed: formData.get("isIndexed") === "on",
     faqPayload: formData.get("faqPayload") ?? "",
+    content: String(formData.get("content") ?? ""),
   });
 }
 
@@ -118,8 +121,13 @@ async function saveFaqs(seoPageId: string, faqs: { question: string; answer: str
 
 function revalidateSeoPaths(slug: string) {
   revalidatePath("/admin/seo");
-  revalidatePath(`/${slug}`);
   revalidatePath("/sitemap.xml");
+  if (slug === "home" || isModuleHubSlug(slug)) {
+    const hub = pageArticleDefBySlug(slug);
+    revalidatePath(hub?.path ?? "/");
+    return;
+  }
+  revalidatePath(`/${slug}`);
 }
 
 export async function createSeoPage(
@@ -144,6 +152,7 @@ export async function createSeoPage(
         title: data.title,
         metaDescription: data.metaDescription,
         h1: data.h1,
+        content: data.content ?? "",
         canonicalUrl: data.canonicalUrl || null,
         ogTitle: data.ogTitle || null,
         ogDescription: data.ogDescription || null,
@@ -189,6 +198,7 @@ export async function updateSeoPage(
         title: data.title,
         metaDescription: data.metaDescription,
         h1: data.h1,
+        content: data.content ?? "",
         canonicalUrl: data.canonicalUrl || null,
         ogTitle: data.ogTitle || null,
         ogDescription: data.ogDescription || null,
@@ -234,7 +244,7 @@ export async function syncSeoTemplates(): Promise<SeoFormState> {
     revalidatePath("/admin/seo");
     revalidatePath("/sitemap.xml");
     for (const t of SEO_TEMPLATES) {
-      revalidatePath(`/${t.slug}`);
+      revalidateSeoPaths(t.slug);
     }
     return {
       ok: true,

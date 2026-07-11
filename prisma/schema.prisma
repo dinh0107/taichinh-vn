@@ -505,6 +505,8 @@ model SeoPage {
   title           String
   metaDescription String
   h1              String
+  /** Rich HTML body shown at bottom of the public page (SEO article). */
+  content         String?        @db.Text
   canonicalUrl    String?
   ogTitle         String?
   ogDescription   String?
@@ -684,7 +686,7 @@ model RevenueStat {
 
 model SiteSetting {
   key       String   @id
-  value     String
+  value     String   @db.Text
   updatedAt DateTime @updatedAt
 
   @@map("site_settings")

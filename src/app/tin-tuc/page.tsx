@@ -3,6 +3,7 @@ import { PageMain } from "@/components/ui/market-ui";
 import { ArticleCard } from "@/components/news/article-card";
 import { getPublishedArticles } from "@/modules/news/service";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
+import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { Newspaper } from "lucide-react";
 
@@ -66,6 +67,8 @@ export default async function NewsPage() {
             )}
           </>
         )}
+
+        <PageBottomArticle slug="tin-tuc" />
       </PageMain>
     </>
   );

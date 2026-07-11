@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Save, Globe, KeyRound, Megaphone, Bot } from "lucide-react";
 import { AdminCard } from "@/components/admin/ui";
@@ -93,23 +94,32 @@ export function SettingsForm({
   secretFlags: Record<string, boolean>;
   gscEnabled?: boolean;
 }) {
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(saveSettings, initialState);
   const lastShown = useRef<SaveSettingsState | null>(null);
 
   useEffect(() => {
     if (state === initialState || lastShown.current === state) return;
     lastShown.current = state;
-    if (state.ok && state.message) toast.success(state.message);
-    else if (!state.ok && state.error) toast.error(state.error);
-  }, [state]);
+    if (state.ok && state.message) {
+      toast.success(state.message);
+      router.refresh();
+    } else if (!state.ok && state.error) {
+      toast.error(state.error);
+    }
+  }, [state, router]);
 
   return (
     <form action={formAction} className="space-y-6">
-      <div className="flex items-center justify-end gap-3">
+      <div className="sticky top-2 z-10 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+        <p className="text-sm text-amber-900">
+          Đổi tên / mô tả xong phải bấm <strong>Lưu thay đổi</strong>. Upload logo/favicon
+          bấm <strong>Tải lên</strong> trong từng ô ảnh.
+        </p>
         <button
           type="submit"
           disabled={isPending}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Save className={cn("h-4 w-4", isPending && "animate-pulse")} />
           {isPending ? "Đang lưu" : "Lưu thay đổi"}
@@ -241,6 +251,17 @@ export function SettingsForm({
             </div>
           </AdminCard>
         )}
+      </div>
+
+      <div className="flex justify-end border-t border-slate-100 pt-4">
+        <button
+          type="submit"
+          disabled={isPending}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+        >
+          <Save className="h-4 w-4" />
+          {isPending ? "Đang lưu" : "Lưu thay đổi"}
+        </button>
       </div>
     </form>
   );

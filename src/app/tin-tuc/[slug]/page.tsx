@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const siteName = s.site_name || "TaiChinh.vn";
   const v = s.brand_asset_version || "0";
-  const icon = `/logo-icon.png?v=${v}`;
+  const icon = `/api/brand/icon?v=${v}`;
   const title = article.seoTitle || article.title;
   const fullTitle = title.includes(siteName) ? title : `${title} | ${siteName}`;
   const description =
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const image =
     article.ogImage ||
     article.featuredImage ||
-    `/brand-wordmark.png?v=${v}`;
+    `/api/brand/logo?v=${v}`;
 
   return {
     title: { absolute: fullTitle },

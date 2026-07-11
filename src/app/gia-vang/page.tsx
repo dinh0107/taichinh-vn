@@ -17,6 +17,7 @@ import {
 import { canonicalUrl } from "@/lib/seo/site-url";
 import { formatNumber, formatUsd } from "@/lib/utils";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
+import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { MetricCard, PageMain, ProseSection } from "@/components/ui/market-ui";
 import { PageHeader } from "@/components/layout/page-header";
 import { getSiteSettings } from "@/modules/admin/settings-service";
@@ -31,14 +32,14 @@ export async function generateMetadata(): Promise<Metadata> {
   ]);
   const siteName = s.site_name || "TaiChinh.vn";
   const v = s.brand_asset_version || "0";
-  const icon = `/logo-icon.png?v=${v}`;
+  const icon = `/api/brand/icon?v=${v}`;
   const seo = buildGoldSeoMetadata("Giá vàng hôm nay", prices, siteName);
   return {
     title: { absolute: seo.title },
     description: seo.description,
     openGraph: {
       ...seo.openGraph,
-      images: [{ url: `/brand-wordmark.png?v=${v}`, alt: siteName }],
+      images: [{ url: `/api/brand/logo?v=${v}`, alt: siteName }],
     },
     alternates: { canonical: await canonicalUrl("/gia-vang") },
     icons: {
@@ -143,6 +144,8 @@ export default async function GoldPage() {
             ))}
           </div>
         </ProseSection>
+
+        <PageBottomArticle slug="gia-vang" />
       </PageMain>
     </>
   );

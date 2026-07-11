@@ -1,11 +1,19 @@
 import prisma from "@/lib/db";
 import { SETTING_DEFAULTS, type SiteSettings } from "./settings-shared";
 import { isNextProductionBuild } from "@/lib/build-phase";
+import { connection } from "next/server";
 
 const SECRET_KEYS = ["cron_secret", "openai_api_key", "gsc_private_key"] as const;
 
 export async function getSiteSettings(): Promise<SiteSettings> {
   if (isNextProductionBuild()) return { ...SETTING_DEFAULTS };
+
+  // Mark as request-time so static pages don't bake admin defaults forever.
+  try {
+    await connection();
+  } catch {
+    // outside request context (scripts) — continue
+  }
 
   try {
     const rows = await prisma.siteSetting.findMany();

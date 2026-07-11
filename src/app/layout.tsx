@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Toaster } from "sonner";
 import { SiteChrome } from "@/components/layout/site-chrome";
 import { getSiteSettings } from "@/modules/admin/settings-service";
@@ -6,10 +7,11 @@ import { SETTING_DEFAULTS } from "@/modules/admin/settings-shared";
 import { getSiteBaseUrl } from "@/lib/seo/site-url";
 import "./globals.css";
 
-/** Pick up admin settings / brand uploads without full rebuild. */
-export const revalidate = 60;
+/** Always read admin settings at request time (IIS/ISR often sticks to build defaults). */
+export const dynamic = "force-dynamic";
 
 async function loadSettings() {
+  await connection();
   try {
     return await getSiteSettings();
   } catch {
@@ -23,8 +25,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = s.site_description || SETTING_DEFAULTS.site_description;
   const url = await getSiteBaseUrl();
   const v = s.brand_asset_version || "0";
-  const icon = `/logo-icon.png?v=${v}`;
-  const wordmark = `/brand-wordmark.png?v=${v}`;
+  // Serve via API so IIS never serves a stale root PNG bypassing Next.
+  const icon = `/api/brand/icon?v=${v}`;
+  const wordmark = `/api/brand/logo?v=${v}`;
 
   return {
     metadataBase: new URL(url),
@@ -33,6 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${name}`,
     },
     description,
+    applicationName: name,
     keywords: [
       "giá vàng hôm nay",
       "tỷ giá usd",
@@ -53,6 +57,9 @@ export async function generateMetadata(): Promise<Metadata> {
       shortcut: icon,
       apple: [{ url: icon, type: "image/png" }],
     },
+    other: {
+      "msapplication-TileImage": icon,
+    },
     robots: { index: true, follow: true },
   };
 }
@@ -67,6 +74,11 @@ export default async function RootLayout({
 
   return (
     <html lang="vi">
+      <head>
+        {/* Extra favicon links — browsers cache <link rel=icon> aggressively */}
+        <link rel="icon" href={`/api/brand/icon?v=${v}`} type="image/png" />
+        <link rel="apple-touch-icon" href={`/api/brand/icon?v=${v}`} />
+      </head>
       <body className="min-h-screen bg-finance-50 text-finance-900 antialiased flex flex-col">
         <SiteChrome
           siteName={s.site_name || SETTING_DEFAULTS.site_name}

@@ -17,8 +17,8 @@ type PageMetaInput = {
 };
 
 function brandMeta(siteName: string, version: string) {
-  const icon = `/logo-icon.png?v=${version}`;
-  const wordmark = `/brand-wordmark.png?v=${version}`;
+  const icon = `/api/brand/icon?v=${version}`;
+  const wordmark = `/api/brand/logo?v=${version}`;
   return {
     siteName,
     icon,

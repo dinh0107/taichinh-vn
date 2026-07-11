@@ -30,6 +30,7 @@ export default async function EditSeoPage({
           title: page.title,
           metaDescription: page.metaDescription,
           h1: page.h1,
+          content: page.content ?? "",
           canonicalUrl: page.canonicalUrl ?? "",
           ogTitle: page.ogTitle ?? "",
           ogDescription: page.ogDescription ?? "",

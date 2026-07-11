@@ -26,7 +26,7 @@ export default async function AdminSettingsPage() {
           <BrandAssetUploader
             kind="logo"
             label="Logo (wordmark)"
-            src="/brand-wordmark.png"
+            src="/api/brand/logo"
             initialVersion={Number(settings.brand_asset_version || 0)}
             hint="PNG nền trong suốt, khuyến nghị ~1024×410px, tối đa 2MB."
             previewClassName="h-16 w-40"
@@ -34,7 +34,7 @@ export default async function AdminSettingsPage() {
           <BrandAssetUploader
             kind="favicon"
             label="Favicon / icon"
-            src="/logo-icon.png"
+            src="/api/brand/icon"
             initialVersion={Number(settings.brand_asset_version || 0)}
             hint="PNG vuông, khuyến nghị 512×512px, tối đa 2MB."
             previewClassName="h-16 w-16"

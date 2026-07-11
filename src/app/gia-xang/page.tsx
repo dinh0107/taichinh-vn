@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/market-ui";
 import { ChangeBadge } from "@/components/ui/change-badge";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
+import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { Fuel } from "lucide-react";
 
@@ -120,6 +121,8 @@ export default async function FuelPage() {
             RON92 và dầu Diesel ngay sau mỗi kỳ điều hành.
           </p>
         </ProseSection>
+
+        <PageBottomArticle slug="gia-xang" />
       </PageMain>
     </>
   );

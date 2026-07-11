@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
@@ -11,12 +12,23 @@ import { SeoPageType } from "@prisma/client";
 import { AdminCard } from "@/components/admin/ui";
 import { cn } from "@/lib/utils";
 
+const RichTextEditor = dynamic(
+  () => import("./rich-text-editor").then((m) => m.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-48 animate-pulse rounded-lg border border-slate-200 bg-slate-50" />
+    ),
+  }
+);
+
 export type SeoFormValues = {
   slug: string;
   pageType: SeoPageType;
   title: string;
   metaDescription: string;
   h1: string;
+  content: string;
   canonicalUrl: string;
   ogTitle: string;
   ogDescription: string;
@@ -31,6 +43,7 @@ const EMPTY: SeoFormValues = {
   title: "",
   metaDescription: "",
   h1: "",
+  content: "",
   canonicalUrl: "",
   ogTitle: "",
   ogDescription: "",
@@ -76,6 +89,7 @@ export function SeoForm({
     ok: false,
   });
   const [faqs, setFaqs] = useState(v.faqs);
+  const [content, setContent] = useState(v.content);
   const fe = state.fieldErrors ?? {};
 
   useEffect(() => {
@@ -97,6 +111,7 @@ export function SeoForm({
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="faqPayload" value={JSON.stringify(faqs)} readOnly />
+      <input type="hidden" name="content" value={content} readOnly />
 
       <div className="flex items-center justify-between">
         <Link
@@ -182,6 +197,15 @@ export function SeoForm({
               <p className="mt-1 text-xs text-red-600">{fe.metaDescription}</p>
             )}
           </label>
+        </div>
+      </AdminCard>
+
+      <AdminCard title="Nội dung chi tiết (cuối trang)">
+        <div className="space-y-2 p-5">
+          <p className="text-xs text-slate-500">
+            Chỉ cần nội dung bài — hiện ở cuối trang công khai tương ứng với slug này.
+          </p>
+          <RichTextEditor value={content} onChange={setContent} />
         </div>
       </AdminCard>
 

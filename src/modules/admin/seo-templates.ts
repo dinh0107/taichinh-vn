@@ -1,5 +1,6 @@
 import type { SeoPageType } from "@prisma/client";
 import { SEO_GOLD_SLUGS } from "@/modules/gold/types";
+import { PAGE_ARTICLE_DEFS } from "./page-articles";
 
 export type SeoPageConfig = {
   brand?: string;
@@ -18,6 +19,8 @@ export type SeoTemplate = {
   metaDescription: string;
   h1: string;
   config?: SeoPageConfig;
+  /** Module hub: content edited in SEO admin, served by dedicated app route. */
+  hubOnly?: boolean;
 };
 
 const FX_CURRENCIES = [
@@ -117,7 +120,20 @@ function stockTemplates(): SeoTemplate[] {
   }));
 }
 
+/** Main module pages — appear in Admin → SEO for writing bottom articles. */
+function moduleHubTemplates(): SeoTemplate[] {
+  return PAGE_ARTICLE_DEFS.map((d) => ({
+    slug: d.slug,
+    pageType: "CUSTOM" as const,
+    title: d.label,
+    h1: d.label,
+    metaDescription: `Nội dung SEO trang ${d.label} (${d.path}) trên TaiChinh.vn.`,
+    hubOnly: true,
+  }));
+}
+
 export const SEO_TEMPLATES: SeoTemplate[] = [
+  ...moduleHubTemplates(),
   ...goldTemplates(),
   ...fxTemplates(),
   ...interestTemplates(),
@@ -125,8 +141,17 @@ export const SEO_TEMPLATES: SeoTemplate[] = [
   ...stockTemplates(),
 ];
 
+/** Public programmatic SEO landings (excludes module hubs). */
+export const SEO_LANDING_TEMPLATES: SeoTemplate[] = SEO_TEMPLATES.filter(
+  (t) => !t.hubOnly
+);
+
 export function getSeoTemplate(slug: string): SeoTemplate | undefined {
   return SEO_TEMPLATES.find((t) => t.slug === slug);
+}
+
+export function isModuleHubSlug(slug: string): boolean {
+  return SEO_TEMPLATES.some((t) => t.slug === slug && t.hubOnly);
 }
 
 export function parseSeoConfig(raw: unknown): SeoPageConfig {

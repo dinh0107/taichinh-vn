@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const siteName = s.site_name || "TaiChinh.vn";
   const v = s.brand_asset_version || "0";
-  const icon = `/logo-icon.png?v=${v}`;
+  const icon = `/api/brand/icon?v=${v}`;
   const url = page.canonicalUrl ?? canonicalUrlSync(`/${slug}`);
   const rawTitle = page.ogTitle || page.title;
   const title =
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName,
       images: page.ogImage
         ? [{ url: page.ogImage }]
-        : [{ url: `/brand-wordmark.png?v=${v}`, alt: siteName }],
+        : [{ url: `/api/brand/logo?v=${v}`, alt: siteName }],
     },
     icons: {
       icon: [{ url: icon, type: "image/png" }],

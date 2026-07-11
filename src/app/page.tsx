@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
+import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { getSiteSettings } from "@/modules/admin/settings-service";
 import { getCurrentGoldPrices } from "@/modules/gold/service";
@@ -191,6 +192,8 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+
+        <PageBottomArticle slug="home" />
       </div>
     </div>
   );

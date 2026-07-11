@@ -63,7 +63,15 @@ export async function uploadBrandAsset(
 
     revalidatePath("/", "layout");
     revalidatePath("/");
+    revalidatePath("/gia-vang");
+    revalidatePath("/ty-gia");
+    revalidatePath("/lai-suat");
+    revalidatePath("/chung-khoan");
+    revalidatePath("/gia-xang");
+    revalidatePath("/tin-tuc");
     revalidatePath("/admin/cai-dat");
+    revalidatePath("/api/brand/icon");
+    revalidatePath("/api/brand/logo");
 
     logger.info({ kind, size: file.size, version }, "Brand asset uploaded");
     return {
@@ -140,6 +148,12 @@ export async function saveSettings(
     revalidatePath("/admin/cai-dat");
     revalidatePath("/", "layout");
     revalidatePath("/");
+    revalidatePath("/gia-vang");
+    revalidatePath("/ty-gia");
+    revalidatePath("/lai-suat");
+    revalidatePath("/chung-khoan");
+    revalidatePath("/gia-xang");
+    revalidatePath("/tin-tuc");
     logger.info({ count: updates.length }, "Site settings saved");
     return { ok: true, message: "Đã lưu cài đặt." };
   } catch (error) {

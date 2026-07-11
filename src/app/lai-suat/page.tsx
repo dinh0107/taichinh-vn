@@ -14,6 +14,7 @@ import {
   SectionHeading,
 } from "@/components/ui/market-ui";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
+import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
 import { Landmark, Trophy } from "lucide-react";
@@ -164,6 +165,8 @@ export default async function InterestPage() {
             kỳ và số tiền gửi.
           </p>
         </ProseSection>
+
+        <PageBottomArticle slug="lai-suat" />
       </PageMain>
     </>
   );

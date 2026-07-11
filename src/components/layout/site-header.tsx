@@ -29,7 +29,7 @@ export function SiteHeader({
   brandVersion?: string;
 }) {
   const now = formatHeaderDateTime();
-  const logoSrc = `/brand-wordmark.png?v=${brandVersion}`;
+  const logoSrc = `/api/brand/logo?v=${brandVersion}`;
 
   return (
     <header className="sticky top-0 z-50 bg-finance-ink text-white">
@@ -106,7 +106,7 @@ export function SiteFooter({
           <div className="space-y-4">
             <div className="relative h-10 w-[180px] brightness-0 invert opacity-90">
               <Image
-                src={`/brand-wordmark.png?v=${brandVersion}`}
+                src={`/api/brand/logo?v=${brandVersion}`}
                 alt={siteName}
                 fill
                 sizes="180px"

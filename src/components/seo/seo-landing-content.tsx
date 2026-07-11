@@ -7,6 +7,7 @@ import { getInterestRatesByBank } from "@/modules/interest/service";
 import { getStockIndices } from "@/modules/stocks/service";
 import { getFuelPrices } from "@/modules/fuel/service";
 import { generateGoldFaqs } from "@/lib/seo/schema";
+import { ArticleBody } from "@/components/news/article-body";
 import {
   DataPanel,
   DataTable,
@@ -301,6 +302,12 @@ function LandingShell({
       </div>
 
       {children}
+
+      {page.content ? (
+        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white px-5 py-6 md:px-8 md:py-8">
+          <ArticleBody html={page.content} />
+        </section>
+      ) : null}
 
       {faqs.length > 0 && (
         <section className="rounded-xl border border-slate-200 bg-white p-6">
