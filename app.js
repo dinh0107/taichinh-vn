@@ -7,40 +7,27 @@
  */
 const { createServer } = require("node:http");
 const { parse } = require("node:url");
-const fs = require("node:fs");
 const path = require("node:path");
 const next = require("next");
+const { syncNextStatic } = require("./scripts/sync-next-static");
 
 const dir = __dirname;
 const dev = process.env.NODE_ENV === "development";
 const port = process.env.PORT || 3000;
 const isPipe = typeof port === "string" && String(port).includes("pipe");
 
-/** Keep IIS physical `_next/static` in sync with `.next/static` (avoids unstyled UI). */
 function syncNextStaticForIis() {
   if (dev) return;
-  const src = path.join(dir, ".next", "static");
-  const destRoot = path.join(dir, "_next");
-  const dest = path.join(destRoot, "static");
-  if (!fs.existsSync(src)) {
-    console.warn("[app.js] .next/static missing — skip _next sync");
+  const result = syncNextStatic(dir);
+  if (!result.ok) {
+    console.warn("[app.js] _next sync failed:", result.error);
     return;
   }
-  function copyDir(from, to) {
-    fs.mkdirSync(to, { recursive: true });
-    for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
-      const a = path.join(from, entry.name);
-      const b = path.join(to, entry.name);
-      if (entry.isDirectory()) copyDir(a, b);
-      else fs.copyFileSync(a, b);
-    }
-  }
-  try {
-    fs.rmSync(destRoot, { recursive: true, force: true });
-    copyDir(src, dest);
-    console.log("[app.js] Synced .next/static → _next/static");
-  } catch (err) {
-    console.warn("[app.js] _next sync failed:", err.message);
+  console.log(
+    `[app.js] Synced .next/static → _next/static (${result.files} files, ${result.css} css)`
+  );
+  if (result.css < 1) {
+    console.warn("[app.js] WARNING: no CSS in _next/static — UI will look broken");
   }
 }
 
