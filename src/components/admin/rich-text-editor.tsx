@@ -28,6 +28,8 @@ import {
   PasteFromOffice,
   HorizontalLine,
   RemoveFormat,
+  SourceEditing,
+  GeneralHtmlSupport,
   type EditorConfig,
 } from "ckeditor5";
 import "ckeditor5/ckeditor5.css";
@@ -67,9 +69,13 @@ export function RichTextEditor({
         PasteFromOffice,
         HorizontalLine,
         RemoveFormat,
+        SourceEditing,
+        GeneralHtmlSupport,
       ],
       toolbar: {
         items: [
+          "sourceEditing",
+          "|",
           "undo",
           "redo",
           "|",
@@ -94,6 +100,16 @@ export function RichTextEditor({
           "indent",
         ],
         shouldNotGroupWhenFull: true,
+      },
+      htmlSupport: {
+        allow: [
+          {
+            name: /.*/,
+            attributes: true,
+            classes: true,
+            styles: true,
+          },
+        ],
       },
       image: {
         toolbar: [

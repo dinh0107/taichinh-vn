@@ -144,6 +144,12 @@ body {
   border-top-left-radius: 0.375rem;
   border-top-right-radius: 0.375rem;
 }
+.ck-tcvn .ck-source-editing-area textarea {
+  min-height: 360px;
+  font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
 .prose-tcvn p + p {
   margin-top: 0.75rem;
 }
