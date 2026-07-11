@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
+import { getSiteSettings } from "@/modules/admin/settings-service";
 import { getCurrentGoldPrices } from "@/modules/gold/service";
 import { getForexRatesByBank } from "@/modules/forex/service";
 import { GoldPriceCards } from "@/modules/gold/components/gold-price-table";
@@ -20,14 +21,16 @@ import {
 
 export const revalidate = 300;
 
-const PAGE_TITLE = "TaiChinh.vn — Giá vàng, Tỷ giá, Lãi suất, Chứng khoán";
-const PAGE_DESC =
-  "Tra cứu giá vàng SJC, tỷ giá USD, lãi suất ngân hàng, chứng khoán VNINDEX và giá xăng dầu — cập nhật liên tục, miễn phí.";
-
 export async function generateMetadata(): Promise<Metadata> {
+  const s = await getSiteSettings();
+  const name = s.site_name || "TaiChinh.vn";
+  const description =
+    s.site_description ||
+    "Tra cứu giá vàng SJC, tỷ giá USD, lãi suất ngân hàng, chứng khoán VNINDEX và giá xăng dầu — cập nhật liên tục, miễn phí.";
+
   return buildPageMetadata({
-    title: PAGE_TITLE,
-    description: PAGE_DESC,
+    title: `${name} — Giá vàng, Tỷ giá, Lãi suất, Chứng khoán`,
+    description,
     path: "/",
   });
 }
@@ -42,10 +45,15 @@ const MODULES = [
 ];
 
 export default async function HomePage() {
-  const [goldPrices, forexRates] = await Promise.all([
+  const [goldPrices, forexRates, settings] = await Promise.all([
     getCurrentGoldPrices(),
     getForexRatesByBank(),
+    getSiteSettings(),
   ]);
+  const siteName = settings.site_name || "TaiChinh.vn";
+  const siteDesc =
+    settings.site_description ||
+    "Tra cứu giá vàng SJC, tỷ giá USD, lãi suất ngân hàng, chứng khoán VNINDEX và giá xăng dầu — cập nhật liên tục, miễn phí.";
   const sjc = goldPrices.find((p) => p.code === "SJL1L10");
   const world = goldPrices.find((p) => p.code === "XAUUSD");
   const usdRate = forexRates[0]?.rates?.USD;
@@ -54,8 +62,8 @@ export default async function HomePage() {
     <div>
       <ModuleJsonLd
         path="/"
-        serviceName="TaiChinh.vn"
-        serviceDescription={PAGE_DESC}
+        serviceName={siteName}
+        serviceDescription={siteDesc}
         breadcrumbLabel="Trang chủ"
         faqs={[...MODULE_FAQS.home]}
       />

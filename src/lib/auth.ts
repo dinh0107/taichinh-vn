@@ -22,6 +22,15 @@ function accessExpiry(): Date {
   return new Date(Date.now() + ACCESS_TTL_MINUTES * 60 * 1000);
 }
 
+function cookieSecure(): boolean {
+  // Must be false on plain HTTP — otherwise browser drops the session cookie
+  // and login appears to "succeed" without navigating to /admin.
+  if (process.env.COOKIE_SECURE === "true") return true;
+  if (process.env.COOKIE_SECURE === "false") return false;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  return appUrl.startsWith("https://");
+}
+
 function sessionSecret(): string {
   return (
     process.env.ADMIN_SESSION_SECRET ||
@@ -29,6 +38,7 @@ function sessionSecret(): string {
     "change-me-admin-session-secret"
   );
 }
+
 
 function encodeAccessToken(payload: { userId: string; exp: number }): string {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -119,17 +129,18 @@ export async function createSession(userId: string): Promise<void> {
   });
 
   const store = await cookies();
+  const secure = cookieSecure();
   store.set(ACCESS_COOKIE, accessToken, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     expires: accessExpiresAt,
   });
   store.set(REFRESH_COOKIE, refreshToken, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     expires: refreshExpiresAt,
   });

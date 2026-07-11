@@ -21,8 +21,15 @@ export const NAV_ITEMS = [
   { href: "/tin-tuc", label: "Tin tức", icon: Newspaper },
 ] as const;
 
-export function SiteHeader({ siteName = "TaiChinh.vn" }: { siteName?: string }) {
+export function SiteHeader({
+  siteName = "TaiChinh.vn",
+  brandVersion = "0",
+}: {
+  siteName?: string;
+  brandVersion?: string;
+}) {
   const now = formatHeaderDateTime();
+  const logoSrc = `/brand-wordmark.png?v=${brandVersion}`;
 
   return (
     <header className="sticky top-0 z-50 bg-finance-ink text-white">
@@ -47,12 +54,13 @@ export function SiteHeader({ siteName = "TaiChinh.vn" }: { siteName?: string }) 
           <Link href="/" className="group flex min-w-0 items-center gap-3">
             <div className="relative h-9 w-[150px] shrink-0 brightness-0 invert transition-opacity group-hover:opacity-90 sm:h-10 sm:w-[168px]">
               <Image
-                src="/brand-wordmark.png"
+                src={logoSrc}
                 alt={siteName}
                 fill
                 sizes="168px"
                 className="object-contain object-left"
                 priority
+                unoptimized
               />
             </div>
           </Link>
@@ -85,9 +93,11 @@ export function SiteHeader({ siteName = "TaiChinh.vn" }: { siteName?: string }) 
 export function SiteFooter({
   siteName = "TaiChinh.vn",
   siteDescription = "Nền tảng tài chính cá nhân hàng đầu Việt Nam. Giá vàng, tỷ giá, lãi suất, chứng khoán — cập nhật realtime, miễn phí.",
+  brandVersion = "0",
 }: {
   siteName?: string;
   siteDescription?: string;
+  brandVersion?: string;
 }) {
   return (
     <footer className="mt-auto border-t border-gold-500/20 bg-finance-ink text-finance-300">
@@ -96,11 +106,12 @@ export function SiteFooter({
           <div className="space-y-4">
             <div className="relative h-10 w-[180px] brightness-0 invert opacity-90">
               <Image
-                src="/brand-wordmark.png"
+                src={`/brand-wordmark.png?v=${brandVersion}`}
                 alt={siteName}
                 fill
                 sizes="180px"
                 className="object-contain object-left"
+                unoptimized
               />
             </div>
             <p className="text-sm leading-relaxed text-finance-500">

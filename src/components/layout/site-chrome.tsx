@@ -7,10 +7,12 @@ export function SiteChrome({
   children,
   siteName,
   siteDescription,
+  brandVersion = "0",
 }: {
   children: React.ReactNode;
   siteName?: string;
   siteDescription?: string;
+  brandVersion?: string;
 }) {
   const pathname = usePathname();
   const isBare = pathname?.startsWith("/admin") || pathname === "/dang-nhap";
@@ -21,9 +23,13 @@ export function SiteChrome({
 
   return (
     <>
-      <SiteHeader siteName={siteName} />
+      <SiteHeader siteName={siteName} brandVersion={brandVersion} />
       <main className="flex-1">{children}</main>
-      <SiteFooter siteName={siteName} siteDescription={siteDescription} />
+      <SiteFooter
+        siteName={siteName}
+        siteDescription={siteDescription}
+        brandVersion={brandVersion}
+      />
     </>
   );
 }

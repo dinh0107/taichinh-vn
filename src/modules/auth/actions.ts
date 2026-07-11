@@ -10,7 +10,10 @@ import {
   isAdminRole,
 } from "@/lib/auth";
 
-export type LoginState = { error?: string };
+export type LoginState = {
+  error?: string;
+  redirectTo?: string;
+};
 
 const loginSchema = z.object({
   email: z.string().trim().email("Email không hợp lệ"),
@@ -39,7 +42,6 @@ export async function loginAction(
 
   const { email, password, next } = parsed.data;
 
-  let target: string;
   try {
     const user = await verifyCredentials(email, password);
     if (!user) {
@@ -49,13 +51,14 @@ export async function loginAction(
       return { error: "Tài khoản không có quyền truy cập quản trị." };
     }
     await createSession(user.id);
-    target = safeNext(next);
   } catch (e) {
     logger.error({ e }, "Login failed");
     return { error: "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại." };
   }
 
-  redirect(target);
+  // Return path for client navigation (more reliable than redirect()
+  // with useActionState on some hosts / Next versions).
+  return { redirectTo: safeNext(next) };
 }
 
 export async function logoutAction(): Promise<void> {

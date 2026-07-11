@@ -27,6 +27,7 @@ export default async function AdminSettingsPage() {
             kind="logo"
             label="Logo (wordmark)"
             src="/brand-wordmark.png"
+            initialVersion={Number(settings.brand_asset_version || 0)}
             hint="PNG nền trong suốt, khuyến nghị ~1024×410px, tối đa 2MB."
             previewClassName="h-16 w-40"
           />
@@ -34,6 +35,7 @@ export default async function AdminSettingsPage() {
             kind="favicon"
             label="Favicon / icon"
             src="/logo-icon.png"
+            initialVersion={Number(settings.brand_asset_version || 0)}
             hint="PNG vuông, khuyến nghị 512×512px, tối đa 2MB."
             previewClassName="h-16 w-16"
           />

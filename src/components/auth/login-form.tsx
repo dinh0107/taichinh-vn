@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 import { LogIn, AlertCircle, Lock } from "lucide-react";
 import { loginAction, type LoginState } from "@/modules/auth/actions";
 
@@ -20,10 +21,17 @@ function SubmitButton() {
 }
 
 export function LoginForm({ next }: { next?: string }) {
+  const router = useRouter();
   const [state, formAction] = useActionState<LoginState, FormData>(
     loginAction,
     {}
   );
+
+  useEffect(() => {
+    if (!state.redirectTo) return;
+    router.replace(state.redirectTo);
+    router.refresh();
+  }, [state.redirectTo, router]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -34,6 +42,12 @@ export function LoginForm({ next }: { next?: string }) {
           <AlertCircle className="h-4 w-4 shrink-0" />
           {state.error}
         </div>
+      )}
+
+      {state.redirectTo && !state.error && (
+        <p className="text-center text-sm text-amber-300">
+          Đăng nhập thành công — đang chuyển hướng…
+        </p>
       )}
 
       <label className="block">

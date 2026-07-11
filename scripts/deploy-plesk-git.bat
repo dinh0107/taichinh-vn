@@ -37,6 +37,10 @@ if exist "prisma\migrations" (
   echo ==^> prisma migrate deploy
   call npx prisma migrate deploy
   if errorlevel 1 echo WARN: migrate failed — check DATABASE_URL
+) else (
+  echo ==^> prisma db push ^(no migrations folder^)
+  call npx prisma db push --skip-generate
+  if errorlevel 1 echo WARN: db push failed — check DATABASE_URL / password encoding
 )
 
 echo ==^> next build + copy _next/static

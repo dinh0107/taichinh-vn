@@ -49,16 +49,27 @@ export async function uploadBrandAsset(
     const buffer = Buffer.from(await file.arrayBuffer());
     const publicDir = path.join(process.cwd(), "public");
     await mkdir(publicDir, { recursive: true });
-    await writeFile(path.join(publicDir, TARGETS[kind]), buffer);
+    const filename = TARGETS[kind];
+    // Next.js serves from public/; IIS often looks at site root — write both.
+    await writeFile(path.join(publicDir, filename), buffer);
+    await writeFile(path.join(process.cwd(), filename), buffer);
+
+    const version = String(Date.now());
+    await prisma.siteSetting.upsert({
+      where: { key: "brand_asset_version" },
+      create: { key: "brand_asset_version", value: version },
+      update: { value: version },
+    });
 
     revalidatePath("/", "layout");
+    revalidatePath("/");
     revalidatePath("/admin/cai-dat");
 
-    logger.info({ kind, size: file.size }, "Brand asset uploaded");
+    logger.info({ kind, size: file.size, version }, "Brand asset uploaded");
     return {
       ok: true,
       message: kind === "logo" ? "Đã cập nhật logo." : "Đã cập nhật favicon.",
-      version: Date.now(),
+      version: Number(version),
     };
   } catch (error) {
     logger.error({ error: (error as Error).message, kind }, "Brand upload failed");
@@ -128,6 +139,7 @@ export async function saveSettings(
 
     revalidatePath("/admin/cai-dat");
     revalidatePath("/", "layout");
+    revalidatePath("/");
     logger.info({ count: updates.length }, "Site settings saved");
     return { ok: true, message: "Đã lưu cài đặt." };
   } catch (error) {

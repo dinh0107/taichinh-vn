@@ -15,6 +15,7 @@ export function BrandAssetUploader({
   label,
   hint,
   src,
+  initialVersion = 0,
   previewClassName,
   imageClassName = "object-contain",
 }: {
@@ -22,14 +23,13 @@ export function BrandAssetUploader({
   label: string;
   hint?: string;
   src: string;
+  initialVersion?: number;
   previewClassName?: string;
   imageClassName?: string;
 }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(uploadBrandAsset, initialState);
-  // Start at 0 so server and client render the same src (no hydration
-  // mismatch). Bump to a timestamp only after a successful upload to bust cache.
-  const [version, setVersion] = useState<number>(0);
+  const [version, setVersion] = useState<number>(initialVersion);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +68,9 @@ export function BrandAssetUploader({
     }
   }
 
-  const displaySrc = previewUrl ?? (version > 0 ? `${src}?v=${version}` : src);
+  const baseSrc = src.split("?")[0];
+  const displaySrc =
+    previewUrl ?? (version > 0 ? `${baseSrc}?v=${version}` : baseSrc);
 
   return (
     <form action={formAction} className="space-y-3">
