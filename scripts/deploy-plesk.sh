@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Chạy trên server Plesk sau khi Git pull (Additional deployment actions).
+# Linux Plesk only. On Windows Plesk use: scripts/deploy-plesk.bat
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
