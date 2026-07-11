@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/copy-next-static.js",
+    "build": "node scripts/build-production.js",
     "postinstall": "node scripts/prisma-generate-safe.js",
     "start": "node app.js",
     "start:next": "next start",

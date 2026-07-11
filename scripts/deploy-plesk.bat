@@ -43,4 +43,7 @@ call npm run build
 if errorlevel 1 exit /b 1
 
 echo ==^> Deploy OK. Restart Node.js app in Plesk.
+echo.
+echo TIP: Auto-deploy = Plesk Git + Additional actions:
+echo   call scripts\deploy-plesk-git.bat
 endlocal
