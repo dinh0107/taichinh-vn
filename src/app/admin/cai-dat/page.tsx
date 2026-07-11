@@ -2,13 +2,16 @@ import { ImageIcon } from "lucide-react";
 import { AdminPageTitle, AdminCard } from "@/components/admin/ui";
 import { BrandAssetUploader } from "@/components/admin/brand-asset-uploader";
 import { SettingsForm } from "@/components/admin/settings-form";
-import { getSiteSettings, getSecretFlags } from "@/modules/admin/settings-service";
+import { HomeArticleEditor } from "@/components/admin/home-article-editor";
+import { getSiteSettingsFresh, getSecretFlags } from "@/modules/admin/settings-service";
+import { ensureModuleHubSeoPage } from "@/modules/admin/seo-service";
 import { isGscEnabled } from "@/lib/gsc/feature";
 
 export default async function AdminSettingsPage() {
-  const [settings, secretFlags] = await Promise.all([
-    getSiteSettings(),
+  const [settings, secretFlags, homePage] = await Promise.all([
+    getSiteSettingsFresh(),
     getSecretFlags(),
+    ensureModuleHubSeoPage("home"),
   ]);
 
   return (
@@ -41,6 +44,13 @@ export default async function AdminSettingsPage() {
           />
         </div>
       </AdminCard>
+
+      {homePage && (
+        <HomeArticleEditor
+          pageId={homePage.id}
+          initialContent={homePage.content}
+        />
+      )}
 
       <SettingsForm
         initial={settings}

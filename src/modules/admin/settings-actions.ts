@@ -2,14 +2,27 @@
 
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/db";
+import { SITE_SETTINGS_TAG } from "./settings-service";
 import {
   type SaveSettingsState,
   type UploadState,
 } from "./settings-shared";
+
+function revalidatePublicSite() {
+  revalidateTag(SITE_SETTINGS_TAG, "max");
+  revalidatePath("/", "layout");
+  revalidatePath("/");
+  revalidatePath("/gia-vang");
+  revalidatePath("/ty-gia");
+  revalidatePath("/lai-suat");
+  revalidatePath("/chung-khoan");
+  revalidatePath("/gia-xang");
+  revalidatePath("/tin-tuc");
+}
 
 // Canonical public asset names already referenced across the site
 // (root layout icons + SiteHeader wordmark).
@@ -61,14 +74,7 @@ export async function uploadBrandAsset(
       update: { value: version },
     });
 
-    revalidatePath("/", "layout");
-    revalidatePath("/");
-    revalidatePath("/gia-vang");
-    revalidatePath("/ty-gia");
-    revalidatePath("/lai-suat");
-    revalidatePath("/chung-khoan");
-    revalidatePath("/gia-xang");
-    revalidatePath("/tin-tuc");
+    revalidatePublicSite();
     revalidatePath("/admin/cai-dat");
     revalidatePath("/api/brand/icon");
     revalidatePath("/api/brand/logo");
@@ -145,15 +151,8 @@ export async function saveSettings(
       )
     );
 
+    revalidatePublicSite();
     revalidatePath("/admin/cai-dat");
-    revalidatePath("/", "layout");
-    revalidatePath("/");
-    revalidatePath("/gia-vang");
-    revalidatePath("/ty-gia");
-    revalidatePath("/lai-suat");
-    revalidatePath("/chung-khoan");
-    revalidatePath("/gia-xang");
-    revalidatePath("/tin-tuc");
     logger.info({ count: updates.length }, "Site settings saved");
     return { ok: true, message: "Đã lưu cài đặt." };
   } catch (error) {

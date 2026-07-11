@@ -3,6 +3,8 @@ import { getPublishedArticleSlugs } from "@/modules/news/service";
 import { getSiteBaseUrl } from "@/lib/seo/site-url";
 import { getIndexedSeoPaths } from "@/modules/admin/seo-service";
 
+export const revalidate = 300;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BASE = await getSiteBaseUrl();
 

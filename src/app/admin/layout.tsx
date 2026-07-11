@@ -6,6 +6,9 @@ import { requireAdmin } from "@/lib/auth";
 import { ADMIN_ROLE_LABELS } from "@/modules/admin/labels";
 import { Bell, UserCircle } from "lucide-react";
 
+/** Admin uses cookies/auth — always render on demand. */
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Admin Dashboard",
   robots: { index: false, follow: false },

@@ -4,6 +4,8 @@ import { ShieldCheck } from "lucide-react";
 import { getCurrentUser, isAdminRole } from "@/lib/auth";
 import { LoginForm } from "@/components/auth/login-form";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Đăng nhập quản trị",
   robots: { index: false, follow: false },

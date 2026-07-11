@@ -1,20 +1,14 @@
+import { unstable_cache } from "next/cache";
 import prisma from "@/lib/db";
 import { SETTING_DEFAULTS, type SiteSettings } from "./settings-shared";
 import { isNextProductionBuild } from "@/lib/build-phase";
-import { connection } from "next/server";
 
 const SECRET_KEYS = ["cron_secret", "openai_api_key", "gsc_private_key"] as const;
 
-export async function getSiteSettings(): Promise<SiteSettings> {
-  if (isNextProductionBuild()) return { ...SETTING_DEFAULTS };
+/** Cache tag for on-demand ISR invalidation after admin settings changes. */
+export const SITE_SETTINGS_TAG = "site-settings";
 
-  // Mark as request-time so static pages don't bake admin defaults forever.
-  try {
-    await connection();
-  } catch {
-    // outside request context (scripts) — continue
-  }
-
+async function fetchSiteSettingsFromDb(): Promise<SiteSettings> {
   try {
     const rows = await prisma.siteSetting.findMany();
     const map: SiteSettings = { ...SETTING_DEFAULTS };
@@ -23,6 +17,24 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   } catch {
     return { ...SETTING_DEFAULTS };
   }
+}
+
+const getCachedSiteSettings = unstable_cache(
+  fetchSiteSettingsFromDb,
+  ["site-settings"],
+  { revalidate: 300, tags: [SITE_SETTINGS_TAG] }
+);
+
+/** Public/ISR-safe settings (cached ~5 minutes, tag-invalidated on save). */
+export async function getSiteSettings(): Promise<SiteSettings> {
+  if (isNextProductionBuild()) return { ...SETTING_DEFAULTS };
+  return getCachedSiteSettings();
+}
+
+/** Uncached settings for admin forms (always read latest from DB). */
+export async function getSiteSettingsFresh(): Promise<SiteSettings> {
+  if (isNextProductionBuild()) return { ...SETTING_DEFAULTS };
+  return fetchSiteSettingsFromDb();
 }
 
 /** Whether a secret value already exists (so the UI can show "đã thiết lập"). */

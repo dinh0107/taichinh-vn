@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { connection } from "next/server";
 import { Toaster } from "sonner";
 import { SiteChrome } from "@/components/layout/site-chrome";
 import { getSiteSettings } from "@/modules/admin/settings-service";
@@ -7,11 +6,10 @@ import { SETTING_DEFAULTS } from "@/modules/admin/settings-shared";
 import { getSiteBaseUrl } from "@/lib/seo/site-url";
 import "./globals.css";
 
-/** Always read admin settings at request time (IIS/ISR often sticks to build defaults). */
-export const dynamic = "force-dynamic";
+/** ISR: refresh site chrome / metadata every 5 minutes (on-demand via revalidatePath). */
+export const revalidate = 300;
 
 async function loadSettings() {
-  await connection();
   try {
     return await getSiteSettings();
   } catch {
