@@ -7,6 +7,7 @@ import {
   type SeoPageConfig,
 } from "./seo-templates";
 import { logger } from "@/lib/logger";
+import { isNextProductionBuild } from "@/lib/build-phase";
 
 export type SeoPageListItem = {
   id: string;
@@ -128,6 +129,10 @@ export async function getSeoStats() {
 }
 
 export async function getIndexedSeoPaths(): Promise<string[]> {
+  if (isNextProductionBuild()) {
+    return SEO_TEMPLATES.map((t) => `/${t.slug}`);
+  }
+
   let dbPages: { slug: string; isIndexed: boolean }[] = [];
   try {
     dbPages = await prisma.seoPage.findMany({

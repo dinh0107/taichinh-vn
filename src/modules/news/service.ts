@@ -1,5 +1,6 @@
 import prisma from "@/lib/db";
 import type { NewsCategoryCode } from "@prisma/client";
+import { isNextProductionBuild } from "@/lib/build-phase";
 
 const publishedWhere = {
   status: "PUBLISHED" as const,
@@ -29,6 +30,7 @@ export type PublicArticleDetail = PublicArticleSummary & {
 export async function getPublishedArticles(
   limit = 50
 ): Promise<PublicArticleSummary[]> {
+  if (isNextProductionBuild()) return [];
   try {
     return await prisma.newsArticle.findMany({
       where: publishedWhere,
@@ -82,6 +84,7 @@ export async function getPublishedArticleBySlug(
 }
 
 export async function getPublishedArticleSlugs(): Promise<string[]> {
+  if (isNextProductionBuild()) return [];
   try {
     const rows = await prisma.newsArticle.findMany({
       where: publishedWhere,

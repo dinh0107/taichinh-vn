@@ -1,9 +1,12 @@
 import prisma from "@/lib/db";
 import { SETTING_DEFAULTS, type SiteSettings } from "./settings-shared";
+import { isNextProductionBuild } from "@/lib/build-phase";
 
 const SECRET_KEYS = ["cron_secret", "openai_api_key", "gsc_private_key"] as const;
 
 export async function getSiteSettings(): Promise<SiteSettings> {
+  if (isNextProductionBuild()) return { ...SETTING_DEFAULTS };
+
   try {
     const rows = await prisma.siteSetting.findMany();
     const map: SiteSettings = { ...SETTING_DEFAULTS };
@@ -18,6 +21,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 export async function getSecretFlags(): Promise<Record<string, boolean>> {
   const flags: Record<string, boolean> = {};
   for (const key of SECRET_KEYS) flags[key] = false;
+  if (isNextProductionBuild()) return flags;
+
   try {
     const rows = await prisma.siteSetting.findMany({
       where: { key: { in: [...SECRET_KEYS] } },

@@ -10,7 +10,10 @@ export type IndexRow = { code: string; value: number; change: number; pct: numbe
 const INDEX_ORDER = ["VNINDEX", "HNXINDEX", "UPCOM"];
 
 /** Current market indices for public display, ordered VNINDEX → HNX → UPCOM. */
+import { isNextProductionBuild } from "@/lib/build-phase";
+
 export async function getStockIndices(): Promise<IndexRow[]> {
+  if (isNextProductionBuild()) return [];
   try {
     const rows = await prisma.stockIndex.findMany();
     return rows

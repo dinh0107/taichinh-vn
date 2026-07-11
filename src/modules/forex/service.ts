@@ -1,6 +1,7 @@
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { forexAdapter } from "./adapter";
+import { isNextProductionBuild } from "@/lib/build-phase";
 
 const SOURCE = "vietcombank.com.vn";
 
@@ -14,6 +15,7 @@ export type ForexBankRates = {
  * Returns only banks that actually have rate data (empty => caller falls back).
  */
 export async function getForexRatesByBank(): Promise<ForexBankRates[]> {
+  if (isNextProductionBuild()) return [];
   try {
     const banks = await prisma.bank.findMany({ orderBy: { code: "asc" } });
     const out: ForexBankRates[] = [];

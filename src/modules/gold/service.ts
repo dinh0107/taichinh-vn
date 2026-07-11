@@ -9,8 +9,11 @@ import {
 } from "./types";
 import { GoldBrandCode, GoldPurity } from "@prisma/client";
 import { logger } from "@/lib/logger";
+import { isNextProductionBuild } from "@/lib/build-phase";
 
 export async function getCurrentGoldPrices(): Promise<GoldPriceItem[]> {
+  if (isNextProductionBuild()) return getMockGoldPrices();
+
   const cached = await cacheGet<GoldPriceItem[]>(CACHE_KEYS.gold.current);
   if (cached) return cached;
 

@@ -1,6 +1,7 @@
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
 import type { FuelTypeCode } from "@prisma/client";
+import { isNextProductionBuild } from "@/lib/build-phase";
 
 const SOURCE = "curated";
 const REGION = "national";
@@ -22,6 +23,7 @@ export type FuelHistoryRow = { date: string; price: number; change: number };
 
 /** Latest price per fuel type for public display. */
 export async function getFuelPrices(): Promise<FuelRow[]> {
+  if (isNextProductionBuild()) return [];
   try {
     const out: FuelRow[] = [];
     for (const code of Object.keys(FUEL_LABEL) as FuelTypeCode[]) {
@@ -49,6 +51,7 @@ export async function getFuelHistory(
   code: FuelTypeCode,
   take = 6
 ): Promise<FuelHistoryRow[]> {
+  if (isNextProductionBuild()) return [];
   try {
     const rows = await prisma.fuelPriceHistory.findMany({
       where: { fuelType: code, region: REGION },

@@ -1,6 +1,7 @@
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
 import type { BankCode, TermPeriod } from "@prisma/client";
+import { isNextProductionBuild } from "@/lib/build-phase";
 
 const SOURCE = "curated";
 
@@ -14,6 +15,7 @@ export type InterestBankRow = { name: string; rates: number[] };
  * Returns only banks with data (empty => caller falls back to mock).
  */
 export async function getInterestRatesByBank(): Promise<InterestBankRow[]> {
+  if (isNextProductionBuild()) return [];
   try {
     const banks = await prisma.bank.findMany({ orderBy: { code: "asc" } });
     const out: InterestBankRow[] = [];

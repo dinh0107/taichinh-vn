@@ -2,9 +2,8 @@ import {
   buildBreadcrumbSchema,
   buildFaqSchema,
   buildFinancialServiceSchema,
-  buildGoldSeoMetadata,
 } from "@/lib/seo/schema";
-import { canonicalUrl } from "@/lib/seo/site-url";
+import { canonicalUrlSync } from "@/lib/seo/site-url";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { SeoLandingContent } from "@/components/seo/seo-landing-content";
 import {
@@ -16,6 +15,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 export const revalidate = 300;
+export const dynamicParams = true;
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await resolveSeoPage(slug);
   if (!page) return { title: "Không tìm thấy" };
 
-  const url = page.canonicalUrl ?? (await canonicalUrl(`/${slug}`));
+  const url = page.canonicalUrl ?? canonicalUrlSync(`/${slug}`);
   const title = page.ogTitle || page.title;
   const description = page.ogDescription || page.metaDescription;
 
@@ -61,9 +61,9 @@ export default async function SeoLandingPage({ params }: Props) {
 
   void incrementSeoPageView(slug);
 
-  const pageUrl = page.canonicalUrl ?? (await canonicalUrl(`/${slug}`));
-  const homeUrl = await canonicalUrl("/");
-  const goldHubUrl = await canonicalUrl("/gia-vang");
+  const pageUrl = page.canonicalUrl ?? canonicalUrlSync(`/${slug}`);
+  const homeUrl = canonicalUrlSync("/");
+  const goldHubUrl = canonicalUrlSync("/gia-vang");
 
   const jsonLd = [
     buildBreadcrumbSchema([
