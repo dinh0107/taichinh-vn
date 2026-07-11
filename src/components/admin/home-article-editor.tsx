@@ -71,7 +71,9 @@ export function HomeArticleEditor({
           .
         </p>
 
-        <RichTextEditor value={content} onChange={setContent} />
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <RichTextEditor value={content} onChange={setContent} />
+        </div>
 
         <div className="flex justify-end">
           <SubmitButton />
