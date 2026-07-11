@@ -246,13 +246,28 @@ export async function syncSeoTemplates(): Promise<SeoFormState> {
     for (const t of SEO_TEMPLATES) {
       revalidateSeoPaths(t.slug);
     }
+
+    let message = `Đồng bộ xong: ${result.created} mới, ${result.updated} cập nhật, ${result.skipped} giữ nguyên (chỉnh tay).`;
+    if (result.failed > 0) {
+      message += ` ${result.failed} lỗi.`;
+      if (result.errors[0]) message += ` Chi tiết: ${result.errors[0]}`;
+    }
+
     return {
-      ok: true,
-      message: `Đồng bộ xong: ${result.created} mới, ${result.updated} cập nhật, ${result.skipped} giữ nguyên (chỉnh tay).`,
+      ok: result.failed === 0,
+      message: result.failed === 0 ? message : undefined,
+      error: result.failed > 0 ? message : undefined,
     };
   } catch (e) {
     logger.error({ e }, "Sync SEO templates failed");
-    return { ok: false, error: "Không thể đồng bộ template SEO." };
+    const detail =
+      e instanceof Error ? e.message.split("\n")[0]?.slice(0, 200) : null;
+    return {
+      ok: false,
+      error: detail
+        ? `Không thể đồng bộ template SEO: ${detail}`
+        : "Không thể đồng bộ template SEO. Kiểm tra DATABASE_URL / chạy prisma db push.",
+    };
   }
 }
 
