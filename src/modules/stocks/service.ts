@@ -11,15 +11,20 @@ const INDEX_ORDER = ["VNINDEX", "HNXINDEX", "UPCOM"];
 
 /** Current market indices for public display, ordered VNINDEX → HNX → UPCOM. */
 export async function getStockIndices(): Promise<IndexRow[]> {
-  const rows = await prisma.stockIndex.findMany();
-  return rows
-    .map((r) => ({
-      code: r.code,
-      value: Number(r.value),
-      change: Number(r.change),
-      pct: Number(r.changePct),
-    }))
-    .sort((a, b) => INDEX_ORDER.indexOf(a.code) - INDEX_ORDER.indexOf(b.code));
+  try {
+    const rows = await prisma.stockIndex.findMany();
+    return rows
+      .map((r) => ({
+        code: r.code,
+        value: Number(r.value),
+        change: Number(r.change),
+        pct: Number(r.changePct),
+      }))
+      .sort((a, b) => INDEX_ORDER.indexOf(a.code) - INDEX_ORDER.indexOf(b.code));
+  } catch (error) {
+    logger.warn({ error }, "Stock indices lookup failed; returning empty");
+    return [];
+  }
 }
 
 /**

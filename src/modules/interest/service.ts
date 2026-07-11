@@ -14,27 +14,32 @@ export type InterestBankRow = { name: string; rates: number[] };
  * Returns only banks with data (empty => caller falls back to mock).
  */
 export async function getInterestRatesByBank(): Promise<InterestBankRow[]> {
-  const banks = await prisma.bank.findMany({ orderBy: { code: "asc" } });
-  const out: InterestBankRow[] = [];
+  try {
+    const banks = await prisma.bank.findMany({ orderBy: { code: "asc" } });
+    const out: InterestBankRow[] = [];
 
-  for (const bank of banks) {
-    const rows = await prisma.bankInterestRate.findMany({
-      where: { bankId: bank.id, term: { in: PAGE_TERMS } },
-      orderBy: { recordedAt: "desc" },
-    });
-    if (rows.length === 0) continue;
+    for (const bank of banks) {
+      const rows = await prisma.bankInterestRate.findMany({
+        where: { bankId: bank.id, term: { in: PAGE_TERMS } },
+        orderBy: { recordedAt: "desc" },
+      });
+      if (rows.length === 0) continue;
 
-    const latest: Partial<Record<TermPeriod, number>> = {};
-    for (const r of rows) {
-      if (latest[r.term] == null) latest[r.term] = Number(r.rate);
+      const latest: Partial<Record<TermPeriod, number>> = {};
+      for (const r of rows) {
+        if (latest[r.term] == null) latest[r.term] = Number(r.rate);
+      }
+      out.push({
+        name: bank.name,
+        rates: PAGE_TERMS.map((t) => latest[t] ?? 0),
+      });
     }
-    out.push({
-      name: bank.name,
-      rates: PAGE_TERMS.map((t) => latest[t] ?? 0),
-    });
-  }
 
-  return out;
+    return out;
+  } catch (error) {
+    logger.warn({ error }, "Interest rates lookup failed; returning empty");
+    return [];
+  }
 }
 
 // 12-month anchor rate (% / year) per bank — representative VN levels.

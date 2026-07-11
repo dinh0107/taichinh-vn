@@ -22,21 +22,26 @@ export type FuelHistoryRow = { date: string; price: number; change: number };
 
 /** Latest price per fuel type for public display. */
 export async function getFuelPrices(): Promise<FuelRow[]> {
-  const out: FuelRow[] = [];
-  for (const code of Object.keys(FUEL_LABEL) as FuelTypeCode[]) {
-    const latest = await prisma.fuelPrice.findFirst({
-      where: { fuelType: code, region: REGION },
-      orderBy: { recordedAt: "desc" },
-    });
-    if (!latest) continue;
-    out.push({
-      code,
-      type: FUEL_LABEL[code],
-      price: Number(latest.price),
-      change: Number(latest.change),
-    });
+  try {
+    const out: FuelRow[] = [];
+    for (const code of Object.keys(FUEL_LABEL) as FuelTypeCode[]) {
+      const latest = await prisma.fuelPrice.findFirst({
+        where: { fuelType: code, region: REGION },
+        orderBy: { recordedAt: "desc" },
+      });
+      if (!latest) continue;
+      out.push({
+        code,
+        type: FUEL_LABEL[code],
+        price: Number(latest.price),
+        change: Number(latest.change),
+      });
+    }
+    return out;
+  } catch (error) {
+    logger.warn({ error }, "Fuel prices lookup failed; returning empty");
+    return [];
   }
-  return out;
 }
 
 /** Adjustment history for one fuel type (newest first), change computed vs prev. */
@@ -44,25 +49,30 @@ export async function getFuelHistory(
   code: FuelTypeCode,
   take = 6
 ): Promise<FuelHistoryRow[]> {
-  const rows = await prisma.fuelPriceHistory.findMany({
-    where: { fuelType: code, region: REGION },
-    orderBy: { recordedAt: "desc" },
-    take: take + 1,
-  });
-  if (rows.length === 0) return [];
-
-  const result: FuelHistoryRow[] = [];
-  for (let i = 0; i < Math.min(rows.length, take); i++) {
-    const cur = rows[i];
-    const prev = rows[i + 1];
-    const change = prev ? Number(cur.price) - Number(prev.price) : 0;
-    result.push({
-      date: cur.recordedAt.toLocaleDateString("vi-VN"),
-      price: Number(cur.price),
-      change,
+  try {
+    const rows = await prisma.fuelPriceHistory.findMany({
+      where: { fuelType: code, region: REGION },
+      orderBy: { recordedAt: "desc" },
+      take: take + 1,
     });
+    if (rows.length === 0) return [];
+
+    const result: FuelHistoryRow[] = [];
+    for (let i = 0; i < Math.min(rows.length, take); i++) {
+      const cur = rows[i];
+      const prev = rows[i + 1];
+      const change = prev ? Number(cur.price) - Number(prev.price) : 0;
+      result.push({
+        date: cur.recordedAt.toLocaleDateString("vi-VN"),
+        price: Number(cur.price),
+        change,
+      });
+    }
+    return result;
+  } catch (error) {
+    logger.warn({ error, code }, "Fuel history lookup failed; returning empty");
+    return [];
   }
-  return result;
 }
 
 // Baseline retail prices (VND/litre) — representative VN levels.

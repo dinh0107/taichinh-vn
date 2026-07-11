@@ -14,30 +14,35 @@ export type ForexBankRates = {
  * Returns only banks that actually have rate data (empty => caller falls back).
  */
 export async function getForexRatesByBank(): Promise<ForexBankRates[]> {
-  const banks = await prisma.bank.findMany({ orderBy: { code: "asc" } });
-  const out: ForexBankRates[] = [];
+  try {
+    const banks = await prisma.bank.findMany({ orderBy: { code: "asc" } });
+    const out: ForexBankRates[] = [];
 
-  for (const bank of banks) {
-    const rows = await prisma.exchangeRate.findMany({
-      where: { bankId: bank.id },
-      orderBy: { recordedAt: "desc" },
-      take: 60,
-    });
-    if (rows.length === 0) continue;
+    for (const bank of banks) {
+      const rows = await prisma.exchangeRate.findMany({
+        where: { bankId: bank.id },
+        orderBy: { recordedAt: "desc" },
+        take: 60,
+      });
+      if (rows.length === 0) continue;
 
-    const rates: ForexBankRates["rates"] = {};
-    for (const r of rows) {
-      if (rates[r.currency]) continue; // keep the most recent per currency
-      rates[r.currency] = {
-        buy: Number(r.buyRate),
-        sell: Number(r.sellRate),
-        ch: Number(r.changeBuy),
-      };
+      const rates: ForexBankRates["rates"] = {};
+      for (const r of rows) {
+        if (rates[r.currency]) continue; // keep the most recent per currency
+        rates[r.currency] = {
+          buy: Number(r.buyRate),
+          sell: Number(r.sellRate),
+          ch: Number(r.changeBuy),
+        };
+      }
+      out.push({ bankName: bank.name, rates });
     }
-    out.push({ bankName: bank.name, rates });
-  }
 
-  return out;
+    return out;
+  } catch (error) {
+    logger.warn({ error }, "Forex rates lookup failed; returning empty");
+    return [];
+  }
 }
 
 /**
