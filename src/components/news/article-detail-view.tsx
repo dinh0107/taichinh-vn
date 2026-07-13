@@ -12,6 +12,7 @@ import type {
 } from "@/modules/news/service";
 import { formatDateVi, formatRelativeTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
+import { withHtmlExtension } from "@/lib/seo/html-path";
 
 export function ArticleDetailView({
   article,
@@ -31,7 +32,7 @@ export function ArticleDetailView({
       {preview && (
         <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-900">
           Đang xem trước — bài chưa công khai trên{" "}
-          <Link href="/tin-tuc" className="font-semibold underline">
+          <Link href={withHtmlExtension("/tin-tuc")} className="font-semibold underline">
             /tin-tuc
           </Link>
           .
@@ -45,7 +46,7 @@ export function ArticleDetailView({
               Trang chủ
             </Link>
             <ChevronRight className="h-3 w-3 opacity-50" />
-            <Link href="/tin-tuc" className="hover:text-gold-400">
+            <Link href={withHtmlExtension("/tin-tuc")} className="hover:text-gold-400">
               Tin tức
             </Link>
             <ChevronRight className="h-3 w-3 opacity-50" />
@@ -160,7 +161,7 @@ export function ArticleDetailView({
 
           <div className="flex justify-center border-t border-finance-100 pt-6">
             <Link
-              href="/tin-tuc"
+              href={withHtmlExtension("/tin-tuc")}
               className="text-sm font-semibold text-finance-600 hover:text-gold-700"
             >
               ← Về danh sách tin tức

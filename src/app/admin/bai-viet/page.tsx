@@ -15,6 +15,7 @@ import {
 } from "@/modules/admin/labels";
 import { formatDateVi } from "@/lib/time";
 import type { ArticleStatus } from "@prisma/client";
+import { withHtmlExtension } from "@/lib/seo/html-path";
 
 const CATEGORY_TONE: Record<string, "amber" | "violet" | "sky" | "emerald" | "slate"> = {
   GOLD: "amber",
@@ -155,7 +156,7 @@ export default async function AdminArticlesPage() {
                           </Link>
                           {a.status === "PUBLISHED" && (
                             <Link
-                              href={`/tin-tuc/${a.slug}`}
+                              href={withHtmlExtension(`/tin-tuc/${a.slug}`)}
                               target="_blank"
                               className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-emerald-600"
                               title="Xem trang công khai"

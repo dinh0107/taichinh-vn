@@ -1,5 +1,6 @@
 import { getSiteSettings } from "@/modules/admin/settings-service";
 import { isNextProductionBuild } from "@/lib/build-phase";
+import { withHtmlExtension } from "@/lib/seo/html-path";
 
 const PRODUCTION_FALLBACK = "https://taichinh.vn";
 
@@ -20,10 +21,16 @@ export async function getSiteBaseUrl(): Promise<string> {
   }
 }
 
+function toPublicPath(path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return withHtmlExtension(normalized);
+}
+
 export async function canonicalUrl(path: string): Promise<string> {
   const base = await getSiteBaseUrl();
-  const normalized = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${normalized}`;
+  const publicPath = toPublicPath(path);
+  if (publicPath === "/") return `${base}/`;
+  return `${base}${publicPath}`;
 }
 
 export function siteBaseUrlSync(): string {
@@ -34,6 +41,7 @@ export function siteBaseUrlSync(): string {
 
 export function canonicalUrlSync(path: string): string {
   const base = siteBaseUrlSync();
-  const normalized = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${normalized}`;
+  const publicPath = toPublicPath(path);
+  if (publicPath === "/") return `${base}/`;
+  return `${base}${publicPath}`;
 }

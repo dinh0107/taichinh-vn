@@ -10,6 +10,7 @@ import {
 } from "@/lib/gsc/client";
 import { clearGscTokenCache } from "@/lib/gsc/auth";
 import { isGscEnabled } from "@/lib/gsc/feature";
+import { withHtmlExtension } from "@/lib/seo/html-path";
 
 export type GscConfigStatus = {
   configured: boolean;
@@ -143,7 +144,9 @@ export async function syncGscToDatabase(): Promise<{
   const syncedAt = new Date();
 
   for (const page of pages) {
-    const pageUrl = page.canonicalUrl ?? `${base}/${page.slug}`;
+    const pageUrl =
+      page.canonicalUrl ??
+      `${base.replace(/\/$/, "")}${withHtmlExtension(`/${page.slug}`)}`;
     const pathKey = normalizePageUrl(pageUrl);
     const stats = analytics.get(pathKey);
 

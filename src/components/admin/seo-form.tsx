@@ -214,7 +214,7 @@ export function SeoForm({
             <input
               name="canonicalUrl"
               defaultValue={v.canonicalUrl}
-              placeholder="https://taichinh.vn/gia-vang-sjc-hom-nay"
+              placeholder="https://taichinh.vn/gia-vang-sjc-hom-nay.html"
               className={inputCls(fe.canonicalUrl)}
             />
           </label>

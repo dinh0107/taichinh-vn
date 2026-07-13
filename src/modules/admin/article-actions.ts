@@ -147,6 +147,7 @@ export async function createArticle(
   revalidatePath("/tin-tuc");
   revalidatePath(`/tin-tuc/${slug}`);
 
+  // Redirect to App Router paths (no .html). Proxy will 308 public URLs.
   if (data.status === "PUBLISHED") {
     redirect(`/tin-tuc/${slug}`);
   }

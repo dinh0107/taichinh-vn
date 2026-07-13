@@ -4,6 +4,7 @@ import { Eye, Pencil } from "lucide-react";
 import { AdminPageTitle } from "@/components/admin/ui";
 import { ArticleDetailView } from "@/components/news/article-detail-view";
 import { getArticleByIdForAdmin } from "@/modules/news/service";
+import { withHtmlExtension } from "@/lib/seo/html-path";
 
 export default async function AdminArticlePreviewPage({
   params,
@@ -25,7 +26,7 @@ export default async function AdminArticlePreviewPage({
           <div className="flex flex-wrap items-center gap-2">
             {isPublic && (
               <Link
-                href={`/tin-tuc/${article.slug}`}
+                href={withHtmlExtension(`/tin-tuc/${article.slug}`)}
                 target="_blank"
                 className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100"
               >

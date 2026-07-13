@@ -6,6 +6,7 @@ import { formatRelativeTime } from "@/lib/time";
 import type { PublicArticleSummary } from "@/modules/news/service";
 import { cn } from "@/lib/utils";
 import { ArticleCoverImage } from "@/components/news/article-cover-image";
+import { withHtmlExtension } from "@/lib/seo/html-path";
 
 export function ArticleCard({
   article,
@@ -19,11 +20,12 @@ export function ArticleCard({
   const excerpt =
     article.excerpt?.trim() ||
     "Nhấn để đọc nội dung đầy đủ bài viết.";
+  const href = withHtmlExtension(`/tin-tuc/${article.slug}`);
 
   if (featured) {
     return (
       <Link
-        href={`/tin-tuc/${article.slug}`}
+        href={href}
         className="card-hover group block overflow-hidden rounded border border-finance-700 bg-finance-hero bg-finance-grid"
       >
         {article.featuredImage && (
@@ -75,7 +77,7 @@ export function ArticleCard({
 
   return (
     <Link
-      href={`/tin-tuc/${article.slug}`}
+      href={href}
       className="card-hover group flex h-full flex-col gap-2 rounded border border-finance-200 bg-white p-5 shadow-sm"
     >
       {article.featuredImage && (

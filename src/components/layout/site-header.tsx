@@ -12,13 +12,15 @@ import {
 import { SiteNav } from "@/components/layout/site-nav";
 import { formatHeaderDateTime } from "@/lib/time";
 
+import { withHtmlExtension } from "@/lib/seo/html-path";
+
 export const NAV_ITEMS = [
-  { href: "/gia-vang", label: "Giá vàng", icon: Coins },
-  { href: "/ty-gia", label: "Tỷ giá", icon: DollarSign },
-  { href: "/lai-suat", label: "Lãi suất", icon: Landmark },
-  { href: "/chung-khoan", label: "Chứng khoán", icon: TrendingUp },
-  { href: "/gia-xang", label: "Giá xăng", icon: Fuel },
-  { href: "/tin-tuc", label: "Tin tức", icon: Newspaper },
+  { href: withHtmlExtension("/gia-vang"), label: "Giá vàng", icon: Coins },
+  { href: withHtmlExtension("/ty-gia"), label: "Tỷ giá", icon: DollarSign },
+  { href: withHtmlExtension("/lai-suat"), label: "Lãi suất", icon: Landmark },
+  { href: withHtmlExtension("/chung-khoan"), label: "Chứng khoán", icon: TrendingUp },
+  { href: withHtmlExtension("/gia-xang"), label: "Giá xăng", icon: Fuel },
+  { href: withHtmlExtension("/tin-tuc"), label: "Tin tức", icon: Newspaper },
 ] as const;
 
 export function SiteHeader({
@@ -76,7 +78,7 @@ export function SiteHeader({
               <Search className="h-4 w-4" />
             </button>
             <Link
-              href="/gia-vang"
+              href={withHtmlExtension("/gia-vang")}
               className="hidden rounded border border-gold-500/40 bg-gold-500/10 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-gold-400 transition hover:bg-gold-500/20 sm:inline-flex"
             >
               GIÁ VÀNG
@@ -170,7 +172,7 @@ function FooterCol({
         {links.map(([label, href]) => (
           <li key={href}>
             <Link
-              href={href}
+              href={withHtmlExtension(href)}
               className="text-finance-400 transition-colors hover:text-gold-400"
             >
               {label}

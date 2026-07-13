@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { stripHtmlExtension } from "@/lib/seo/html-path";
 
 export function SiteNav({
   items,
@@ -13,13 +14,14 @@ export function SiteNav({
   variant?: "desktop" | "mobile";
 }) {
   const pathname = usePathname();
+  const current = stripHtmlExtension(pathname || "/");
 
   if (variant === "mobile") {
     return (
       <nav className="flex items-center gap-0 overflow-x-auto border-t border-white/5 bg-finance-900/50 px-2 py-1.5 no-scrollbar lg:hidden">
         {items.map((item) => {
-          const active =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+          const base = stripHtmlExtension(item.href);
+          const active = current === base || current.startsWith(`${base}/`);
           return (
             <Link
               key={item.href}
@@ -43,17 +45,15 @@ export function SiteNav({
   return (
     <nav className="hidden items-center lg:flex">
       {items.map((item) => {
-        const active =
-          pathname === item.href || pathname.startsWith(item.href + "/");
+        const base = stripHtmlExtension(item.href);
+        const active = current === base || current.startsWith(`${base}/`);
         return (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
               "relative flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium transition-colors",
-              active
-                ? "text-gold-400"
-                : "text-finance-300 hover:text-white"
+              active ? "text-gold-400" : "text-finance-300 hover:text-white"
             )}
           >
             <item.icon className="h-3.5 w-3.5 opacity-70" />
