@@ -6,15 +6,16 @@ import {
 } from "@/lib/seo/html-path";
 
 /**
- * Article detail: rewrite `.html` → App Router path only.
- * Do NOT 308 extensionless → `.html` here — `app.js` already strips `.html`
- * before Next runs; redirecting again causes an infinite loop:
- *   /slug.html → app.js strip → /slug → proxy 308 → /slug.html → …
+ * Public article URLs may end with `.html`.
+ * Only rewrite — never 308 to `.html` (redirects loop with custom servers / IIS).
+ *
+ *   /tin-tuc/slug.html → rewrite → /tin-tuc/slug
+ *   /tin-tuc.html      → rewrite → /tin-tuc
+ *   /tin-tuc/slug      → pass through (also valid)
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method.toUpperCase();
-  const isServerAction = request.headers.has("next-action");
 
   if (
     pathname.startsWith("/_next") ||
@@ -26,18 +27,20 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isServerAction || (method !== "GET" && method !== "HEAD")) {
+  // Never redirect POST / Server Actions
+  if (
+    request.headers.has("next-action") ||
+    (method !== "GET" && method !== "HEAD")
+  ) {
     return NextResponse.next();
   }
 
-  // /tin-tuc.html → listing
   if (/^\/tin-tuc\.html$/i.test(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/tin-tuc";
     return NextResponse.rewrite(url);
   }
 
-  // /tin-tuc/slug.html → /tin-tuc/slug (when request still has .html)
   if (/\.html$/i.test(pathname) && isArticleDetailPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = stripHtmlExtension(pathname);

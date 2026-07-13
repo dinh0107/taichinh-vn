@@ -78,28 +78,9 @@ app
           return;
         }
 
-        // Article detail: .html only. Listing /tin-tuc must never 308↔.html loop.
-        if (/^\/tin-tuc\.html$/i.test(pathname)) {
-          // Rewrite (not redirect) so old clients hitting .html still work
-          parsedUrl.pathname = "/tin-tuc";
-          req.url =
-            "/tin-tuc" + (parsedUrl.search || "") + (parsedUrl.hash || "");
-        } else if (/^\/tin-tuc\/[^/]+\.html$/i.test(pathname)) {
-          const stripped = pathname.replace(/\.html$/i, "");
-          parsedUrl.pathname = stripped;
-          req.url =
-            stripped + (parsedUrl.search || "") + (parsedUrl.hash || "");
-        } else if (
-          /^\/tin-tuc\/[^/]+$/i.test(pathname) &&
-          (req.method === "GET" || req.method === "HEAD") &&
-          !req.headers["next-action"]
-        ) {
-          res.writeHead(308, {
-            Location: pathname + ".html" + (parsedUrl.search || ""),
-          });
-          res.end();
-          return;
-        }
+        // Do NOT strip/redirect .html here.
+        // Stripping before Next + proxy 308 back to .html = ERR_TOO_MANY_REDIRECTS.
+        // Article .html → App Router is handled only in src/proxy.ts (rewrite).
 
         await handle(req, res, parsedUrl);
       } catch (err) {
