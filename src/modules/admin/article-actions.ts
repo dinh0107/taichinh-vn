@@ -21,20 +21,32 @@ const articleSchema = z.object({
   category: z.nativeEnum(NewsCategoryCode),
   status: z.nativeEnum(ArticleStatus),
   excerpt: z.string().trim().optional(),
-  content: z.string().trim().min(20, "Nội dung tối thiểu 20 ký tự"),
+  content: z
+    .string()
+    .trim()
+    .refine((html) => {
+      const text = html
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      return text.length >= 20;
+    }, "Nội dung tối thiểu 20 ký tự"),
   source: z.string().trim().optional(),
   sourceUrl: z
     .string()
     .trim()
-    .url("URL nguồn không hợp lệ")
-    .optional()
-    .or(z.literal("")),
+    .refine(
+      (v) => v === "" || /^https?:\/\//i.test(v),
+      "URL nguồn không hợp lệ (cần http/https)"
+    ),
   featuredImage: z
     .string()
     .trim()
-    .url("URL ảnh không hợp lệ")
-    .optional()
-    .or(z.literal("")),
+    .refine(
+      (v) => v === "" || /^https?:\/\//i.test(v),
+      "URL ảnh không hợp lệ (cần http/https)"
+    ),
   seoTitle: z.string().trim().optional(),
   seoDescription: z.string().trim().optional(),
   isAiGenerated: z.boolean().optional(),

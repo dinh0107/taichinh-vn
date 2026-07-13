@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import {
   ClassicEditor,
@@ -28,7 +28,6 @@ import {
   PasteFromOffice,
   HorizontalLine,
   RemoveFormat,
-  SourceEditing,
   GeneralHtmlSupport,
   type EditorConfig,
 } from "ckeditor5";
@@ -36,6 +35,11 @@ import "ckeditor5/ckeditor5.css";
 import { Code2, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Uncontrolled after mount: do not feed `data` back on every keystroke
+ * (that resets the caret / breaks typing). Remount only when switching
+ * HTML → visual so edited source is loaded into CKEditor.
+ */
 export function RichTextEditor({
   value,
   onChange,
@@ -44,6 +48,12 @@ export function RichTextEditor({
   onChange: (html: string) => void;
 }) {
   const [mode, setMode] = useState<"visual" | "html">("visual");
+  const [htmlDraft, setHtmlDraft] = useState(value);
+  const [editorInstance, setEditorInstance] = useState({
+    key: 0,
+    data: value,
+  });
+  const lastEmitted = useRef(value);
 
   const config = useMemo<EditorConfig>(
     () => ({
@@ -73,13 +83,10 @@ export function RichTextEditor({
         PasteFromOffice,
         HorizontalLine,
         RemoveFormat,
-        SourceEditing,
         GeneralHtmlSupport,
       ],
       toolbar: {
         items: [
-          "sourceEditing",
-          "|",
           "undo",
           "redo",
           "|",
@@ -137,12 +144,29 @@ export function RichTextEditor({
     []
   );
 
+  const emit = (html: string) => {
+    lastEmitted.current = html;
+    setHtmlDraft(html);
+    onChange(html);
+  };
+
+  const switchToHtml = () => {
+    setMode("html");
+  };
+
+  const switchToVisual = () => {
+    const html = htmlDraft;
+    emit(html);
+    setEditorInstance((prev) => ({ key: prev.key + 1, data: html }));
+    setMode("visual");
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={() => setMode("visual")}
+          onClick={switchToVisual}
           className={cn(
             "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition",
             mode === "visual"
@@ -155,7 +179,7 @@ export function RichTextEditor({
         </button>
         <button
           type="button"
-          onClick={() => setMode("html")}
+          onClick={switchToHtml}
           className={cn(
             "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition",
             mode === "html"
@@ -173,8 +197,8 @@ export function RichTextEditor({
 
       {mode === "html" ? (
         <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={htmlDraft}
+          onChange={(e) => emit(e.target.value)}
           spellCheck={false}
           className="min-h-[360px] w-full resize-y rounded-lg border border-slate-200 bg-slate-950 px-3 py-3 font-mono text-xs leading-relaxed text-emerald-300 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
           placeholder="<p>Dán hoặc sửa HTML tại đây…</p>"
@@ -182,10 +206,11 @@ export function RichTextEditor({
       ) : (
         <div className="ck-tcvn">
           <CKEditor
+            key={editorInstance.key}
             editor={ClassicEditor}
             config={config}
-            data={value}
-            onChange={(_e, editor) => onChange(editor.getData())}
+            data={editorInstance.data}
+            onChange={(_e, editor) => emit(editor.getData())}
           />
         </div>
       )}

@@ -309,8 +309,10 @@ function Field({
   required?: boolean;
   children: React.ReactNode;
 }) {
+  // Use <div>, not <label> — wrapping CKEditor/contenteditable in <label>
+  // breaks focus, toolbar clicks, and typing in the article editor.
   return (
-    <label className="block">
+    <div className="block">
       <span className="mb-1.5 block text-sm font-medium text-slate-700">
         {label}
         {required && <span className="ml-0.5 text-red-500">*</span>}
@@ -321,7 +323,7 @@ function Field({
       ) : hint ? (
         <span className="mt-1 block text-xs text-slate-400">{hint}</span>
       ) : null}
-    </label>
+    </div>
   );
 }
 
