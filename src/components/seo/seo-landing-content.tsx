@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/market-ui";
 import { ChangeBadge } from "@/components/ui/change-badge";
 import { formatNumber } from "@/lib/utils";
-import { withHtmlExtension } from "@/lib/seo/html-path";
 import type { ResolvedSeoPage } from "@/modules/seo/service";
 
 const TERMS = ["KKH", "1 tháng", "3 tháng", "6 tháng", "12 tháng"];
@@ -126,7 +125,7 @@ async function ForexBlock({
         </DataTable>
       </DataPanel>
       <p className="text-sm text-slate-500">
-        <Link href={withHtmlExtension("/ty-gia")} className="font-medium text-amber-700 hover:underline">
+        <Link href="/ty-gia" className="font-medium text-amber-700 hover:underline">
           Xem tất cả tỷ giá →
         </Link>
       </p>
@@ -183,7 +182,7 @@ async function InterestBlock({
         <p className="text-sm text-slate-500">Chưa có dữ liệu lãi suất cho ngân hàng này.</p>
       )}
       <p className="text-sm text-slate-500">
-        <Link href={withHtmlExtension("/lai-suat")} className="font-medium text-amber-700 hover:underline">
+        <Link href="/lai-suat" className="font-medium text-amber-700 hover:underline">
           So sánh tất cả ngân hàng →
         </Link>
       </p>
@@ -219,7 +218,7 @@ async function StockBlock({
         <p className="text-sm text-slate-500">Chưa có dữ liệu chỉ số.</p>
       )}
       <p className="text-sm text-slate-500">
-        <Link href={withHtmlExtension("/chung-khoan")} className="font-medium text-amber-700 hover:underline">
+        <Link href="/chung-khoan" className="font-medium text-amber-700 hover:underline">
           Xem thị trường chứng khoán →
         </Link>
       </p>
@@ -253,7 +252,7 @@ async function FuelBlock({
         <p className="text-sm text-slate-500">Chưa có dữ liệu giá xăng dầu.</p>
       )}
       <p className="text-sm text-slate-500">
-        <Link href={withHtmlExtension("/gia-xang")} className="font-medium text-amber-700 hover:underline">
+        <Link href="/gia-xang" className="font-medium text-amber-700 hover:underline">
           Xem giá xăng dầu đầy đủ →
         </Link>
       </p>

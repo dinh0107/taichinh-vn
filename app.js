@@ -78,32 +78,30 @@ app
           return;
         }
 
-        // iisnode custom server: Next proxy.ts often does not run.
-        // Strip .html so App Router pages resolve ( /gia-vang.html → /gia-vang ).
-        const htmlExempt =
-          pathname === "/" ||
-          pathname.startsWith("/admin") ||
-          pathname.startsWith("/api") ||
-          pathname.startsWith("/dang-nhap") ||
-          pathname.startsWith("/_next");
+        // iisnode: article detail URLs use .html
+        // /tin-tuc/slug.html → /tin-tuc/slug (App Router)
+        // /tin-tuc/slug → 308 → /tin-tuc/slug.html
+        if (/^\/tin-tuc\.html$/i.test(pathname)) {
+          res.writeHead(308, { Location: "/tin-tuc" + (parsedUrl.search || "") });
+          res.end();
+          return;
+        }
 
-        if (/\.html$/i.test(pathname) && !htmlExempt) {
-          const stripped = pathname.replace(/\.html$/i, "") || "/";
+        if (/^\/tin-tuc\/[^/]+\.html$/i.test(pathname)) {
+          const stripped = pathname.replace(/\.html$/i, "");
           parsedUrl.pathname = stripped;
           req.url =
-            stripped +
-            (parsedUrl.search || "") +
-            (parsedUrl.hash || "");
-          pathname = stripped;
+            stripped + (parsedUrl.search || "") + (parsedUrl.hash || "");
         } else if (
-          !htmlExempt &&
-          !pathname.includes(".") &&
+          /^\/tin-tuc\/[^/]+$/i.test(pathname) &&
           (req.method === "GET" || req.method === "HEAD") &&
-          !req.headers["next-action"] &&
-          req.headers["rsc"] !== "1"
+          !req.headers["next-action"]
         ) {
-          // Optional: keep extensionless working; SEO links use .html
-          // Do not 308 here — links already include .html from the app.
+          res.writeHead(308, {
+            Location: pathname + ".html" + (parsedUrl.search || ""),
+          });
+          res.end();
+          return;
         }
 
         await handle(req, res, parsedUrl);

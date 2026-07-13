@@ -9,7 +9,6 @@ import { getForexRatesByBank } from "@/modules/forex/service";
 import { GoldPriceCards } from "@/modules/gold/components/gold-price-table";
 import { MetricCard, SectionHeading } from "@/components/ui/market-ui";
 import { formatNumber, formatUsd } from "@/lib/utils";
-import { withHtmlExtension } from "@/lib/seo/html-path";
 import {
   Coins,
   DollarSign,
@@ -38,12 +37,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const MODULES = [
-  { href: withHtmlExtension("/gia-vang"), icon: Coins, title: "Giá vàng", desc: "SJC · DOJI · PNJ · 9999" },
-  { href: withHtmlExtension("/ty-gia"), icon: DollarSign, title: "Tỷ giá", desc: "USD · EUR · JPY" },
-  { href: withHtmlExtension("/lai-suat"), icon: Landmark, title: "Lãi suất", desc: "7 ngân hàng lớn" },
-  { href: withHtmlExtension("/chung-khoan"), icon: TrendingUp, title: "Chứng khoán", desc: "VNINDEX · HNX · UPCOM" },
-  { href: withHtmlExtension("/gia-xang"), icon: Fuel, title: "Giá xăng", desc: "RON95 · E5 · Diesel" },
-  { href: withHtmlExtension("/tin-tuc"), icon: Newspaper, title: "Tin tức", desc: "Phân tích thị trường" },
+  { href: "/gia-vang", icon: Coins, title: "Giá vàng", desc: "SJC · DOJI · PNJ · 9999" },
+  { href: "/ty-gia", icon: DollarSign, title: "Tỷ giá", desc: "USD · EUR · JPY" },
+  { href: "/lai-suat", icon: Landmark, title: "Lãi suất", desc: "7 ngân hàng lớn" },
+  { href: "/chung-khoan", icon: TrendingUp, title: "Chứng khoán", desc: "VNINDEX · HNX · UPCOM" },
+  { href: "/gia-xang", icon: Fuel, title: "Giá xăng", desc: "RON95 · E5 · Diesel" },
+  { href: "/tin-tuc", icon: Newspaper, title: "Tin tức", desc: "Phân tích thị trường" },
 ];
 
 export default async function HomePage() {
@@ -90,13 +89,13 @@ export default async function HomePage() {
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 <Link
-                  href={withHtmlExtension("/gia-vang")}
+                  href="/gia-vang"
                   className="inline-flex items-center gap-2 border border-gold-500/50 bg-gold-500/15 px-4 py-2 text-xs font-semibold tracking-wide text-gold-300 transition hover:bg-gold-500/25"
                 >
                   GIÁ VÀNG <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 <Link
-                  href={withHtmlExtension("/ty-gia")}
+                  href="/ty-gia"
                   className="inline-flex items-center border border-white/10 px-4 py-2 text-xs font-semibold tracking-wide text-finance-300 transition hover:border-white/20 hover:text-white"
                 >
                   TỶ GIÁ
@@ -142,7 +141,7 @@ export default async function HomePage() {
           <SectionHeading
             title="Giá vàng hôm nay"
             description={`Cập nhật ${new Date().toLocaleString("vi-VN")}`}
-            href={withHtmlExtension("/gia-vang")}
+            href="/gia-vang"
             icon={Coins}
           />
           <GoldPriceCards prices={goldPrices} />
@@ -185,7 +184,7 @@ export default async function HomePage() {
             ].map(([label, slug]) => (
               <Link
                 key={slug}
-                href={withHtmlExtension(`/${slug}`)}
+                href={`/${slug}`}
                 className="rounded border border-finance-200 bg-finance-50 px-3 py-1.5 text-xs font-medium text-finance-600 transition-colors hover:border-gold-500/40 hover:text-gold-700"
               >
                 {label}

@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
-  isHtmlExemptPath,
+  isArticleDetailPath,
   stripHtmlExtension,
   withHtmlExtension,
 } from "@/lib/seo/html-path";
 
 /**
- * Next.js 16 proxy:
- * - Public SEO URLs: `/path` → 308 `/path.html`, rewrite back for App Router
- * - Do NOT gate /admin here (IIS/iisnode often drops cookies at the proxy layer
- *   on Server Action follow-up navigations → false redirects to login).
- *   Auth stays in admin layout + requireAdmin() in Server Actions.
+ * Only article detail pages use `.html`:
+ *   /tin-tuc/slug → 308 → /tin-tuc/slug.html
+ *   /tin-tuc/slug.html → rewrite → /tin-tuc/slug
+ * Listing `/tin-tuc` and other hubs stay extensionless.
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -28,25 +27,26 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Never redirect POST/PUT/etc or Server Actions (breaks form saves).
   if (isServerAction || (method !== "GET" && method !== "HEAD")) {
     return NextResponse.next();
   }
 
-  // Admin / login / auth pages — leave alone
-  if (isHtmlExemptPath(pathname)) {
-    return NextResponse.next();
+  // Legacy /tin-tuc.html → listing without extension
+  if (/^\/tin-tuc\.html$/i.test(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/tin-tuc";
+    return NextResponse.redirect(url, 308);
   }
 
-  // /foo.html → rewrite → /foo
-  if (/\.html$/i.test(pathname)) {
+  // /tin-tuc/slug.html → rewrite → /tin-tuc/slug
+  if (/\.html$/i.test(pathname) && isArticleDetailPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = stripHtmlExtension(pathname);
     return NextResponse.rewrite(url);
   }
 
-  // /foo → 308 → /foo.html
-  if (!pathname.includes(".")) {
+  // /tin-tuc/slug → 308 → /tin-tuc/slug.html
+  if (isArticleDetailPath(pathname) && !/\.html$/i.test(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = withHtmlExtension(pathname);
     return NextResponse.redirect(url, 308);
