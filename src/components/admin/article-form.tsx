@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Save, ArrowLeft, AlertCircle } from "lucide-react";
 import type { ArticleFormState } from "@/modules/admin/article-actions";
@@ -90,7 +90,6 @@ export function ArticleForm({
     action,
     { ok: false }
   );
-  const [content, setContent] = useState(v.content);
   const fe = state.fieldErrors ?? {};
 
   return (
@@ -152,12 +151,11 @@ export function ArticleForm({
                 className={
                   fe.content
                     ? "overflow-hidden rounded-lg ring-2 ring-red-100"
-                    : ""
+                    : undefined
                 }
               >
-                <RichTextEditor value={content} onChange={setContent} />
+                <RichTextEditor initialValue={v.content} name="content" />
               </div>
-              <input type="hidden" name="content" value={content} readOnly />
             </Field>
           </Card>
 

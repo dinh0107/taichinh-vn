@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, memo } from "react";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import {
   ClassicEditor,
@@ -35,25 +35,30 @@ import "ckeditor5/ckeditor5.css";
 import { Code2, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type Props = {
+  /** Initial HTML only — do not pass a changing controlled value while typing. */
+  initialValue?: string;
+  /** Called when content changes (parent should NOT setState that re-renders this editor). */
+  onChange?: (html: string) => void;
+  /** Optional hidden input name — keeps FormData in sync without parent re-renders. */
+  name?: string;
+};
+
 /**
- * Uncontrolled after mount: do not feed `data` back on every keystroke
- * (that resets the caret / breaks typing). Remount only when switching
- * HTML → visual so edited source is loaded into CKEditor.
+ * Self-contained editor. Parent must not feed `value` back on every keystroke
+ * or React re-renders will steal focus / block clicks inside CKEditor.
  */
-export function RichTextEditor({
-  value,
+function RichTextEditorInner({
+  initialValue = "",
   onChange,
-}: {
-  value: string;
-  onChange: (html: string) => void;
-}) {
+  name = "content",
+}: Props) {
   const [mode, setMode] = useState<"visual" | "html">("visual");
-  const [htmlDraft, setHtmlDraft] = useState(value);
-  const [editorInstance, setEditorInstance] = useState({
-    key: 0,
-    data: value,
-  });
-  const lastEmitted = useRef(value);
+  const [htmlDraft, setHtmlDraft] = useState(initialValue);
+  const [editorKey, setEditorKey] = useState(0);
+  const [seed, setSeed] = useState(initialValue);
+  const hiddenRef = useRef<HTMLInputElement>(null);
+  const draftRef = useRef(initialValue);
 
   const config = useMemo<EditorConfig>(
     () => ({
@@ -144,25 +149,30 @@ export function RichTextEditor({
     []
   );
 
-  const emit = (html: string) => {
-    lastEmitted.current = html;
-    setHtmlDraft(html);
-    onChange(html);
+  const sync = (html: string) => {
+    draftRef.current = html;
+    if (hiddenRef.current) hiddenRef.current.value = html;
+    onChange?.(html);
   };
 
   const switchToHtml = () => {
+    setHtmlDraft(draftRef.current);
     setMode("html");
   };
 
   const switchToVisual = () => {
-    const html = htmlDraft;
-    emit(html);
-    setEditorInstance((prev) => ({ key: prev.key + 1, data: html }));
+    if (mode === "visual") return;
+    const html = draftRef.current;
+    setSeed(html);
+    setHtmlDraft(html);
+    setEditorKey((k) => k + 1);
     setMode("visual");
   };
 
   return (
     <div className="space-y-2">
+      <input type="hidden" name={name} ref={hiddenRef} defaultValue={initialValue} />
+
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -191,29 +201,50 @@ export function RichTextEditor({
           HTML / Source
         </button>
         <span className="text-[11px] text-slate-400">
-          Bấm «HTML / Source» để xem và sửa mã HTML.
+          Click vào khung trắng bên dưới để gõ nội dung.
         </span>
       </div>
 
       {mode === "html" ? (
         <textarea
           value={htmlDraft}
-          onChange={(e) => emit(e.target.value)}
+          onChange={(e) => {
+            const html = e.target.value;
+            setHtmlDraft(html);
+            sync(html);
+          }}
           spellCheck={false}
           className="min-h-[360px] w-full resize-y rounded-lg border border-slate-200 bg-slate-950 px-3 py-3 font-mono text-xs leading-relaxed text-emerald-300 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
           placeholder="<p>Dán hoặc sửa HTML tại đây…</p>"
         />
       ) : (
-        <div className="ck-tcvn">
+        <div className="ck-tcvn relative z-10 isolate rounded-lg border border-slate-200 bg-white">
           <CKEditor
-            key={editorInstance.key}
+            key={editorKey}
             editor={ClassicEditor}
             config={config}
-            data={editorInstance.data}
-            onChange={(_e, editor) => emit(editor.getData())}
+            data={seed}
+            onChange={(_e, editor) => {
+              sync(editor.getData());
+            }}
+            onReady={(editor) => {
+              const root = editor.editing.view.getDomRoot();
+              if (root instanceof HTMLElement) {
+                root.setAttribute("contenteditable", "true");
+                root.style.pointerEvents = "auto";
+                root.style.userSelect = "text";
+                root.style.cursor = "text";
+                root.style.minHeight = "360px";
+              }
+            }}
+            onError={(err, { willEditorRestart }) => {
+              console.error("[RichTextEditor]", err, { willEditorRestart });
+            }}
           />
         </div>
       )}
     </div>
   );
 }
+
+export const RichTextEditor = memo(RichTextEditorInner);

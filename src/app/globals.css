@@ -134,21 +134,39 @@ body {
   text-transform: uppercase;
 }
 
-/* CKEditor */
+/* CKEditor — keep editable clickable (Tailwind / parent re-renders) */
+.ck-tcvn {
+  position: relative;
+  z-index: 1;
+}
+.ck-tcvn .ck.ck-editor {
+  width: 100%;
+}
 .ck-tcvn .ck.ck-editor__main > .ck-editor__editable {
   min-height: 360px;
+  cursor: text;
+  pointer-events: auto !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
   border-bottom-left-radius: 0.375rem;
   border-bottom-right-radius: 0.375rem;
 }
 .ck-tcvn .ck.ck-toolbar {
   border-top-left-radius: 0.375rem;
   border-top-right-radius: 0.375rem;
+  pointer-events: auto;
 }
 .ck-tcvn .ck-source-editing-area textarea {
   min-height: 360px;
   font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", Consolas, monospace;
   font-size: 0.8125rem;
   line-height: 1.55;
+}
+.ck-tcvn .ck-editor__editable_inline:focus {
+  border-color: var(--accent);
+}
+.ck-tcvn .ck.ck-editor__editable_inline {
+  background: #fff;
 }
 .prose-tcvn p + p {
   margin-top: 0.75rem;
@@ -213,8 +231,4 @@ body {
 .article-prose th {
   background: var(--finance-50);
   font-weight: 600;
-}
-
-.ck-tcvn .ck-editor__editable_inline:focus {
-  border-color: var(--accent);
 }

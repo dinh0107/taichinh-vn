@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import { FileText, Save } from "lucide-react";
@@ -43,7 +43,6 @@ export function HomeArticleEditor({
   pageId: string;
   initialContent: string;
 }) {
-  const [content, setContent] = useState(initialContent);
   const [state, formAction] = useActionState<SeoFormState, FormData>(
     saveHomePageArticle,
     { ok: false }
@@ -61,7 +60,6 @@ export function HomeArticleEditor({
     >
       <form action={formAction} className="space-y-4 p-5">
         <input type="hidden" name="id" value={pageId} />
-        <input type="hidden" name="content" value={content} readOnly />
 
         <p className="text-xs text-slate-500">
           Nội dung hiện ở cuối trang chủ (/). Có thể chỉnh thêm meta / FAQ tại{" "}
@@ -71,8 +69,8 @@ export function HomeArticleEditor({
           .
         </p>
 
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
-          <RichTextEditor value={content} onChange={setContent} />
+        <div className="rounded-lg border border-slate-200 p-1">
+          <RichTextEditor initialValue={initialContent} name="content" />
         </div>
 
         <div className="flex justify-end">
