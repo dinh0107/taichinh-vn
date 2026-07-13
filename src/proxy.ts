@@ -10,7 +10,7 @@ import {
  * Only article detail pages use `.html`:
  *   /tin-tuc/slug → 308 → /tin-tuc/slug.html
  *   /tin-tuc/slug.html → rewrite → /tin-tuc/slug
- * Listing `/tin-tuc` and other hubs stay extensionless.
+ * Listing `/tin-tuc` stays extensionless (never redirect to .html).
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -31,11 +31,16 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Legacy /tin-tuc.html → listing without extension
+  // Listing: /tin-tuc.html → rewrite /tin-tuc (no redirect — avoids loops)
   if (/^\/tin-tuc\.html$/i.test(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/tin-tuc";
-    return NextResponse.redirect(url, 308);
+    return NextResponse.rewrite(url);
+  }
+
+  // Never touch the news listing
+  if (pathname === "/tin-tuc" || pathname === "/tin-tuc/") {
+    return NextResponse.next();
   }
 
   // /tin-tuc/slug.html → rewrite → /tin-tuc/slug

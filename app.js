@@ -78,16 +78,13 @@ app
           return;
         }
 
-        // iisnode: article detail URLs use .html
-        // /tin-tuc/slug.html → /tin-tuc/slug (App Router)
-        // /tin-tuc/slug → 308 → /tin-tuc/slug.html
+        // Article detail: .html only. Listing /tin-tuc must never 308↔.html loop.
         if (/^\/tin-tuc\.html$/i.test(pathname)) {
-          res.writeHead(308, { Location: "/tin-tuc" + (parsedUrl.search || "") });
-          res.end();
-          return;
-        }
-
-        if (/^\/tin-tuc\/[^/]+\.html$/i.test(pathname)) {
+          // Rewrite (not redirect) so old clients hitting .html still work
+          parsedUrl.pathname = "/tin-tuc";
+          req.url =
+            "/tin-tuc" + (parsedUrl.search || "") + (parsedUrl.hash || "");
+        } else if (/^\/tin-tuc\/[^/]+\.html$/i.test(pathname)) {
           const stripped = pathname.replace(/\.html$/i, "");
           parsedUrl.pathname = stripped;
           req.url =
