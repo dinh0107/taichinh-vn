@@ -10,7 +10,6 @@ import {
 import { absoluteUrl } from "@/lib/utils";
 import {
   getPublishedArticleBySlug,
-  getPublishedArticleSlugs,
   getRelatedArticles,
 } from "@/modules/news/service";
 import { getSiteSettings } from "@/modules/admin/settings-service";
@@ -18,12 +17,12 @@ import { getSiteSettings } from "@/modules/admin/settings-service";
 export const revalidate = 60;
 /** Allow newly published slugs that were not in the last build. */
 export const dynamicParams = true;
+export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
-  const slugs = await getPublishedArticleSlugs();
-  return slugs.map((slug) => ({ slug }));
+  return [];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

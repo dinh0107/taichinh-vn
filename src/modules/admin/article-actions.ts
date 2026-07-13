@@ -2,17 +2,18 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import prisma from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { logger } from "@/lib/logger";
-import { requireAdmin, touchSession } from "@/lib/auth";
+import { getCurrentUser, isAdminRole } from "@/lib/auth";
 import { NewsCategoryCode, ArticleStatus } from "@prisma/client";
 
 export type ArticleFormState = {
   ok: boolean;
   error?: string;
   fieldErrors?: Record<string, string>;
+  /** Client-side navigation (redirect() breaks session on IIS/iisnode). */
+  redirectTo?: string;
 };
 
 const articleSchema = z.object({
@@ -91,25 +92,57 @@ async function uniqueSlug(base: string, excludeId?: string): Promise<string> {
   }
 }
 
+/** Parse datetime-local as Vietnam time (UTC+7). */
+function parseDateTimeLocal(raw: string): Date | null {
+  const m = raw.trim().match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!m) return null;
+  const d = new Date(
+    `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00+07:00`
+  );
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function resolvePublishedAt(
   status: ArticleStatus,
   raw: string | undefined,
   current?: Date | null
 ): Date | null {
   if (raw) {
-    const d = new Date(raw);
-    if (!Number.isNaN(d.getTime())) return d;
+    const d = parseDateTimeLocal(raw);
+    if (d) return d;
   }
   if (status === "PUBLISHED") return current ?? new Date();
   return current ?? null;
+}
+
+async function assertAdmin(): Promise<ArticleFormState | null> {
+  const user = await getCurrentUser();
+  if (!user || !isAdminRole(user.role)) {
+    return {
+      ok: false,
+      error: "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.",
+      redirectTo: "/dang-nhap?next=/admin/bai-viet",
+    };
+  }
+  return null;
+}
+
+function revalidateArticlePaths(slug: string, previousSlug?: string) {
+  revalidatePath("/admin/bai-viet");
+  revalidatePath("/tin-tuc");
+  revalidatePath(`/tin-tuc/${slug}`);
+  revalidatePath("/", "layout");
+  if (previousSlug && previousSlug !== slug) {
+    revalidatePath(`/tin-tuc/${previousSlug}`);
+  }
 }
 
 export async function createArticle(
   _prev: ArticleFormState,
   formData: FormData
 ): Promise<ArticleFormState> {
-  await requireAdmin();
-  await touchSession();
+  const authError = await assertAdmin();
+  if (authError) return authError;
 
   const parsed = parseForm(formData);
   if (!parsed.success) {
@@ -144,12 +177,8 @@ export async function createArticle(
     return { ok: false, error: "Không thể tạo bài viết. Vui lòng thử lại." };
   }
 
-  revalidatePath("/admin/bai-viet");
-  revalidatePath("/tin-tuc");
-  revalidatePath(`/tin-tuc/${slug}`);
-
-  // Always stay in admin after save (avoids session drops on public redirect).
-  redirect(`/admin/bai-viet/${id}/xem`);
+  revalidateArticlePaths(slug);
+  return { ok: true, redirectTo: `/admin/bai-viet/${id}/xem` };
 }
 
 export async function updateArticle(
@@ -157,8 +186,8 @@ export async function updateArticle(
   _prev: ArticleFormState,
   formData: FormData
 ): Promise<ArticleFormState> {
-  await requireAdmin();
-  await touchSession();
+  const authError = await assertAdmin();
+  if (authError) return authError;
 
   const parsed = parseForm(formData);
   if (!parsed.success) {
@@ -201,18 +230,13 @@ export async function updateArticle(
     return { ok: false, error: "Không thể cập nhật bài viết." };
   }
 
-  revalidatePath("/admin/bai-viet");
-  revalidatePath("/tin-tuc");
-  revalidatePath(`/tin-tuc/${slug}`);
-  if (previousSlug && previousSlug !== slug) {
-    revalidatePath(`/tin-tuc/${previousSlug}`);
-  }
-
-  redirect(`/admin/bai-viet/${id}/xem`);
+  revalidateArticlePaths(slug, previousSlug);
+  return { ok: true, redirectTo: `/admin/bai-viet/${id}/xem` };
 }
 
 export async function deleteArticle(formData: FormData): Promise<void> {
-  await requireAdmin();
+  const user = await getCurrentUser();
+  if (!user || !isAdminRole(user.role)) return;
 
   const id = formData.get("id");
   if (typeof id !== "string" || !id) return;
@@ -230,7 +254,6 @@ export async function deleteArticle(formData: FormData): Promise<void> {
     return;
   }
 
-  revalidatePath("/admin/bai-viet");
-  revalidatePath("/tin-tuc");
-  if (slug) revalidatePath(`/tin-tuc/${slug}`);
+  if (slug) revalidateArticlePaths(slug);
+  else revalidatePath("/admin/bai-viet");
 }

@@ -8,6 +8,8 @@ import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { Newspaper } from "lucide-react";
 
 export const revalidate = 60;
+/** Always hit DB on IIS — static ISR was baking empty "Chưa có bài" at build. */
+export const dynamic = "force-dynamic";
 
 const PAGE_TITLE = "Tin tức tài chính";
 const PAGE_DESC =

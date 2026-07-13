@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Save, ArrowLeft, AlertCircle } from "lucide-react";
 import type { ArticleFormState } from "@/modules/admin/article-actions";
 import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
@@ -86,11 +87,18 @@ export function ArticleForm({
   mode: "create" | "edit";
 }) {
   const v = { ...EMPTY, ...initialValues };
+  const router = useRouter();
   const [state, formAction] = useActionState<ArticleFormState, FormData>(
     action,
     { ok: false }
   );
   const fe = state.fieldErrors ?? {};
+
+  useEffect(() => {
+    if (!state.redirectTo) return;
+    router.replace(state.redirectTo);
+    router.refresh();
+  }, [state.redirectTo, router]);
 
   return (
     <form action={formAction} className="space-y-6">
@@ -103,6 +111,12 @@ export function ArticleForm({
         </Link>
         <SubmitButton />
       </div>
+
+      {state.ok && state.redirectTo && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Đã lưu — đang chuyển trang…
+        </div>
+      )}
 
       {state.error && (
         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

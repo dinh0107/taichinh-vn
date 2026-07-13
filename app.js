@@ -72,10 +72,38 @@ app
     const server = createServer(async (req, res) => {
       try {
         const parsedUrl = parse(req.url, true);
-        const pathname = parsedUrl.pathname || "/";
+        let pathname = parsedUrl.pathname || "/";
 
         if (serveNextStatic(req, res, dir, pathname)) {
           return;
+        }
+
+        // iisnode custom server: Next proxy.ts often does not run.
+        // Strip .html so App Router pages resolve ( /gia-vang.html → /gia-vang ).
+        const htmlExempt =
+          pathname === "/" ||
+          pathname.startsWith("/admin") ||
+          pathname.startsWith("/api") ||
+          pathname.startsWith("/dang-nhap") ||
+          pathname.startsWith("/_next");
+
+        if (/\.html$/i.test(pathname) && !htmlExempt) {
+          const stripped = pathname.replace(/\.html$/i, "") || "/";
+          parsedUrl.pathname = stripped;
+          req.url =
+            stripped +
+            (parsedUrl.search || "") +
+            (parsedUrl.hash || "");
+          pathname = stripped;
+        } else if (
+          !htmlExempt &&
+          !pathname.includes(".") &&
+          (req.method === "GET" || req.method === "HEAD") &&
+          !req.headers["next-action"] &&
+          req.headers["rsc"] !== "1"
+        ) {
+          // Optional: keep extensionless working; SEO links use .html
+          // Do not 308 here — links already include .html from the app.
         }
 
         await handle(req, res, parsedUrl);
