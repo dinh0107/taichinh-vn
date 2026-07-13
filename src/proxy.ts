@@ -3,14 +3,13 @@ import type { NextRequest } from "next/server";
 import {
   isArticleDetailPath,
   stripHtmlExtension,
-  withHtmlExtension,
 } from "@/lib/seo/html-path";
 
 /**
- * Only article detail pages use `.html`:
- *   /tin-tuc/slug → 308 → /tin-tuc/slug.html
- *   /tin-tuc/slug.html → rewrite → /tin-tuc/slug
- * Listing `/tin-tuc` stays extensionless (never redirect to .html).
+ * Article detail: rewrite `.html` → App Router path only.
+ * Do NOT 308 extensionless → `.html` here — `app.js` already strips `.html`
+ * before Next runs; redirecting again causes an infinite loop:
+ *   /slug.html → app.js strip → /slug → proxy 308 → /slug.html → …
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -31,30 +30,18 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Listing: /tin-tuc.html → rewrite /tin-tuc (no redirect — avoids loops)
+  // /tin-tuc.html → listing
   if (/^\/tin-tuc\.html$/i.test(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/tin-tuc";
     return NextResponse.rewrite(url);
   }
 
-  // Never touch the news listing
-  if (pathname === "/tin-tuc" || pathname === "/tin-tuc/") {
-    return NextResponse.next();
-  }
-
-  // /tin-tuc/slug.html → rewrite → /tin-tuc/slug
+  // /tin-tuc/slug.html → /tin-tuc/slug (when request still has .html)
   if (/\.html$/i.test(pathname) && isArticleDetailPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = stripHtmlExtension(pathname);
     return NextResponse.rewrite(url);
-  }
-
-  // /tin-tuc/slug → 308 → /tin-tuc/slug.html
-  if (isArticleDetailPath(pathname) && !/\.html$/i.test(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = withHtmlExtension(pathname);
-    return NextResponse.redirect(url, 308);
   }
 
   return NextResponse.next();
