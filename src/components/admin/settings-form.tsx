@@ -166,7 +166,7 @@ export function SettingsForm({
               name="cron_secret"
               type="password"
               placeholder={secretFlags.cron_secret ? "••••••••  (đã thiết lập)" : "Chưa thiết lập"}
-              hint="Bảo vệ các endpoint /api/cron/*. Để trống nếu không đổi."
+              hint="Dùng cho Scheduled Task: Authorization Bearer …. Nếu Plesk không có Environment, đặt tại đây rồi Save."
             />
             <Field label="Redis URL" name="redis_url" defaultValue={initial.redis_url} />
           </div>

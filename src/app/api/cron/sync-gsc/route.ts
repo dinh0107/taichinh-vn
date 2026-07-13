@@ -3,6 +3,7 @@ import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { syncGscToDatabase } from "@/modules/admin/gsc-sync";
 import { isGscEnabled } from "@/lib/gsc/feature";
+import { verifyCronRequest } from "@/lib/cron-auth";
 
 export async function POST(request: NextRequest) {
   if (!isGscEnabled()) {
@@ -12,9 +13,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const auth = request.headers.get("authorization");
-  const secret = process.env.CRON_SECRET;
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if (!(await verifyCronRequest(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
