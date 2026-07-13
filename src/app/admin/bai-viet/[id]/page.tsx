@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { Eye } from "lucide-react";
 import prisma from "@/lib/db";
 import { AdminPageTitle } from "@/components/admin/ui";
 import { ArticleForm } from "@/components/admin/article-form";
@@ -29,6 +31,14 @@ export default async function EditArticlePage({
       <AdminPageTitle
         title="Sửa bài viết"
         description={article.title}
+        action={
+          <Link
+            href={`/admin/bai-viet/${article.id}/xem`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <Eye className="h-4 w-4" /> Xem chi tiết
+          </Link>
+        }
       />
       <ArticleForm
         action={boundAction}

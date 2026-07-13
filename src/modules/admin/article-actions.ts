@@ -116,10 +116,11 @@ export async function createArticle(
   }
   const data = parsed.data;
   let slug = "";
+  let id = "";
 
   try {
     slug = await uniqueSlug(data.slug || data.title);
-    await prisma.newsArticle.create({
+    const created = await prisma.newsArticle.create({
       data: {
         slug,
         title: data.title,
@@ -136,6 +137,7 @@ export async function createArticle(
         publishedAt: resolvePublishedAt(data.status, data.publishedAt),
       },
     });
+    id = created.id;
   } catch (e) {
     logger.error({ e }, "Create article failed");
     return { ok: false, error: "Không thể tạo bài viết. Vui lòng thử lại." };
@@ -144,7 +146,11 @@ export async function createArticle(
   revalidatePath("/admin/bai-viet");
   revalidatePath("/tin-tuc");
   revalidatePath(`/tin-tuc/${slug}`);
-  redirect("/admin/bai-viet");
+
+  if (data.status === "PUBLISHED") {
+    redirect(`/tin-tuc/${slug}`);
+  }
+  redirect(`/admin/bai-viet/${id}/xem`);
 }
 
 export async function updateArticle(
@@ -201,7 +207,11 @@ export async function updateArticle(
   if (previousSlug && previousSlug !== slug) {
     revalidatePath(`/tin-tuc/${previousSlug}`);
   }
-  redirect("/admin/bai-viet");
+
+  if (data.status === "PUBLISHED") {
+    redirect(`/tin-tuc/${slug}`);
+  }
+  redirect(`/admin/bai-viet/${id}/xem`);
 }
 
 export async function deleteArticle(formData: FormData): Promise<void> {

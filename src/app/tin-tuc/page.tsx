@@ -7,7 +7,7 @@ import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { Newspaper } from "lucide-react";
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 const PAGE_TITLE = "Tin tức tài chính";
 const PAGE_DESC =

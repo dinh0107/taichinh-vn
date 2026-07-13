@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileText, Sparkles, Eye, Pencil } from "lucide-react";
+import { Plus, FileText, Sparkles, Eye, Pencil, ExternalLink } from "lucide-react";
 import {
   AdminPageTitle,
   AdminCard,
@@ -146,6 +146,13 @@ export default async function AdminArticlesPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/admin/bai-viet/${a.id}/xem`}
+                            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-sky-600"
+                            title="Xem chi tiết"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
                           {a.status === "PUBLISHED" && (
                             <Link
                               href={`/tin-tuc/${a.slug}`}
@@ -153,7 +160,7 @@ export default async function AdminArticlesPage() {
                               className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-emerald-600"
                               title="Xem trang công khai"
                             >
-                              <Eye className="h-4 w-4" />
+                              <ExternalLink className="h-4 w-4" />
                             </Link>
                           )}
                           <Link

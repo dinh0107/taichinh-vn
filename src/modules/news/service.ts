@@ -125,3 +125,68 @@ export async function getRelatedArticles(
     return [];
   }
 }
+
+export async function getArticleBySlugAnyStatus(
+  slug: string
+): Promise<PublicArticleDetail | null> {
+  try {
+    const article = await prisma.newsArticle.findFirst({
+      where: { slug },
+      select: {
+        slug: true,
+        title: true,
+        excerpt: true,
+        content: true,
+        category: true,
+        featuredImage: true,
+        publishedAt: true,
+        isAiGenerated: true,
+        source: true,
+        sourceUrl: true,
+        seoTitle: true,
+        seoDescription: true,
+        ogImage: true,
+        faqs: {
+          orderBy: { sortOrder: "asc" },
+          select: { question: true, answer: true },
+        },
+      },
+    });
+    return article;
+  } catch {
+    return null;
+  }
+}
+
+export async function getArticleByIdForAdmin(
+  id: string
+): Promise<(PublicArticleDetail & { id: string; status: string }) | null> {
+  try {
+    return await prisma.newsArticle.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        slug: true,
+        title: true,
+        excerpt: true,
+        content: true,
+        category: true,
+        featuredImage: true,
+        publishedAt: true,
+        isAiGenerated: true,
+        source: true,
+        sourceUrl: true,
+        seoTitle: true,
+        seoDescription: true,
+        ogImage: true,
+        faqs: {
+          orderBy: { sortOrder: "asc" },
+          select: { question: true, answer: true },
+        },
+      },
+    });
+  } catch {
+    return null;
+  }
+}
