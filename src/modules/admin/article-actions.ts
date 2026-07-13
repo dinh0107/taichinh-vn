@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { logger } from "@/lib/logger";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, touchSession } from "@/lib/auth";
 import { NewsCategoryCode, ArticleStatus } from "@prisma/client";
 
 export type ArticleFormState = {
@@ -109,6 +109,7 @@ export async function createArticle(
   formData: FormData
 ): Promise<ArticleFormState> {
   await requireAdmin();
+  await touchSession();
 
   const parsed = parseForm(formData);
   if (!parsed.success) {
@@ -147,10 +148,7 @@ export async function createArticle(
   revalidatePath("/tin-tuc");
   revalidatePath(`/tin-tuc/${slug}`);
 
-  // Redirect to App Router paths (no .html). Proxy will 308 public URLs.
-  if (data.status === "PUBLISHED") {
-    redirect(`/tin-tuc/${slug}`);
-  }
+  // Always stay in admin after save (avoids session drops on public redirect).
   redirect(`/admin/bai-viet/${id}/xem`);
 }
 
@@ -160,6 +158,7 @@ export async function updateArticle(
   formData: FormData
 ): Promise<ArticleFormState> {
   await requireAdmin();
+  await touchSession();
 
   const parsed = parseForm(formData);
   if (!parsed.success) {
@@ -209,9 +208,6 @@ export async function updateArticle(
     revalidatePath(`/tin-tuc/${previousSlug}`);
   }
 
-  if (data.status === "PUBLISHED") {
-    redirect(`/tin-tuc/${slug}`);
-  }
   redirect(`/admin/bai-viet/${id}/xem`);
 }
 

@@ -6,22 +6,21 @@ import {
   withHtmlExtension,
 } from "@/lib/seo/html-path";
 
-const ACCESS_COOKIE = "tcvn_admin_access";
-const REFRESH_COOKIE = "tcvn_admin_refresh";
-const LEGACY_SESSION_COOKIE = "tcvn_admin_session";
-
 /**
- * Next.js 16: single `proxy.ts` (middleware convention is deprecated).
- * - Admin: cookie gate
- * - Public: force `.html` URLs (rewrite inbound / 308 outbound)
+ * Next.js 16 proxy:
+ * - Public SEO URLs: `/path` → 308 `/path.html`, rewrite back for App Router
+ * - Do NOT gate /admin here (IIS/iisnode often drops cookies at the proxy layer
+ *   on Server Action follow-up navigations → false redirects to login).
+ *   Auth stays in admin layout + requireAdmin() in Server Actions.
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  // Server Actions POSTs must not be redirected — requireAdmin() still applies.
+  const method = request.method.toUpperCase();
   const isServerAction = request.headers.has("next-action");
 
   if (
     pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/") ||
     pathname === "/sitemap.xml" ||
     pathname === "/robots.txt" ||
     pathname === "/favicon.ico"
@@ -29,38 +28,25 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Admin auth gate
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-    if (!isServerAction) {
-      const hasSession = Boolean(
-        request.cookies.get(ACCESS_COOKIE)?.value ||
-          request.cookies.get(REFRESH_COOKIE)?.value ||
-          request.cookies.get(LEGACY_SESSION_COOKIE)?.value
-      );
-
-      if (!hasSession) {
-        const loginUrl = new URL("/dang-nhap", request.url);
-        loginUrl.searchParams.set("next", request.nextUrl.pathname);
-        return NextResponse.redirect(loginUrl);
-      }
-    }
-
+  // Never redirect POST/PUT/etc or Server Actions (breaks form saves).
+  if (isServerAction || (method !== "GET" && method !== "HEAD")) {
     return NextResponse.next();
   }
 
-  // /foo.html → rewrite → /foo (App Router path) — keep for RSC navigations
+  // Admin / login / auth pages — leave alone
+  if (isHtmlExemptPath(pathname)) {
+    return NextResponse.next();
+  }
+
+  // /foo.html → rewrite → /foo
   if (/\.html$/i.test(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = stripHtmlExtension(pathname);
     return NextResponse.rewrite(url);
   }
 
-  // /foo → 308 → /foo.html (skip Server Actions)
-  if (
-    !isServerAction &&
-    !isHtmlExemptPath(pathname) &&
-    !pathname.includes(".")
-  ) {
+  // /foo → 308 → /foo.html
+  if (!pathname.includes(".")) {
     const url = request.nextUrl.clone();
     url.pathname = withHtmlExtension(pathname);
     return NextResponse.redirect(url, 308);

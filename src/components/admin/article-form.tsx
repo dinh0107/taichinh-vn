@@ -47,7 +47,7 @@ const EMPTY: ArticleFormValues = {
   title: "",
   slug: "",
   category: "GOLD",
-  status: "DRAFT",
+  status: "PUBLISHED",
   excerpt: "",
   content: "",
   source: "",
