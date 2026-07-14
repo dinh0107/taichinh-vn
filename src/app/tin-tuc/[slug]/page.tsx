@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { ArticleBody } from "@/components/news/article-body";
 import { ArticleCard } from "@/components/news/article-card";
+import { ArticleCoverImage } from "@/components/news/article-cover-image";
 import { MarketPageShell } from "@/components/layout/market-page-shell";
 import { ModuleSection } from "@/components/layout/page-header";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
@@ -11,7 +13,10 @@ import {
   buildFaqSchema,
   buildNewsArticleSchema,
 } from "@/lib/seo/schema";
-import { absoluteUrl } from "@/lib/utils";
+import { absoluteUrl, cn } from "@/lib/utils";
+import { formatDateVi, formatRelativeTime } from "@/lib/time";
+import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
+import { NEWS_CATEGORY_COLORS } from "@/modules/news/constants";
 import {
   getPublishedArticleBySlug,
   getRelatedArticles,
@@ -81,6 +86,9 @@ export default async function ArticleDetailPage({ params }: Props) {
 
   const related = await getRelatedArticles(slug, article.category);
   const siteName = settings.site_name || "TaiChinh.vn";
+  const publishedLabel = article.publishedAt
+    ? `${formatDateVi(article.publishedAt)} · ${formatRelativeTime(article.publishedAt)}`
+    : formatRelativeTime(article.publishedAt);
 
   const jsonLd = [
     buildBreadcrumbSchema([
