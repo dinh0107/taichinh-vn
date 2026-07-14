@@ -3,16 +3,10 @@ import { syncGoldPricesToDb } from "@/modules/gold/service";
 import prisma from "@/lib/db";
 import { cacheDel } from "@/lib/redis";
 import { logger } from "@/lib/logger";
-
-function verifyCronSecret(request: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return process.env.NODE_ENV === "development";
-  const auth = request.headers.get("authorization");
-  return auth === `Bearer ${secret}`;
-}
+import { verifyCronRequest } from "@/lib/cron-auth";
 
 export async function POST(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
+  if (!(await verifyCronRequest(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

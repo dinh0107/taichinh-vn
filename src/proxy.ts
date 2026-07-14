@@ -1,31 +1,57 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const ACCESS_COOKIE = "tcvn_admin_access";
-const REFRESH_COOKIE = "tcvn_admin_refresh";
-const LEGACY_SESSION_COOKIE = "tcvn_admin_session";
+import {
+  isArticleDetailPath,
+  stripHtmlExtension,
+} from "@/lib/seo/html-path";
 
 /**
- * Lightweight gate for the admin area: if there's no session cookie, redirect to
- * the login page. The authoritative role check happens in the admin layout and in
- * each Server Action (defense in depth).
+ * Public article URLs may end with `.html`.
+ * Only rewrite — never 308 to `.html` (redirects loop with custom servers / IIS).
+ *
+ *   /tin-tuc/slug.html → rewrite → /tin-tuc/slug
+ *   /tin-tuc.html      → rewrite → /tin-tuc
+ *   /tin-tuc/slug      → pass through (also valid)
  */
 export function proxy(request: NextRequest) {
-  const hasSession = Boolean(
-    request.cookies.get(ACCESS_COOKIE)?.value ||
-      request.cookies.get(REFRESH_COOKIE)?.value ||
-      request.cookies.get(LEGACY_SESSION_COOKIE)?.value
-  );
+  const { pathname } = request.nextUrl;
+  const method = request.method.toUpperCase();
 
-  if (!hasSession) {
-    const loginUrl = new URL("/dang-nhap", request.url);
-    loginUrl.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/") ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
+    pathname === "/favicon.ico"
+  ) {
+    return NextResponse.next();
+  }
+
+  // Never redirect POST / Server Actions
+  if (
+    request.headers.has("next-action") ||
+    (method !== "GET" && method !== "HEAD")
+  ) {
+    return NextResponse.next();
+  }
+
+  if (/^\/tin-tuc\.html$/i.test(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/tin-tuc";
+    return NextResponse.rewrite(url);
+  }
+
+  if (/\.html$/i.test(pathname) && isArticleDetailPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = stripHtmlExtension(pathname);
+    return NextResponse.rewrite(url);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|api/brand|.*\\.(?:ico|png|jpg|jpeg|gif|webp|svg|css|js|map|woff2?|txt|xml)$).*)",
+  ],
 };

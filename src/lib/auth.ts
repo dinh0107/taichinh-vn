@@ -8,7 +8,8 @@ import type { User, UserRole } from "@prisma/client";
 export const ACCESS_COOKIE = "tcvn_admin_access";
 export const REFRESH_COOKIE = "tcvn_admin_refresh";
 export const LEGACY_SESSION_COOKIE = "tcvn_admin_session";
-const ACCESS_TTL_MINUTES = 15;
+/** Long enough for editing articles without mid-save auth drops. */
+const ACCESS_TTL_MINUTES = 60 * 12;
 const SESSION_TTL_DAYS = 7;
 const ADMIN_ROLES: UserRole[] = ["ADMIN", "EDITOR"];
 
@@ -161,6 +162,22 @@ export async function destroySession(): Promise<void> {
   store.delete(LEGACY_SESSION_COOKIE);
 }
 
+async function issueAccessCookie(userId: string): Promise<void> {
+  const accessExpiresAt = accessExpiry();
+  const accessToken = encodeAccessToken({
+    userId,
+    exp: Math.floor(accessExpiresAt.getTime() / 1000),
+  });
+  const store = await cookies();
+  store.set(ACCESS_COOKIE, accessToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: cookieSecure(),
+    path: "/",
+    expires: accessExpiresAt,
+  });
+}
+
 /** Read the current authenticated user from the session cookie, or null. */
 export async function getCurrentUser(): Promise<SessionUser | null> {
   const store = await cookies();
@@ -176,6 +193,21 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 
   if (!refreshToken) return null;
   return getUserFromRefreshToken(refreshToken);
+}
+
+/**
+ * Renew access cookie when refresh is still valid.
+ * Call only from Server Actions / Route Handlers (not RSC render).
+ */
+export async function touchSession(): Promise<SessionUser | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  try {
+    await issueAccessCookie(user.id);
+  } catch {
+    // ignore
+  }
+  return user;
 }
 
 export function isAdminRole(role: UserRole): boolean {

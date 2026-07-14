@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Save, ArrowLeft, AlertCircle } from "lucide-react";
 import type { ArticleFormState } from "@/modules/admin/article-actions";
 import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
@@ -47,7 +48,7 @@ const EMPTY: ArticleFormValues = {
   title: "",
   slug: "",
   category: "GOLD",
-  status: "DRAFT",
+  status: "PUBLISHED",
   excerpt: "",
   content: "",
   source: "",
@@ -86,12 +87,18 @@ export function ArticleForm({
   mode: "create" | "edit";
 }) {
   const v = { ...EMPTY, ...initialValues };
+  const router = useRouter();
   const [state, formAction] = useActionState<ArticleFormState, FormData>(
     action,
     { ok: false }
   );
-  const [content, setContent] = useState(v.content);
   const fe = state.fieldErrors ?? {};
+
+  useEffect(() => {
+    if (!state.redirectTo) return;
+    router.replace(state.redirectTo);
+    router.refresh();
+  }, [state.redirectTo, router]);
 
   return (
     <form action={formAction} className="space-y-6">
@@ -104,6 +111,12 @@ export function ArticleForm({
         </Link>
         <SubmitButton />
       </div>
+
+      {state.ok && state.redirectTo && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Đã lưu — đang chuyển trang…
+        </div>
+      )}
 
       {state.error && (
         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -152,12 +165,11 @@ export function ArticleForm({
                 className={
                   fe.content
                     ? "overflow-hidden rounded-lg ring-2 ring-red-100"
-                    : ""
+                    : undefined
                 }
               >
-                <RichTextEditor value={content} onChange={setContent} />
+                <RichTextEditor initialValue={v.content} name="content" />
               </div>
-              <input type="hidden" name="content" value={content} readOnly />
             </Field>
           </Card>
 
@@ -309,8 +321,10 @@ function Field({
   required?: boolean;
   children: React.ReactNode;
 }) {
+  // Use <div>, not <label> — wrapping CKEditor/contenteditable in <label>
+  // breaks focus, toolbar clicks, and typing in the article editor.
   return (
-    <label className="block">
+    <div className="block">
       <span className="mb-1.5 block text-sm font-medium text-slate-700">
         {label}
         {required && <span className="ml-0.5 text-red-500">*</span>}
@@ -321,7 +335,7 @@ function Field({
       ) : hint ? (
         <span className="mt-1 block text-xs text-slate-400">{hint}</span>
       ) : null}
-    </label>
+    </div>
   );
 }
 

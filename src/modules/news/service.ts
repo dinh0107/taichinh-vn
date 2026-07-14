@@ -1,10 +1,11 @@
 import prisma from "@/lib/db";
 import type { NewsCategoryCode } from "@prisma/client";
 import { isNextProductionBuild } from "@/lib/build-phase";
+import { logger } from "@/lib/logger";
 
+/** Public listing: show all PUBLISHED (scheduled filter was hiding posts). */
 const publishedWhere = {
   status: "PUBLISHED" as const,
-  OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
 };
 
 export type PublicArticleSummary = {
@@ -46,7 +47,8 @@ export async function getPublishedArticles(
         isAiGenerated: true,
       },
     });
-  } catch {
+  } catch (e) {
+    logger.error({ e }, "getPublishedArticles failed");
     return [];
   }
 }
@@ -54,6 +56,7 @@ export async function getPublishedArticles(
 export async function getPublishedArticleBySlug(
   slug: string
 ): Promise<PublicArticleDetail | null> {
+  if (isNextProductionBuild()) return null;
   try {
     const article = await prisma.newsArticle.findFirst({
       where: { slug, ...publishedWhere },
@@ -78,7 +81,8 @@ export async function getPublishedArticleBySlug(
       },
     });
     return article;
-  } catch {
+  } catch (e) {
+    logger.error({ e, slug }, "getPublishedArticleBySlug failed");
     return null;
   }
 }
@@ -92,7 +96,8 @@ export async function getPublishedArticleSlugs(): Promise<string[]> {
       orderBy: { publishedAt: "desc" },
     });
     return rows.map((r) => r.slug);
-  } catch {
+  } catch (e) {
+    logger.error({ e }, "getPublishedArticleSlugs failed");
     return [];
   }
 }
@@ -121,7 +126,73 @@ export async function getRelatedArticles(
         isAiGenerated: true,
       },
     });
-  } catch {
+  } catch (e) {
+    logger.error({ e }, "getRelatedArticles failed");
     return [];
+  }
+}
+
+export async function getArticleBySlugAnyStatus(
+  slug: string
+): Promise<PublicArticleDetail | null> {
+  try {
+    const article = await prisma.newsArticle.findFirst({
+      where: { slug },
+      select: {
+        slug: true,
+        title: true,
+        excerpt: true,
+        content: true,
+        category: true,
+        featuredImage: true,
+        publishedAt: true,
+        isAiGenerated: true,
+        source: true,
+        sourceUrl: true,
+        seoTitle: true,
+        seoDescription: true,
+        ogImage: true,
+        faqs: {
+          orderBy: { sortOrder: "asc" },
+          select: { question: true, answer: true },
+        },
+      },
+    });
+    return article;
+  } catch {
+    return null;
+  }
+}
+
+export async function getArticleByIdForAdmin(
+  id: string
+): Promise<(PublicArticleDetail & { id: string; status: string }) | null> {
+  try {
+    return await prisma.newsArticle.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        slug: true,
+        title: true,
+        excerpt: true,
+        content: true,
+        category: true,
+        featuredImage: true,
+        publishedAt: true,
+        isAiGenerated: true,
+        source: true,
+        sourceUrl: true,
+        seoTitle: true,
+        seoDescription: true,
+        ogImage: true,
+        faqs: {
+          orderBy: { sortOrder: "asc" },
+          select: { question: true, answer: true },
+        },
+      },
+    });
+  } catch {
+    return null;
   }
 }

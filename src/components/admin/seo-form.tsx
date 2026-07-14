@@ -89,7 +89,6 @@ export function SeoForm({
     ok: false,
   });
   const [faqs, setFaqs] = useState(v.faqs);
-  const [content, setContent] = useState(v.content);
   const fe = state.fieldErrors ?? {};
 
   useEffect(() => {
@@ -111,7 +110,6 @@ export function SeoForm({
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="faqPayload" value={JSON.stringify(faqs)} readOnly />
-      <input type="hidden" name="content" value={content} readOnly />
 
       <div className="flex items-center justify-between">
         <Link
@@ -205,7 +203,7 @@ export function SeoForm({
           <p className="text-xs text-slate-500">
             Chỉ cần nội dung bài — hiện ở cuối trang công khai tương ứng với slug này.
           </p>
-          <RichTextEditor value={content} onChange={setContent} />
+          <RichTextEditor initialValue={v.content} name="content" />
         </div>
       </AdminCard>
 

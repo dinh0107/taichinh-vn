@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "taichinh.vn" },
+      { protocol: "https", hostname: "giahomnay.site" },
       { protocol: "https", hostname: "**.amazonaws.com" },
     ],
   },

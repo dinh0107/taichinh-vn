@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { ArticleBody } from "@/components/news/article-body";
@@ -12,25 +11,22 @@ import {
   buildFaqSchema,
   buildNewsArticleSchema,
 } from "@/lib/seo/schema";
-import { absoluteUrl, cn } from "@/lib/utils";
-import { formatDateVi, formatRelativeTime } from "@/lib/time";
-import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
-import { NEWS_CATEGORY_COLORS } from "@/modules/news/constants";
+import { absoluteUrl } from "@/lib/utils";
 import {
   getPublishedArticleBySlug,
-  getPublishedArticleSlugs,
   getRelatedArticles,
 } from "@/modules/news/service";
 import { getSiteSettings } from "@/modules/admin/settings-service";
-import { ArticleCoverImage } from "@/components/news/article-cover-image";
 
-export const revalidate = 300;
+export const revalidate = 60;
+/** Allow newly published slugs that were not in the last build. */
+export const dynamicParams = true;
+export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
-  const slugs = await getPublishedArticleSlugs();
-  return slugs.map((slug) => ({ slug }));
+  return [];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -85,9 +81,6 @@ export default async function ArticleDetailPage({ params }: Props) {
 
   const related = await getRelatedArticles(slug, article.category);
   const siteName = settings.site_name || "TaiChinh.vn";
-  const publishedLabel = article.publishedAt
-    ? `${formatDateVi(article.publishedAt)} · ${formatRelativeTime(article.publishedAt)}`
-    : formatRelativeTime(article.publishedAt);
 
   const jsonLd = [
     buildBreadcrumbSchema([

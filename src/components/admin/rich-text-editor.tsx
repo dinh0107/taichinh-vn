@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, memo } from "react";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import {
   ClassicEditor,
@@ -28,7 +28,6 @@ import {
   PasteFromOffice,
   HorizontalLine,
   RemoveFormat,
-  SourceEditing,
   GeneralHtmlSupport,
   type EditorConfig,
 } from "ckeditor5";
@@ -36,14 +35,30 @@ import "ckeditor5/ckeditor5.css";
 import { Code2, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function RichTextEditor({
-  value,
+type Props = {
+  /** Initial HTML only — do not pass a changing controlled value while typing. */
+  initialValue?: string;
+  /** Called when content changes (parent should NOT setState that re-renders this editor). */
+  onChange?: (html: string) => void;
+  /** Optional hidden input name — keeps FormData in sync without parent re-renders. */
+  name?: string;
+};
+
+/**
+ * Self-contained editor. Parent must not feed `value` back on every keystroke
+ * or React re-renders will steal focus / block clicks inside CKEditor.
+ */
+function RichTextEditorInner({
+  initialValue = "",
   onChange,
-}: {
-  value: string;
-  onChange: (html: string) => void;
-}) {
+  name = "content",
+}: Props) {
   const [mode, setMode] = useState<"visual" | "html">("visual");
+  const [htmlDraft, setHtmlDraft] = useState(initialValue);
+  const [editorKey, setEditorKey] = useState(0);
+  const [seed, setSeed] = useState(initialValue);
+  const hiddenRef = useRef<HTMLInputElement>(null);
+  const draftRef = useRef(initialValue);
 
   const config = useMemo<EditorConfig>(
     () => ({
@@ -73,13 +88,10 @@ export function RichTextEditor({
         PasteFromOffice,
         HorizontalLine,
         RemoveFormat,
-        SourceEditing,
         GeneralHtmlSupport,
       ],
       toolbar: {
         items: [
-          "sourceEditing",
-          "|",
           "undo",
           "redo",
           "|",
@@ -137,12 +149,34 @@ export function RichTextEditor({
     []
   );
 
+  const sync = (html: string) => {
+    draftRef.current = html;
+    if (hiddenRef.current) hiddenRef.current.value = html;
+    onChange?.(html);
+  };
+
+  const switchToHtml = () => {
+    setHtmlDraft(draftRef.current);
+    setMode("html");
+  };
+
+  const switchToVisual = () => {
+    if (mode === "visual") return;
+    const html = draftRef.current;
+    setSeed(html);
+    setHtmlDraft(html);
+    setEditorKey((k) => k + 1);
+    setMode("visual");
+  };
+
   return (
     <div className="space-y-2">
+      <input type="hidden" name={name} ref={hiddenRef} defaultValue={initialValue} />
+
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={() => setMode("visual")}
+          onClick={switchToVisual}
           className={cn(
             "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition",
             mode === "visual"
@@ -155,7 +189,7 @@ export function RichTextEditor({
         </button>
         <button
           type="button"
-          onClick={() => setMode("html")}
+          onClick={switchToHtml}
           className={cn(
             "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition",
             mode === "html"
@@ -167,28 +201,50 @@ export function RichTextEditor({
           HTML / Source
         </button>
         <span className="text-[11px] text-slate-400">
-          Bấm «HTML / Source» để xem và sửa mã HTML.
+          Click vào khung trắng bên dưới để gõ nội dung.
         </span>
       </div>
 
       {mode === "html" ? (
         <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={htmlDraft}
+          onChange={(e) => {
+            const html = e.target.value;
+            setHtmlDraft(html);
+            sync(html);
+          }}
           spellCheck={false}
           className="min-h-[360px] w-full resize-y rounded-lg border border-slate-200 bg-slate-950 px-3 py-3 font-mono text-xs leading-relaxed text-emerald-300 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
           placeholder="<p>Dán hoặc sửa HTML tại đây…</p>"
         />
       ) : (
-        <div className="ck-tcvn">
+        <div className="ck-tcvn relative z-10 isolate rounded-lg border border-slate-200 bg-white">
           <CKEditor
+            key={editorKey}
             editor={ClassicEditor}
             config={config}
-            data={value}
-            onChange={(_e, editor) => onChange(editor.getData())}
+            data={seed}
+            onChange={(_e, editor) => {
+              sync(editor.getData());
+            }}
+            onReady={(editor) => {
+              const root = editor.editing.view.getDomRoot();
+              if (root instanceof HTMLElement) {
+                root.setAttribute("contenteditable", "true");
+                root.style.pointerEvents = "auto";
+                root.style.userSelect = "text";
+                root.style.cursor = "text";
+                root.style.minHeight = "360px";
+              }
+            }}
+            onError={(err, { willEditorRestart }) => {
+              console.error("[RichTextEditor]", err, { willEditorRestart });
+            }}
           />
         </div>
       )}
     </div>
   );
 }
+
+export const RichTextEditor = memo(RichTextEditorInner);

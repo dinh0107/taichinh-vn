@@ -72,11 +72,15 @@ app
     const server = createServer(async (req, res) => {
       try {
         const parsedUrl = parse(req.url, true);
-        const pathname = parsedUrl.pathname || "/";
+        let pathname = parsedUrl.pathname || "/";
 
         if (serveNextStatic(req, res, dir, pathname)) {
           return;
         }
+
+        // Do NOT strip/redirect .html here.
+        // Stripping before Next + proxy 308 back to .html = ERR_TOO_MANY_REDIRECTS.
+        // Article .html → App Router is handled only in src/proxy.ts (rewrite).
 
         await handle(req, res, parsedUrl);
       } catch (err) {

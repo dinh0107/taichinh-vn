@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getPublishedArticleSlugs } from "@/modules/news/service";
 import { getSiteBaseUrl } from "@/lib/seo/site-url";
 import { getIndexedSeoPaths } from "@/modules/admin/seo-service";
+import { withHtmlExtension } from "@/lib/seo/html-path";
 
 export const revalidate = 300;
 
@@ -31,10 +32,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const unique = [...new Set(combined)];
 
-  return unique.map((path) => ({
-    url: `${BASE}${path}`,
-    lastModified: new Date(),
-    changeFrequency: path.includes("hom-nay") ? ("hourly" as const) : ("daily" as const),
-    priority: path === "" ? 1 : path.includes("gia-vang") || path.includes("hom-nay") ? 0.9 : 0.7,
-  }));
+  return unique.map((path) => {
+    const publicPath =
+      path === "" || path === "/" ? "/" : withHtmlExtension(path);
+    const url = publicPath === "/" ? `${BASE}/` : `${BASE}${publicPath}`;
+    return {
+      url,
+      lastModified: new Date(),
+      changeFrequency: path.includes("hom-nay")
+        ? ("hourly" as const)
+        : ("daily" as const),
+      priority:
+        path === ""
+          ? 1
+          : path.includes("gia-vang") || path.includes("hom-nay")
+            ? 0.9
+            : 0.7,
+    };
+  });
 }

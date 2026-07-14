@@ -18,6 +18,7 @@ import { getSeoPagesList, getSeoStats } from "@/modules/admin/seo-service";
 import { SEO_PAGE_TYPE_LABELS, GSC_INDEX_STATUS_LABELS } from "@/modules/admin/labels";
 import { pageArticleDefBySlug } from "@/modules/admin/page-articles";
 import { isGscEnabled } from "@/lib/gsc/feature";
+import { withHtmlExtension } from "@/lib/seo/html-path";
 import type { SeoPageType } from "@prisma/client";
 import { formatRelativeTime } from "@/lib/time";
 
@@ -169,7 +170,7 @@ export default async function AdminSeoPage({
                 {pages.map((p) => {
                   const gsc = GSC_INDEX_STATUS_LABELS[p.gscIndexStatus] ?? GSC_INDEX_STATUS_LABELS.UNKNOWN;
                   const hub = pageArticleDefBySlug(p.slug);
-                  const publicHref = hub?.path ?? `/${p.slug}`;
+                  const publicHref = withHtmlExtension(hub?.path ?? `/${p.slug}`);
                   return (
                   <tr key={p.id} className="hover:bg-slate-50/60">
                     <td className="px-5 py-3.5">

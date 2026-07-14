@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileText, Sparkles, Eye, Pencil } from "lucide-react";
+import { Plus, FileText, Sparkles, Eye, Pencil, ExternalLink } from "lucide-react";
 import {
   AdminPageTitle,
   AdminCard,
@@ -15,6 +15,7 @@ import {
 } from "@/modules/admin/labels";
 import { formatDateVi } from "@/lib/time";
 import type { ArticleStatus } from "@prisma/client";
+import { withHtmlExtension } from "@/lib/seo/html-path";
 
 const CATEGORY_TONE: Record<string, "amber" | "violet" | "sky" | "emerald" | "slate"> = {
   GOLD: "amber",
@@ -146,14 +147,21 @@ export default async function AdminArticlesPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/admin/bai-viet/${a.id}/xem`}
+                            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-sky-600"
+                            title="Xem chi tiết"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
                           {a.status === "PUBLISHED" && (
                             <Link
-                              href={`/tin-tuc/${a.slug}`}
+                              href={withHtmlExtension(`/tin-tuc/${a.slug}`)}
                               target="_blank"
                               className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-emerald-600"
                               title="Xem trang công khai"
                             >
-                              <Eye className="h-4 w-4" />
+                              <ExternalLink className="h-4 w-4" />
                             </Link>
                           )}
                           <Link

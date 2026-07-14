@@ -9,7 +9,9 @@ import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
 import { formatDateVi } from "@/lib/time";
 import { ArticleCoverImage } from "@/components/news/article-cover-image";
 
-export const revalidate = 300;
+export const revalidate = 60;
+/** Always hit DB on IIS — static ISR was baking empty "Chưa có bài" at build. */
+export const dynamic = "force-dynamic";
 
 const PAGE_TITLE = "Tin tức thị trường";
 const PAGE_DESC =
