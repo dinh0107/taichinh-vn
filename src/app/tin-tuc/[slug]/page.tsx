@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { ChevronRight, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { ArticleBody } from "@/components/news/article-body";
 import { ArticleCard } from "@/components/news/article-card";
-import { PageMain } from "@/components/ui/market-ui";
+import { MarketPageShell } from "@/components/layout/market-page-shell";
+import { ModuleSection } from "@/components/layout/page-header";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import {
   buildBreadcrumbSchema,
@@ -106,20 +107,26 @@ export default async function ArticleDetailPage({ params }: Props) {
   ];
 
   return (
-    <>
+    <MarketPageShell variant="news">
       <JsonLdScript data={jsonLd} />
 
-      <div className="border-b border-finance-200 bg-finance-hero bg-finance-grid text-white">
-        <div className="container-page py-8 md:py-10">
-          <nav className="flex items-center gap-1 text-xs text-finance-400">
-            <Link href="/" className="hover:text-gold-400">Trang chủ</Link>
-            <ChevronRight className="h-3 w-3 opacity-50" />
-            <Link href="/tin-tuc" className="hover:text-gold-400">Tin tức</Link>
-            <ChevronRight className="h-3 w-3 opacity-50" />
-            <span className="line-clamp-1 text-finance-300">{article.title}</span>
-          </nav>
+      <header className="space-y-4">
+        <nav className="flex flex-wrap items-center gap-1 text-sm text-[var(--text-secondary)]">
+          <Link href="/" className="hover:text-blue-600">
+            Trang chủ
+          </Link>
+          <span className="text-[var(--text-muted)]">/</span>
+          <Link href="/tin-tuc" className="hover:text-blue-600">
+            Tin tức
+          </Link>
+          <span className="text-[var(--text-muted)]">/</span>
+          <span className="line-clamp-1 font-medium text-[var(--text-primary)]">
+            {article.title}
+          </span>
+        </nav>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="surface-card p-5 md:p-6">
+          <div className="flex flex-wrap items-center gap-2">
             <span
               className={cn(
                 "inline-flex rounded border px-2 py-0.5 text-[11px] font-semibold",
@@ -129,103 +136,91 @@ export default async function ArticleDetailPage({ params }: Props) {
               {NEWS_CATEGORY_LABELS[article.category]}
             </span>
             {article.isAiGenerated && (
-              <span className="label-caps text-finance-400">
-                <Sparkles className="mr-1 inline h-3 w-3" /> AI
+              <span className="inline-flex items-center text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                <Sparkles className="mr-1 h-3 w-3" /> AI
               </span>
             )}
-            <span className="inline-flex items-center gap-1 text-xs text-finance-500">
+            <span className="inline-flex items-center gap-1 text-xs text-[var(--text-secondary)]">
               <Clock className="h-3.5 w-3.5" />
               {publishedLabel}
             </span>
           </div>
 
-          <h1 className="mt-4 max-w-4xl text-2xl font-semibold leading-tight md:text-3xl">
+          <h1 className="mt-4 text-[24px] font-bold leading-[1.25] tracking-[-0.03em] text-[var(--text-primary)] sm:text-[28px]">
             {article.title}
           </h1>
 
           {article.excerpt && (
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-finance-400 md:text-base">
+            <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)] md:text-base">
               {article.excerpt}
             </p>
           )}
 
           {article.source && (
-            <p className="mt-4 text-xs text-finance-500">
+            <p className="mt-4 text-xs text-[var(--text-muted)]">
               Nguồn:{" "}
               {article.sourceUrl ? (
                 <a
                   href={article.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-medium text-gold-400 hover:underline"
+                  className="inline-flex items-center gap-1 font-medium text-blue-600 hover:underline"
                 >
                   {article.source}
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               ) : (
-                <span className="text-finance-300">{article.source}</span>
+                <span>{article.source}</span>
               )}
             </p>
           )}
         </div>
-      </div>
+      </header>
 
       {article.featuredImage && (
-        <div className="border-b border-finance-200 bg-finance-50">
-          <div className="container-page py-5">
-            <div className="relative aspect-[21/9] w-full overflow-hidden rounded border border-finance-200">
-              <ArticleCoverImage
-                src={article.featuredImage}
-                alt={article.title}
-                priority
-                sizes="(max-width: 1200px) 100vw, 1200px"
-              />
-            </div>
+        <div className="overflow-hidden rounded-2xl border border-[var(--border-soft)]">
+          <div className="relative aspect-[21/9] w-full bg-slate-100">
+            <ArticleCoverImage
+              src={article.featuredImage}
+              alt={article.title}
+              priority
+              sizes="(max-width: 1200px) 100vw, 900px"
+            />
           </div>
         </div>
       )}
 
-      <PageMain>
-        <div className="mx-auto max-w-3xl space-y-10">
-        <article className="rounded border border-finance-200 bg-white p-6 shadow-sm md:p-10">
-          <ArticleBody html={article.content} />
-        </article>
+      <article className="surface-card p-6 md:p-10">
+        <ArticleBody html={article.content} />
+      </article>
 
-        {article.faqs.length > 0 && (
-          <section className="rounded border border-finance-200 bg-white p-6 shadow-sm md:p-8">
-            <h2 className="text-lg font-semibold text-finance-900">
-              Câu hỏi thường gặp
-            </h2>
-            <div className="mt-4 divide-y divide-finance-100">
-              {article.faqs.map((faq, i) => (
-                <details key={i} className="group py-4">
-                  <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-finance-800 marker:content-none group-open:text-gold-700">
-                    {faq.question}
-                    <ChevronRight className="h-4 w-4 shrink-0 text-finance-400 transition-transform group-open:rotate-90" />
-                  </summary>
-                  <p className="mt-2 text-sm leading-relaxed text-finance-600">
-                    {faq.answer}
-                  </p>
-                </details>
-              ))}
-            </div>
-          </section>
-        )}
+      {article.faqs.length > 0 && (
+        <ModuleSection title="Câu hỏi thường gặp">
+          <div className="divide-y divide-slate-100">
+            {article.faqs.map((faq, i) => (
+              <details key={i} className="group py-3">
+                <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-[var(--text-primary)] marker:content-none">
+                  {faq.question}
+                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-90" />
+                </summary>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+                  {faq.answer}
+                </p>
+              </details>
+            ))}
+          </div>
+        </ModuleSection>
+      )}
 
-        {related.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-finance-900">
-              Bài viết liên quan
-            </h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {related.map((item) => (
-                <ArticleCard key={item.slug} article={item} />
-              ))}
-            </div>
-          </section>
-        )}
-        </div>
-      </PageMain>
-    </>
+      {related.length > 0 && (
+        <ModuleSection title="Bài viết liên quan">
+          <div className="grid gap-4 md:grid-cols-2">
+            {related.map((item) => (
+              <ArticleCard key={item.slug} article={item} />
+            ))}
+          </div>
+        </ModuleSection>
+      )}
+    </MarketPageShell>
   );
 }

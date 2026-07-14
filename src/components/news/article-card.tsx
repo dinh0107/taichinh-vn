@@ -24,15 +24,14 @@ export function ArticleCard({
     return (
       <Link
         href={`/tin-tuc/${article.slug}`}
-        className="card-hover group block overflow-hidden rounded border border-finance-700 bg-finance-hero bg-finance-grid"
+        className="card-hover group block overflow-hidden rounded-2xl border border-finance-200 bg-white shadow-sm"
       >
         {article.featuredImage && (
-          <div className="relative aspect-[21/9] w-full overflow-hidden">
+          <div className="relative aspect-[21/9] w-full overflow-hidden bg-finance-100">
             <ArticleCoverImage
               src={article.featuredImage}
               alt={article.title}
               sizes="(max-width: 768px) 100vw, 1200px"
-              className="opacity-30"
             />
           </div>
         )}
@@ -52,10 +51,10 @@ export function ArticleCard({
               </span>
             )}
           </div>
-          <h2 className="mt-3 max-w-3xl text-xl font-semibold leading-snug text-white group-hover:text-gold-400 md:text-2xl">
+          <h2 className="mt-3 max-w-3xl text-xl font-bold leading-snug text-finance-900 group-hover:text-brand-700 md:text-2xl">
             {article.title}
           </h2>
-          <p className="mt-2 max-w-2xl text-sm text-finance-400 line-clamp-2">
+          <p className="mt-2 max-w-2xl text-sm text-finance-500 line-clamp-2">
             {excerpt}
           </p>
           <div className="mt-4 flex items-center gap-4 text-xs text-finance-500">
@@ -63,7 +62,7 @@ export function ArticleCard({
               <Clock className="h-3.5 w-3.5" />
               {time}
             </span>
-            <span className="inline-flex items-center gap-1 font-semibold text-gold-500">
+            <span className="inline-flex items-center gap-1 font-semibold text-brand-600">
               Đọc tiếp
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </span>

@@ -35,7 +35,7 @@ export function SectionHeading({
     <div className="flex items-end justify-between gap-4 border-b border-finance-200 pb-3">
       <div>
         <div className="flex items-center gap-2">
-          {Icon && <Icon className="h-4 w-4 text-gold-600" />}
+          {Icon && <Icon className="h-4 w-4 text-brand-600" />}
           <h2 className="text-lg font-semibold tracking-tight text-finance-900 md:text-xl">
             {title}
           </h2>
@@ -47,7 +47,7 @@ export function SectionHeading({
       {href && (
         <Link
           href={href}
-          className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-finance-700 transition-all hover:gap-1.5 hover:text-gold-600"
+          className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-finance-700 transition-all hover:gap-1.5 hover:text-brand-600"
         >
           {linkLabel} <ArrowRight className="h-3.5 w-3.5" />
         </Link>

@@ -74,11 +74,17 @@ export default async function RootLayout({
   return (
     <html lang="vi">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
         {/* Extra favicon links — browsers cache <link rel=icon> aggressively */}
         <link rel="icon" href={`/api/brand/icon?v=${v}`} type="image/png" />
         <link rel="apple-touch-icon" href={`/api/brand/icon?v=${v}`} />
       </head>
-      <body className="min-h-screen bg-finance-50 text-finance-900 antialiased flex flex-col">
+      <body className="flex min-h-screen flex-col text-[var(--text-primary)] antialiased">
         <SiteChrome
           siteName={s.site_name || SETTING_DEFAULTS.site_name}
           siteDescription={s.site_description || SETTING_DEFAULTS.site_description}

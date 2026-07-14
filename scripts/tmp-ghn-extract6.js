@@ -1,0 +1,14 @@
+const fs = require("fs");
+const h = fs.readFileSync(process.env.TEMP + "/ghn-full.html", "utf8");
+const css = fs.readFileSync(process.env.TEMP + "/ghn-style.css", "utf8");
+const bodies = css.match(/body\{[^}]+\}/g);
+console.log("body", bodies && bodies[0]);
+const k = h.indexOf("Giá bán lẻ");
+console.log("fuel", k);
+if (k > 0) fs.writeFileSync(process.env.TEMP + "/ghn-right.html", h.slice(k - 300, k + 2000));
+const g = h.match(/xl:grid-cols-\[[^\]]+\][^\"]*/);
+console.log("grid", g && g[0]);
+const html = h.match(/<html[^>]*>/);
+console.log("html", html && html[0]);
+const body = h.match(/<body[^>]*>/);
+console.log("bodytag", body && body[0]);

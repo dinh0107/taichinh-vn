@@ -8,6 +8,8 @@ import { getStockIndices } from "@/modules/stocks/service";
 import { getFuelPrices } from "@/modules/fuel/service";
 import { generateGoldFaqs } from "@/lib/seo/schema";
 import { ArticleBody } from "@/components/news/article-body";
+import { MarketPageShell } from "@/components/layout/market-page-shell";
+import { PageHeader, ModuleSection } from "@/components/layout/page-header";
 import {
   DataPanel,
   DataTable,
@@ -63,7 +65,9 @@ async function GoldBlock({
 
   return (
     <LandingShell page={page} updated={updated} faqs={faqs}>
-      <GoldPriceTable prices={display} />
+      <div className="surface-card overflow-hidden">
+        <GoldPriceTable prices={display} />
+      </div>
       <Prose title={`${page.h1} — Phân tích nhanh`}>
         Trang cung cấp {page.title.toLowerCase()} cập nhật liên tục. So sánh giá
         mua/bán từ các thương hiệu uy tín trước khi giao dịch.
@@ -286,51 +290,50 @@ function LandingShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
-      <div>
-        <nav className="text-xs text-slate-400">
-          <Link href="/" className="hover:text-slate-600">
-            Trang chủ
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-slate-600">{page.h1}</span>
-        </nav>
-        <h1 className="mt-3 text-3xl font-bold text-slate-900">{page.h1}</h1>
-        <p className="mt-2 text-slate-600">
-          Cập nhật lúc {updated} — Dữ liệu tham khảo từ TaiChinh.vn
-        </p>
-      </div>
+    <MarketPageShell>
+      <PageHeader
+        title={page.h1}
+        description={`Cập nhật lúc ${updated} — Dữ liệu tham khảo`}
+        breadcrumb={[
+          { label: "Trang chủ", href: "/" },
+          { label: page.h1 },
+        ]}
+      />
 
       {children}
 
       {page.content ? (
-        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white px-5 py-6 md:px-8 md:py-8">
+        <section className="surface-card overflow-hidden px-5 py-6 md:px-8 md:py-8">
           <ArticleBody html={page.content} />
         </section>
       ) : null}
 
       {faqs.length > 0 && (
-        <section className="rounded-xl border border-slate-200 bg-white p-6">
-          <h2 className="mb-4 text-xl font-semibold">FAQ — {page.title}</h2>
-          <div className="space-y-4">
+        <ModuleSection title={`FAQ — ${page.title}`}>
+          <div className="divide-y divide-slate-100">
             {faqs.map((faq, i) => (
-              <details key={i} className="group border-b border-slate-100 pb-4">
-                <summary className="cursor-pointer font-medium">{faq.question}</summary>
-                <p className="mt-2 text-sm text-slate-600">{faq.answer}</p>
+              <details key={i} className="group py-3">
+                <summary className="cursor-pointer font-medium text-[var(--text-primary)] marker:content-none">
+                  {faq.question}
+                </summary>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                  {faq.answer}
+                </p>
               </details>
             ))}
           </div>
-        </section>
+        </ModuleSection>
       )}
-    </div>
+    </MarketPageShell>
   );
 }
 
 function Prose({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="prose prose-slate max-w-none rounded-xl border border-slate-200 bg-white p-6">
-      <h2>{title}</h2>
-      <p>{children}</p>
-    </section>
+    <ModuleSection title={title}>
+      <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
+        {children}
+      </p>
+    </ModuleSection>
   );
 }

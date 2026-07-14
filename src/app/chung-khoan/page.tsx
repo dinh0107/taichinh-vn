@@ -1,11 +1,6 @@
-import { PageHeader } from "@/components/layout/page-header";
+import { PageHeader, ModuleSection } from "@/components/layout/page-header";
+import { MarketPageShell } from "@/components/layout/market-page-shell";
 import { getStockIndices } from "@/modules/stocks/service";
-import {
-  DataPanel,
-  MetricCard,
-  PageMain,
-  ProseSection,
-} from "@/components/ui/market-ui";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
 import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
@@ -52,7 +47,7 @@ export default async function StocksPage() {
   ];
 
   return (
-    <>
+    <MarketPageShell>
       <ModuleJsonLd
         path="/chung-khoan"
         serviceName={PAGE_TITLE}
@@ -60,64 +55,83 @@ export default async function StocksPage() {
         breadcrumbLabel="Chứng khoán"
         faqs={[...MODULE_FAQS.stocks]}
       />
+
       <PageHeader
-        title="Chứng khoán Việt Nam"
+        title="Chứng khoán Việt Nam hôm nay"
         description="Chỉ số VNINDEX, HNX, UPCOM cùng top cổ phiếu tăng/giảm mạnh và thanh khoản cao nhất."
-        breadcrumb={[{ label: "Trang chủ", href: "/" }, { label: "Chứng khoán" }]}
-        icon={TrendingUp}
+        breadcrumb={[
+          { label: "Trang chủ", href: "/" },
+          { label: "Chứng khoán" },
+        ]}
+        categoryLabel="Chứng khoán"
         badge="Phiên giao dịch hôm nay"
       />
 
-      <PageMain>
-        <div className="grid gap-4 md:grid-cols-3">
+      <ModuleSection title="Chỉ số thị trường">
+        <div className="grid gap-3 md:grid-cols-3">
           {indices.map((idx) => (
-            <MetricCard
+            <div
               key={idx.code}
-              label={idx.code}
-              value={idx.value.toLocaleString("vi-VN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-              sub={`${idx.change >= 0 ? "+" : ""}${idx.change.toFixed(2)} điểm (${idx.pct.toFixed(2)}%)`}
-              accent={idx.change >= 0 ? "emerald" : "rose"}
-            />
+              className="rounded-xl border border-[var(--border-soft)] bg-white p-4"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                {idx.code}
+              </p>
+              <p className="data-value mt-2 text-2xl font-extrabold text-[var(--text-primary)]">
+                {idx.value.toLocaleString("vi-VN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+              <p
+                className={cn(
+                  "mt-1 text-sm font-bold",
+                  idx.change >= 0 ? "text-emerald-600" : "text-[var(--accent-red)]"
+                )}
+              >
+                {idx.change >= 0 ? "+" : ""}
+                {idx.change.toFixed(2)} ({idx.pct.toFixed(2)}%)
+              </p>
+            </div>
           ))}
         </div>
+      </ModuleSection>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <TopList title="Tăng mạnh nhất" items={gainers} positive />
-          <TopList title="Giảm mạnh nhất" items={losers} positive={false} />
-          <DataPanel title="Thanh khoản cao nhất">
-            <div className="divide-y divide-slate-100">
-              {liquid.map((it) => (
-                <div
-                  key={it.sym}
-                  className="flex items-center justify-between px-5 py-3.5"
-                >
-                  <span className="font-bold text-slate-800">{it.sym}</span>
-                  <span className="rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-bold text-sky-700">
-                    {it.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </DataPanel>
-        </div>
+      <div className="grid gap-5 lg:grid-cols-3">
+        <TopList title="Tăng mạnh nhất" items={gainers} positive />
+        <TopList title="Giảm mạnh nhất" items={losers} positive={false} />
+        <ModuleSection title="Thanh khoản cao nhất">
+          <div className="divide-y divide-slate-100">
+            {liquid.map((it) => (
+              <div
+                key={it.sym}
+                className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+              >
+                <span className="font-bold text-[var(--text-primary)]">
+                  {it.sym}
+                </span>
+                <span className="rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-bold text-sky-700">
+                  {it.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </ModuleSection>
+      </div>
 
-        <ProseSection title="Thị trường chứng khoán Việt Nam hôm nay">
+      <ModuleSection title="Thị trường chứng khoán Việt Nam hôm nay">
+        <div className="space-y-3 text-sm leading-relaxed text-[var(--text-secondary)]">
           <p>
             Cập nhật nhanh ba chỉ số chính của thị trường: VN-Index (HOSE),
             HNX-Index và UPCOM. Bảng xếp hạng top cổ phiếu tăng/giảm mạnh và thanh
             khoản cao nhất giúp nhà đầu tư nắm bắt dòng tiền trong phiên.
           </p>
-          <p>
-            Dữ liệu mang tính tham khảo, không phải khuyến nghị đầu tư.
-          </p>
-        </ProseSection>
+          <p>Dữ liệu mang tính tham khảo, không phải khuyến nghị đầu tư.</p>
+        </div>
+      </ModuleSection>
 
-        <PageBottomArticle slug="chung-khoan" />
-      </PageMain>
-    </>
+      <PageBottomArticle slug="chung-khoan" />
+    </MarketPageShell>
   );
 }
 
@@ -131,31 +145,31 @@ function TopList({
   positive: boolean;
 }) {
   return (
-    <DataPanel
-      title={
-        <span className="flex items-center gap-2">
-          {positive ? (
-            <TrendingUp className="h-4 w-4 text-emerald-600" />
-          ) : (
-            <TrendingDown className="h-4 w-4 text-red-600" />
-          )}
-          {title}
-        </span>
-      }
+    <ModuleSection
+      title={title}
     >
+      <div className="mb-2 flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+        {positive ? (
+          <TrendingUp className="h-4 w-4 text-emerald-600" />
+        ) : (
+          <TrendingDown className="h-4 w-4 text-red-600" />
+        )}
+      </div>
       <div className="divide-y divide-slate-100">
         {items.map((it) => (
           <div
             key={it.sym}
-            className="flex items-center justify-between px-5 py-3.5"
+            className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
           >
-            <span className="font-bold text-slate-800">{it.sym}</span>
+            <span className="font-bold text-[var(--text-primary)]">{it.sym}</span>
             <div className="flex items-center gap-4 tabular-nums">
               <span className="text-sm text-slate-600">{it.price}</span>
               <span
                 className={cn(
                   "min-w-14 rounded-full px-2 py-0.5 text-right text-xs font-bold",
-                  positive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                  positive
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-red-50 text-red-700"
                 )}
               >
                 {positive ? "+" : ""}
@@ -165,6 +179,6 @@ function TopList({
           </div>
         ))}
       </div>
-    </DataPanel>
+    </ModuleSection>
   );
 }

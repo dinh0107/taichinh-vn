@@ -1,6 +1,7 @@
 import prisma from "@/lib/db";
 import { cacheGet, cacheSet, CACHE_KEYS, CACHE_TTL } from "@/lib/redis";
 import { goldAdapter } from "./adapter";
+import { fetchGhnHomeGoldBoard } from "./ghn-adapter";
 import {
   GOLD_API_CODES,
   HISTORY_RANGE_DAYS,
@@ -27,6 +28,31 @@ export async function getCurrentGoldPrices(): Promise<GoldPriceItem[]> {
     if (dbPrices.length > 0) return dbPrices;
     return getMockGoldPrices();
   }
+}
+
+/** Homepage gold board from giahomnay.vn widgets (SJC/DOJI/Mi Hồng/Ngọc Thẩm/PNJ). */
+export async function getHomeGoldBoard(): Promise<GoldPriceItem[]> {
+  if (isNextProductionBuild()) return [];
+
+  const cacheKey = "gold:home-board:ghn";
+  const cached = await cacheGet<GoldPriceItem[]>(cacheKey);
+  if (cached?.length) return cached;
+
+  try {
+    const board = await fetchGhnHomeGoldBoard();
+    if (board.length > 0) {
+      await cacheSet(cacheKey, board, CACHE_TTL.GOLD_CURRENT);
+      return board;
+    }
+  } catch (error) {
+    logger.warn({ error }, "GHN home gold board failed");
+  }
+
+  // Fallback: featured codes from giavang.now
+  const all = await getCurrentGoldPrices();
+  return all.filter((p) =>
+    ["SJL1L10", "DOHNL", "DOHCML", "PQHNVM", "BTSJC"].includes(p.code)
+  );
 }
 
 async function getGoldPricesFromDb(): Promise<GoldPriceItem[]> {
