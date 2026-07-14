@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import { SiteChrome } from "@/components/layout/site-chrome";
 import { SiteScripts } from "@/components/layout/site-scripts";
@@ -6,6 +7,13 @@ import { getSiteSettings } from "@/modules/admin/settings-service";
 import { SETTING_DEFAULTS } from "@/modules/admin/settings-shared";
 import { getSiteBaseUrl } from "@/lib/seo/site-url";
 import "./globals.css";
+
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["vietnamese", "latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-be-vietnam-pro",
+});
 
 /** ISR: refresh site chrome / metadata every 5 minutes (on-demand via revalidatePath). */
 export const revalidate = 300;
@@ -72,19 +80,15 @@ export default async function RootLayout({
   const v = s.brand_asset_version || "0";
 
   return (
-    <html lang="vi">
+    <html lang="vi" className={beVietnamPro.variable}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
         {/* Extra favicon links — browsers cache <link rel=icon> aggressively */}
         <link rel="icon" href={`/api/brand/icon?v=${v}`} type="image/png" />
         <link rel="apple-touch-icon" href={`/api/brand/icon?v=${v}`} />
       </head>
-      <body className="flex min-h-screen flex-col text-[var(--text-primary)] antialiased">
+      <body
+        className={`${beVietnamPro.className} flex min-h-screen flex-col text-[var(--text-primary)] antialiased`}
+      >
         <SiteChrome
           siteName={s.site_name || SETTING_DEFAULTS.site_name}
           siteDescription={s.site_description || SETTING_DEFAULTS.site_description}

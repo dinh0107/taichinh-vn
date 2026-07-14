@@ -247,14 +247,13 @@ export function SiteNavDesktop() {
 }
 
 export function SiteNavMobile() {
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  useEffect(() => {
+  function closeMenu() {
     setOpen(false);
     setExpanded(null);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -282,14 +281,14 @@ export function SiteNavMobile() {
             type="button"
             className="absolute inset-0 bg-slate-900/50"
             aria-label="Đóng menu"
-            onClick={() => setOpen(false)}
+            onClick={closeMenu}
           />
           <aside className="absolute inset-y-0 right-0 flex w-[min(100%,340px)] flex-col bg-[#050816] text-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <span className="text-sm font-bold">Menu</span>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-white/70 hover:bg-white/10"
                 aria-label="Đóng"
               >
@@ -304,6 +303,7 @@ export function SiteNavMobile() {
                     <div className="flex items-center gap-1">
                       <Link
                         href={item.href}
+                        onClick={closeMenu}
                         className="flex flex-1 items-center gap-2 px-2 py-3 text-sm font-semibold text-white"
                       >
                         <item.icon className="h-4 w-4 text-blue-400" />
@@ -339,6 +339,7 @@ export function SiteNavMobile() {
                                 <li key={l.href + l.label}>
                                   <Link
                                     href={l.href}
+                                    onClick={closeMenu}
                                     className="block rounded-md px-2 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white"
                                   >
                                     {l.label}
