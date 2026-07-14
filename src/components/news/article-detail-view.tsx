@@ -10,7 +10,7 @@ import type {
   PublicArticleDetail,
   PublicArticleSummary,
 } from "@/modules/news/service";
-import { formatDateVi, formatRelativeTime } from "@/lib/time";
+import { formatDateVi } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
 export function ArticleDetailView({
@@ -23,7 +23,7 @@ export function ArticleDetailView({
   preview?: boolean;
 }) {
   const publishedLabel = article.publishedAt
-    ? `${formatDateVi(article.publishedAt)} · ${formatRelativeTime(article.publishedAt)}`
+    ? formatDateVi(article.publishedAt)
     : "Chưa đặt ngày đăng";
 
   return (

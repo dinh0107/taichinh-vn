@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Clock } from "lucide-react";
 import type { PublicArticleSummary } from "@/modules/news/service";
 import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
-import { formatRelativeTime } from "@/lib/time";
+import { ClientRelativeTime } from "@/components/ui/client-relative-time";
 import { ArticleCoverImage } from "@/components/news/article-cover-image";
 
 export function HomeNewsSection({
@@ -68,7 +68,7 @@ export function HomeNewsSection({
             </h3>
             <p className="mt-2 flex items-center gap-1 text-xs text-slate-400">
               <Clock className="h-3.5 w-3.5" />
-              {formatRelativeTime(featured.publishedAt)}
+              <ClientRelativeTime date={featured.publishedAt} />
             </p>
           </div>
         </Link>
@@ -88,7 +88,7 @@ export function HomeNewsSection({
                     {a.title}
                   </p>
                   <p className="mt-1 text-[11px] text-slate-400">
-                    {formatRelativeTime(a.publishedAt)}
+                    <ClientRelativeTime date={a.publishedAt} />
                   </p>
                 </div>
               </Link>

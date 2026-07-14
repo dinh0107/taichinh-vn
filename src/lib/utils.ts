@@ -16,10 +16,16 @@ export function formatVnd(amount: number | string): string {
 }
 
 export function formatNumber(num: number, decimals = 0): string {
-  return new Intl.NumberFormat("vi-VN", {
-    maximumFractionDigits: decimals,
-    minimumFractionDigits: decimals,
-  }).format(num);
+  // Deterministic vi-VN style (dot thousands, comma decimals) — no Intl hydration drift.
+  const n = Number(num);
+  if (!Number.isFinite(n)) return "—";
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  const fixed = abs.toFixed(decimals);
+  const [intRaw, decRaw] = fixed.split(".");
+  const intPart = intRaw.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  if (decimals > 0 && decRaw != null) return `${sign}${intPart},${decRaw}`;
+  return `${sign}${intPart}`;
 }
 
 export function formatPercent(pct: number): string {

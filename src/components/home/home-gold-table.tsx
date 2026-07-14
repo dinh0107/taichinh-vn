@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { LineChart } from "lucide-react";
 import { formatNumber, cn } from "@/lib/utils";
+import { formatDateTimeVi } from "@/lib/time";
 import type { GoldPriceItem } from "@/modules/gold/types";
 
 type Unit = "chi" | "luong";
@@ -12,16 +13,7 @@ export function HomeGoldTable({ prices }: { prices: GoldPriceItem[] }) {
   const [unit, setUnit] = useState<Unit>("chi");
   const mul = unit === "luong" ? 10 : 1;
   const rows = useMemo(() => prices, [prices]);
-  const updated =
-    rows[0]?.recordedAt != null
-      ? new Date(rows[0].recordedAt).toLocaleString("vi-VN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })
-      : new Date().toLocaleString("vi-VN");
+  const updated = formatDateTimeVi(rows[0]?.recordedAt ?? null);
 
   const buys = rows.map((r) => r.buy * mul);
   const sells = rows.map((r) => r.sell * mul);

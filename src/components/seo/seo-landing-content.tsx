@@ -7,6 +7,7 @@ import { getInterestRatesByBank } from "@/modules/interest/service";
 import { getStockIndices } from "@/modules/stocks/service";
 import { getFuelPrices } from "@/modules/fuel/service";
 import { generateGoldFaqs } from "@/lib/seo/schema";
+import { formatDateTimeVi } from "@/lib/time";
 import { ArticleBody } from "@/components/news/article-body";
 import { MarketPageShell } from "@/components/layout/market-page-shell";
 import { PageHeader, ModuleSection } from "@/components/layout/page-header";
@@ -27,7 +28,7 @@ import type { ResolvedSeoPage } from "@/modules/seo/service";
 const TERMS = ["KKH", "1 tháng", "3 tháng", "6 tháng", "12 tháng"];
 
 export async function SeoLandingContent({ page }: { page: ResolvedSeoPage }) {
-  const updated = new Date().toLocaleString("vi-VN");
+  const updated = formatDateTimeVi(new Date());
 
   switch (page.pageType) {
     case "GOLD_TODAY":

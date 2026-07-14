@@ -1,24 +1,76 @@
 import { formatDistanceToNow, format } from "date-fns";
 import { vi } from "date-fns/locale";
 
+const TZ = "Asia/Ho_Chi_Minh";
+
+function asDate(date: Date | string | number | null | undefined): Date | null {
+  if (date == null) return null;
+  const d = date instanceof Date ? date : new Date(date);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export function formatRelativeTime(date: Date | null | undefined): string {
   if (!date) return "—";
   return formatDistanceToNow(date, { addSuffix: true, locale: vi });
 }
 
-export function formatDateVi(date: Date | null | undefined): string {
-  if (!date) return "—";
-  return format(date, "dd/MM/yyyy", { locale: vi });
+export function formatDateVi(date: Date | string | null | undefined): string {
+  const d = asDate(date);
+  if (!d) return "—";
+  return format(d, "dd/MM/yyyy", { locale: vi });
 }
 
 export function formatTimeVi(date: Date): string {
   return format(date, "HH:mm:ss", { locale: vi });
 }
 
+/**
+ * Stable SSR/client datetime in Vietnam timezone.
+ * Avoids `toLocaleString()` without timeZone (Node TZ ≠ browser TZ).
+ */
+export function formatDateTimeVi(
+  date: Date | string | number | null | undefined
+): string {
+  const d = asDate(date);
+  if (!d) return "—";
+  return new Intl.DateTimeFormat("vi-VN", {
+    timeZone: TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour12: false,
+  }).format(d);
+}
+
 const WEEKDAY_VI = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"] as const;
 
 /** Stable SSR/client format — avoids `toLocaleString` hydration mismatch. */
 export function formatHeaderDateTime(date: Date = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(date.getHours())}:${pad(date.getMinutes())} ${WEEKDAY_VI[date.getDay()]}, ${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    weekday: "short",
+    hour12: false,
+  }).formatToParts(date);
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+
+  const hour = get("hour");
+  const minute = get("minute");
+  const day = get("day");
+  const month = get("month");
+  const year = get("year");
+  // Map weekday via Date in VN wall time
+  const wall = new Date(
+    `${year}-${month}-${day}T${hour}:${minute}:00+07:00`
+  );
+  const wd = WEEKDAY_VI[wall.getUTCDay()] ?? "T2";
+  return `${hour}:${minute} ${wd}, ${day}/${month}/${year}`;
 }

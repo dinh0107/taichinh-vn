@@ -1,4 +1,5 @@
 import { formatNumber, cn } from "@/lib/utils";
+import { formatDateTimeVi } from "@/lib/time";
 import type { FuelRow } from "@/modules/fuel/service";
 
 /** Full Petrolimex retail table — same columns as giahomnay.vn widget. */
@@ -9,18 +10,9 @@ export function FuelRetailTable({
   fuels: FuelRow[];
   updatedAt?: Date | string | null;
 }) {
-  const updated =
-    updatedAt != null
-      ? new Date(updatedAt).toLocaleString("vi-VN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })
-      : fuels[0]?.updatedAt
-        ? new Date(fuels[0].updatedAt).toLocaleString("vi-VN")
-        : null;
+  const updated = formatDateTimeVi(
+    updatedAt ?? fuels[0]?.updatedAt ?? null
+  );
 
   if (fuels.length === 0) {
     return (
@@ -32,7 +24,7 @@ export function FuelRetailTable({
 
   return (
     <div>
-      {updated && (
+      {updated !== "—" && (
         <p className="mb-3 text-sm text-[var(--text-secondary)]">
           Cập nhật lúc:{" "}
           <span className="font-semibold text-blue-600">{updated}</span>

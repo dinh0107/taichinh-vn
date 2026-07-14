@@ -18,6 +18,7 @@ import {
 } from "@/lib/seo/schema";
 import { canonicalUrl } from "@/lib/seo/site-url";
 import { formatNumber, formatUsd, cn } from "@/lib/utils";
+import { formatDateTimeVi } from "@/lib/time";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { PageHeader, ModuleSection } from "@/components/layout/page-header";
@@ -98,7 +99,7 @@ export default async function GoldPage() {
         description="Cập nhật giá vàng hôm nay mới nhất trong nước và quốc tế theo thời gian thực, bao gồm giá vàng SJC, DOJI, PNJ, vàng 9999 và giá vàng thế giới. Dữ liệu được tổng hợp liên tục từ các nguồn uy tín, kèm biểu đồ giá vàng và lịch sử biến động."
         breadcrumb={[{ label: "Trang chủ", href: "/" }, { label: "Giá vàng" }]}
         categoryLabel="Giá vàng"
-        badge={`Cập nhật ${new Date().toLocaleString("vi-VN")}`}
+        badge={`Cập nhật ${formatDateTimeVi(new Date())}`}
       />
 
       <ModuleSection

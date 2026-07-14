@@ -14,7 +14,7 @@ import {
   buildNewsArticleSchema,
 } from "@/lib/seo/schema";
 import { absoluteUrl, cn } from "@/lib/utils";
-import { formatDateVi, formatRelativeTime } from "@/lib/time";
+import { formatDateVi } from "@/lib/time";
 import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
 import { NEWS_CATEGORY_COLORS } from "@/modules/news/constants";
 import {
@@ -86,9 +86,7 @@ export default async function ArticleDetailPage({ params }: Props) {
 
   const related = await getRelatedArticles(slug, article.category);
   const siteName = settings.site_name || "TaiChinh.vn";
-  const publishedLabel = article.publishedAt
-    ? `${formatDateVi(article.publishedAt)} · ${formatRelativeTime(article.publishedAt)}`
-    : formatRelativeTime(article.publishedAt);
+  const publishedLabel = formatDateVi(article.publishedAt);
 
   const jsonLd = [
     buildBreadcrumbSchema([

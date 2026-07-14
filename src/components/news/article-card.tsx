@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Clock, Sparkles } from "lucide-react";
 import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
 import { NEWS_CATEGORY_COLORS } from "@/modules/news/constants";
-import { formatRelativeTime } from "@/lib/time";
+import { ClientRelativeTime } from "@/components/ui/client-relative-time";
 import type { PublicArticleSummary } from "@/modules/news/service";
 import { cn } from "@/lib/utils";
 import { ArticleCoverImage } from "@/components/news/article-cover-image";
@@ -16,7 +16,6 @@ export function ArticleCard({
   featured?: boolean;
 }) {
   const categoryLabel = NEWS_CATEGORY_LABELS[article.category];
-  const time = formatRelativeTime(article.publishedAt);
   const excerpt =
     article.excerpt?.trim() ||
     "Nhấn để đọc nội dung đầy đủ bài viết.";
@@ -62,7 +61,7 @@ export function ArticleCard({
           <div className="mt-4 flex items-center gap-4 text-xs text-finance-500">
             <span className="inline-flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
-              {time}
+              <ClientRelativeTime date={article.publishedAt} />
             </span>
             <span className="inline-flex items-center gap-1 font-semibold text-brand-600">
               Đọc tiếp
@@ -95,7 +94,7 @@ export function ArticleCard({
         </span>
         <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-finance-400">
           <Clock className="h-3 w-3" />
-          {time}
+          <ClientRelativeTime date={article.publishedAt} />
         </span>
       </div>
       <h2 className="text-sm font-semibold leading-snug text-finance-900 group-hover:text-gold-700">
