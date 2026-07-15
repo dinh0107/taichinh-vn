@@ -41,6 +41,7 @@ const CRON_JOB_DEFS = [
   { name: "sync-forex", schedule: "*/30 * * * *", syncKey: "forex" },
   { name: "sync-interest", schedule: "0 6 * * *", syncKey: "interest" },
   { name: "sync-stocks", schedule: "*/15 9-15 * * 1-5", syncKey: "stocks" },
+  { name: "ingest-24h-gold-news", schedule: "0 8 * * *", syncKey: null },
   { name: "ai-write-articles", schedule: "0 7 * * *", syncKey: null },
   { name: "generate-sitemap", schedule: "0 2 * * *", syncKey: null },
   { name: "sync-gsc", schedule: "0 3 * * *", syncKey: null },

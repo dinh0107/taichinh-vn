@@ -1,0 +1,33 @@
+name: Ingest 24h gold news
+
+# 08:00 Vietnam (UTC+7) = 01:00 UTC
+on:
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    name: POST /api/cron/ingest-24h-gold
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call production cron
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          set -euo pipefail
+          BASE_URL="${APP_URL:-https://giahomnay.site}"
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::Thiếu secret CRON_SECRET (trùng admin cron_secret trên server)"
+            exit 1
+          fi
+          code="$(curl -sS -o /tmp/ingest.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            --connect-timeout 30 --max-time 180 \
+            "${BASE_URL%/}/api/cron/ingest-24h-gold")"
+          echo "HTTP ${code}"
+          cat /tmp/ingest.json || true
+          echo
+          test "$code" = "200"
