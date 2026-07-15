@@ -55,5 +55,52 @@ jobs:
           name: next-build
           path: |
             .next
+            !.next/cache
             _next
           retention-days: 3
+          compression-level: 6
+
+  deploy:
+    name: Deploy to Plesk (SFTP)
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: deploy-out
+
+      - name: Verify build output
+        run: |
+          test -f deploy-out/.next/prerender-manifest.json
+          test -d deploy-out/_next/static
+          ls -la deploy-out
+          du -sh deploy-out/.next deploy-out/_next
+
+      # Secrets: PLESK_SFTP_HOST, PLESK_SFTP_USER, PLESK_SFTP_PASSWORD,
+      #          PLESK_SFTP_PORT (e.g. 22), PLESK_SFTP_REMOTE_PATH (e.g. /httpdocs)
+      - name: SFTP upload .next
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: ${{ secrets.PLESK_SFTP_HOST }}
+          username: ${{ secrets.PLESK_SFTP_USER }}
+          password: ${{ secrets.PLESK_SFTP_PASSWORD }}
+          port: ${{ secrets.PLESK_SFTP_PORT || 22 }}
+          local_path: "./deploy-out/.next/*"
+          remote_path: ${{ secrets.PLESK_SFTP_REMOTE_PATH }}/.next
+          sftp_only: true
+          delete_remote_files: false
+
+      - name: SFTP upload _next
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: ${{ secrets.PLESK_SFTP_HOST }}
+          username: ${{ secrets.PLESK_SFTP_USER }}
+          password: ${{ secrets.PLESK_SFTP_PASSWORD }}
+          port: ${{ secrets.PLESK_SFTP_PORT || 22 }}
+          local_path: "./deploy-out/_next/*"
+          remote_path: ${{ secrets.PLESK_SFTP_REMOTE_PATH }}/_next
+          sftp_only: true
+          delete_remote_files: false

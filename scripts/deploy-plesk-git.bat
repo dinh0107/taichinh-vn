@@ -1,13 +1,22 @@
 @echo off
 REM ============================================================
-REM Plesk Windows — Additional deployment actions (1 dong):
-REM   call scripts\deploy-plesk-git.bat
+REM DEPRECATED for production auto-deploy.
 REM
-REM Flow: GitHub push main → webhook → Plesk pull → script nay
+REM Production flow (no build on server):
+REM   1. GitHub Actions builds on push main + SFTP uploads .next / _next
+REM   2. Plesk Additional deployment actions:
+REM        call scripts\deploy-plesk-fast.bat
+REM
+REM Use THIS script only for emergency / manual full build on server:
+REM   call scripts\deploy-plesk-git.bat
 REM ============================================================
 setlocal EnableExtensions
 cd /d "%~dp0.."
 if errorlevel 1 exit /b 1
+
+echo WARNING: deploy-plesk-git.bat builds ON the server.
+echo          Prefer CI build + deploy-plesk-fast.bat for production.
+echo.
 
 set NODE_ENV=production
 set CI=true
