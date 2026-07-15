@@ -2,165 +2,62 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import {
-  ChevronDown,
-  Menu,
-  X,
-  Coins,
-  DollarSign,
-  Landmark,
-  Fuel,
-  Newspaper,
-  TrendingUp,
-  Wrench,
-} from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  MEGA_NAV,
+  isMegaItemActive,
+  isMegaLinkActive,
+  type MegaNavItem,
+} from "@/components/layout/mega-nav-data";
 
-export type MegaLink = { label: string; href: string };
-
-export type MegaNavItem = {
-  href: string;
-  label: string;
-  icon: typeof Coins;
-  groups?: { title: string; links: MegaLink[] }[];
-};
-
-export const MEGA_NAV: MegaNavItem[] = [
-  {
-    href: "/gia-vang",
-    label: "Giá vàng",
-    icon: Coins,
-    groups: [
-      {
-        title: "Giá vàng trong nước",
-        links: [
-          { label: "SJC", href: "/gia-vang-sjc-hom-nay" },
-          { label: "DOJI", href: "/gia-vang-doji-hom-nay" },
-          { label: "PNJ", href: "/gia-vang-pnj-hom-nay" },
-          { label: "Bảo Tín Minh Châu", href: "/gia-vang-bao-tin-hom-nay" },
-          { label: "Mi Hồng", href: "/gia-vang" },
-          { label: "Ngọc Thẩm", href: "/gia-vang" },
-          { label: "Tất cả giá vàng", href: "/gia-vang" },
-        ],
-      },
-      {
-        title: "Giá vàng quốc tế",
-        links: [{ label: "Thế giới", href: "/gia-vang-the-gioi-hom-nay" }],
-      },
-    ],
-  },
-  {
-    href: "/ty-gia",
-    label: "Tỷ giá ngân hàng",
-    icon: DollarSign,
-    groups: [
-      {
-        title: "Tỷ giá ngân hàng",
-        links: [
-          { label: "USD", href: "/ty-gia-usd-hom-nay" },
-          { label: "EUR", href: "/ty-gia-eur-hom-nay" },
-          { label: "GBP", href: "/ty-gia-gbp-hom-nay" },
-          { label: "JPY", href: "/ty-gia-jpy-hom-nay" },
-          { label: "CNY", href: "/ty-gia-cny-hom-nay" },
-          { label: "Tất cả tỷ giá", href: "/ty-gia" },
-        ],
-      },
-    ],
-  },
-  {
-    href: "/lai-suat",
-    label: "Lãi suất",
-    icon: Landmark,
-    groups: [
-      {
-        title: "Lãi suất ngân hàng",
-        links: [
-          { label: "Vietcombank", href: "/lai-suat-vietcombank" },
-          { label: "BIDV", href: "/lai-suat-bidv" },
-          { label: "Techcombank", href: "/lai-suat-techcombank" },
-          { label: "VPBank", href: "/lai-suat-vpbank" },
-          { label: "So sánh lãi suất", href: "/lai-suat" },
-        ],
-      },
-    ],
-  },
-  {
-    href: "/lai-suat",
-    label: "Công cụ",
-    icon: Wrench,
-    groups: [
-      {
-        title: "Công cụ",
-        links: [
-          { label: "So sánh lãi suất ngân hàng", href: "/lai-suat" },
-        ],
-      },
-    ],
-  },
-  {
-    href: "/gia-xang",
-    label: "Xăng dầu",
-    icon: Fuel,
-    groups: [
-      {
-        title: "Giá xăng dầu",
-        links: [
-          { label: "Trong nước", href: "/gia-xang" },
-          { label: "RON95", href: "/gia-xang-ron95-hom-nay" },
-          { label: "E5", href: "/gia-xang-e5-hom-nay" },
-          { label: "Diesel", href: "/gia-xang-diesel-hom-nay" },
-        ],
-      },
-    ],
-  },
-  {
-    href: "/chung-khoan",
-    label: "Chứng khoán",
-    icon: TrendingUp,
-    groups: [
-      {
-        title: "Chỉ số",
-        links: [
-          { label: "VN-Index", href: "/chung-khoan-vnindex" },
-          { label: "HNX-Index", href: "/chung-khoan-hnxindex" },
-          { label: "UPCOM", href: "/chung-khoan-upcom" },
-          { label: "Thị trường", href: "/chung-khoan" },
-        ],
-      },
-    ],
-  },
-  {
-    href: "/tin-tuc",
-    label: "Tin tức",
-    icon: Newspaper,
-    groups: [
-      {
-        title: "Chuyên mục tin",
-        links: [
-          { label: "Giá vàng", href: "/tin-tuc" },
-          { label: "Xăng dầu", href: "/tin-tuc" },
-        ],
-      },
-    ],
-  },
-];
+export type { MegaLink, MegaNavItem } from "@/components/layout/mega-nav-data";
+export { MEGA_NAV } from "@/components/layout/mega-nav-data";
 
 function DesktopMegaItem({ item }: { item: MegaNavItem }) {
   const pathname = usePathname();
-  const active =
-    pathname === item.href || pathname.startsWith(item.href + "/");
+  const active = isMegaItemActive(pathname, item);
   const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasGroups = Boolean(item.groups?.length);
+
+  function clearClose() {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  }
+
+  function scheduleClose() {
+    clearClose();
+    closeTimer.current = setTimeout(() => setOpen(false), 120);
+  }
+
+  useEffect(() => () => clearClose(), []);
 
   return (
     <div
       className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={() => {
+        clearClose();
+        if (hasGroups) setOpen(true);
+      }}
+      onMouseLeave={scheduleClose}
+      onFocusCapture={() => {
+        clearClose();
+        if (hasGroups) setOpen(true);
+      }}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          scheduleClose();
+        }
+      }}
     >
       <div
         className={cn(
-          "group relative flex h-8 items-center gap-[5px] rounded-full px-1 transition-colors",
+          "group relative flex h-8 items-center gap-0.5 rounded-full px-1 transition-colors",
           open || active
             ? "bg-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.96)]"
             : "text-[rgba(255,255,255,0.72)] hover:bg-[rgba(255,255,255,0.06)] hover:text-[rgba(255,255,255,0.96)]"
@@ -168,60 +65,76 @@ function DesktopMegaItem({ item }: { item: MegaNavItem }) {
       >
         <Link
           href={item.href}
-          className="inline-flex h-7 items-center whitespace-nowrap rounded-full px-1 text-[13px] font-medium leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#050816]"
+          className="inline-flex h-7 items-center whitespace-nowrap rounded-full px-2 text-[13px] font-medium leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#050816]"
+          aria-expanded={hasGroups ? open : undefined}
+          aria-haspopup={hasGroups ? "menu" : undefined}
+          aria-controls={hasGroups ? panelId : undefined}
         >
           {item.label}
         </Link>
-        {item.groups && (
-          <span className="inline-flex h-7 w-3 items-center justify-center text-[rgba(255,255,255,0.45)] group-hover:text-[rgba(255,255,255,0.96)]">
+        {hasGroups && (
+          <button
+            type="button"
+            className="inline-flex h-7 w-6 items-center justify-center text-[rgba(255,255,255,0.45)] hover:text-[rgba(255,255,255,0.96)]"
+            aria-label={`${open ? "Đóng" : "Mở"} menu ${item.label}`}
+            aria-expanded={open}
+            aria-controls={panelId}
+            onClick={() => setOpen((v) => !v)}
+          >
             <ChevronDown
               className={cn(
                 "h-3 w-3 transition-transform duration-200",
                 open && "rotate-180"
               )}
             />
-          </span>
+          </button>
         )}
       </div>
 
-      {item.groups && open && (
-        <div className="absolute left-0 top-full z-50 pt-3">
-          <div className="inline-block max-w-[calc(100vw-2rem)] rounded-2xl border border-[var(--border-soft)] bg-white/95 p-5 shadow-[var(--shadow-dropdown)] backdrop-blur-2xl">
+      {hasGroups && open && item.groups && (
+        <div
+          id={panelId}
+          role="menu"
+          className="absolute left-0 top-full z-50 min-w-[220px] pt-2"
+        >
+          <div className="overflow-hidden rounded-xl border border-[var(--border-soft)] bg-white shadow-[var(--shadow-dropdown)]">
             <div
               className={cn(
-                "grid gap-3",
+                "flex",
                 item.groups.length > 1
-                  ? "grid-cols-2"
-                  : "grid-cols-1"
+                  ? "divide-x divide-slate-100"
+                  : "flex-col"
               )}
-              style={
-                item.groups.length > 1
-                  ? {
-                      gridTemplateColumns:
-                        "minmax(190px, 240px) minmax(190px, 240px)",
-                    }
-                  : { gridTemplateColumns: "minmax(190px, 260px)" }
-              }
             >
               {item.groups.map((g) => (
                 <section
                   key={g.title}
-                  className="rounded-2xl border border-slate-100 bg-white/70 p-3"
+                  className="min-w-[200px] max-w-[260px] px-3 py-3"
                 >
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <p className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
                     {g.title}
                   </p>
-                  <ul className="space-y-1.5">
-                    {g.links.map((l) => (
-                      <li key={l.href + l.label}>
-                        <Link
-                          href={l.href}
-                          className="group flex items-center justify-between rounded-lg px-2.5 py-2 text-sm text-[var(--text-primary)] transition hover:bg-slate-100/70"
-                        >
-                          <span className="truncate">{l.label}</span>
-                        </Link>
-                      </li>
-                    ))}
+                  <ul className="space-y-0.5">
+                    {g.links.map((l) => {
+                      const linkActive = isMegaLinkActive(pathname, l.href);
+                      return (
+                        <li key={`${l.href}-${l.label}`}>
+                          <Link
+                            href={l.href}
+                            role="menuitem"
+                            onClick={() => setOpen(false)}
+                            className={cn(
+                              "block truncate rounded-lg px-2 py-2 text-sm transition-colors",
+                              linkActive
+                                ? "bg-blue-50 font-medium text-blue-700"
+                                : "text-[var(--text-primary)] hover:bg-slate-50"
+                            )}
+                          >
+                            {l.label}
+                          </Link>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </section>
               ))}
@@ -240,13 +153,14 @@ export function SiteNavDesktop() {
       className="flex items-center justify-start gap-0.5"
     >
       {MEGA_NAV.map((item) => (
-        <DesktopMegaItem key={item.label + item.href} item={item} />
+        <DesktopMegaItem key={item.label} item={item} />
       ))}
     </nav>
   );
 }
 
 export function SiteNavMobile() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -254,6 +168,10 @@ export function SiteNavMobile() {
     setOpen(false);
     setExpanded(null);
   }
+
+  useEffect(() => {
+    closeMenu();
+  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;
@@ -295,18 +213,22 @@ export function SiteNavMobile() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <nav className="flex-1 overflow-y-auto p-3">
+            <nav className="flex-1 overflow-y-auto p-3" aria-label="Menu mobile">
               {MEGA_NAV.map((item) => {
                 const isOpen = expanded === item.label;
+                const itemActive = isMegaItemActive(pathname, item);
                 return (
                   <div key={item.label} className="border-b border-white/10">
                     <div className="flex items-center gap-1">
                       <Link
                         href={item.href}
                         onClick={closeMenu}
-                        className="flex flex-1 items-center gap-2 px-2 py-3 text-sm font-semibold text-white"
+                        className={cn(
+                          "flex flex-1 items-center gap-2 px-2 py-3 text-sm font-semibold",
+                          itemActive ? "text-blue-400" : "text-white"
+                        )}
                       >
-                        <item.icon className="h-4 w-4 text-blue-400" />
+                        <item.icon className="h-4 w-4 shrink-0 text-blue-400" />
                         {item.label}
                       </Link>
                       {item.groups && (
@@ -316,7 +238,8 @@ export function SiteNavMobile() {
                             setExpanded(isOpen ? null : item.label)
                           }
                           className="rounded-lg p-2 text-white/60 hover:bg-white/10"
-                          aria-label={`Mở ${item.label}`}
+                          aria-expanded={isOpen}
+                          aria-label={`${isOpen ? "Thu gọn" : "Mở"} ${item.label}`}
                         >
                           <ChevronDown
                             className={cn(
@@ -336,11 +259,16 @@ export function SiteNavMobile() {
                             </p>
                             <ul className="space-y-0.5">
                               {g.links.map((l) => (
-                                <li key={l.href + l.label}>
+                                <li key={`${l.href}-${l.label}`}>
                                   <Link
                                     href={l.href}
                                     onClick={closeMenu}
-                                    className="block rounded-md px-2 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white"
+                                    className={cn(
+                                      "block rounded-md px-2 py-1.5 text-sm hover:bg-white/10 hover:text-white",
+                                      isMegaLinkActive(pathname, l.href)
+                                        ? "bg-white/10 text-white"
+                                        : "text-white/70"
+                                    )}
                                   >
                                     {l.label}
                                   </Link>
