@@ -30,6 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `${name} — Giá vàng, Tỷ giá, Lãi suất, Chứng khoán`,
     description,
     path: "/",
+    todayPrefix: false,
   });
 }
 

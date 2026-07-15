@@ -7,7 +7,7 @@ import { LoginForm } from "@/components/auth/login-form";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Đăng nhập quản trị",
+  title: { absolute: "Đăng nhập quản trị" },
   robots: { index: false, follow: false },
 };
 

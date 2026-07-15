@@ -40,7 +40,6 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(url),
     title: {
       default: `${name} — Giá vàng, Tỷ giá, Lãi suất, Chứng khoán`,
-      template: `%s | ${name}`,
     },
     description,
     applicationName: name,

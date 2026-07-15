@@ -1,4 +1,5 @@
 import { absoluteUrl } from "@/lib/utils";
+import { todayDateVi, withHomNayTitlePrefix } from "@/lib/time";
 import type { GoldPriceItem } from "@/modules/gold/types";
 
 export type JsonLd = Record<string, unknown>;
@@ -156,11 +157,12 @@ export function buildGoldSeoMetadata(
   siteName = "TaiChinh.vn"
 ) {
   const sjc = prices.find((p) => p.code === "SJL1L10");
-  const dateStr = new Date().toLocaleDateString("vi-VN");
+  const dateStr = todayDateVi();
   const priceText = sjc
     ? `SJC mua ${new Intl.NumberFormat("vi-VN").format(sjc.buy)}đ, bán ${new Intl.NumberFormat("vi-VN").format(sjc.sell)}đ`
     : "";
-  const fullTitle = `${title} — Cập nhật ${dateStr} | ${siteName}`;
+  const dated = withHomNayTitlePrefix(title, undefined, siteName);
+  const fullTitle = dated;
 
   return {
     title: fullTitle,

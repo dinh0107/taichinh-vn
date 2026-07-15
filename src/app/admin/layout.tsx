@@ -10,7 +10,7 @@ import { Bell, UserCircle } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard",
+  title: { absolute: "Admin Dashboard" },
   robots: { index: false, follow: false },
 };
 

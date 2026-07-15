@@ -12,6 +12,7 @@ import {
   resolveSeoPage,
 } from "@/modules/seo/service";
 import { getSiteSettings } from "@/modules/admin/settings-service";
+import { withHomNayTitlePrefix } from "@/lib/time";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -37,11 +38,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const v = s.brand_asset_version || "0";
   const icon = `/api/brand/icon?v=${v}`;
   const url = page.canonicalUrl ?? canonicalUrlSync(`/${slug}`);
-  const rawTitle = page.ogTitle || page.title;
-  const title =
-    rawTitle.includes(siteName) || rawTitle.includes(" | ")
-      ? rawTitle
-      : `${rawTitle} | ${siteName}`;
+  const title = withHomNayTitlePrefix(
+    page.ogTitle || page.title,
+    undefined,
+    siteName
+  );
   const description = page.ogDescription || page.metaDescription;
 
   const meta: Metadata = {

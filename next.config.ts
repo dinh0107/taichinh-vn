@@ -8,6 +8,8 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Do not 308 /path/ ↔ /path during SSR/navigation (avoids surprise redirects).
+  skipTrailingSlashRedirect: true,
   turbopack: {
     root: projectRoot,
   },

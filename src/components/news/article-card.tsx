@@ -6,7 +6,7 @@ import { ClientRelativeTime } from "@/components/ui/client-relative-time";
 import type { PublicArticleSummary } from "@/modules/news/service";
 import { cn } from "@/lib/utils";
 import { ArticleCoverImage } from "@/components/news/article-cover-image";
-import { withHtmlExtension } from "@/lib/seo/html-path";
+import { appLinkHref } from "@/lib/seo/html-path";
 
 export function ArticleCard({
   article,
@@ -19,12 +19,13 @@ export function ArticleCard({
   const excerpt =
     article.excerpt?.trim() ||
     "Nhấn để đọc nội dung đầy đủ bài viết.";
-  const href = withHtmlExtension(`/tin-tuc/${article.slug}`);
+  // Soft-nav href: App Router path only (no .html) — avoids rewrite bounce.
+  const href = appLinkHref(`/tin-tuc/${article.slug}`);
 
   if (featured) {
     return (
       <Link
-        href={`/tin-tuc/${article.slug}`}
+        href={href}
         className="card-hover group block overflow-hidden rounded-2xl border border-finance-200 bg-white shadow-sm"
       >
         {article.featuredImage && (

@@ -6,12 +6,15 @@ import {
 } from "@/lib/seo/html-path";
 
 /**
- * Public article URLs may end with `.html`.
- * Only rewrite — never 308 to `.html` (redirects loop with custom servers / IIS).
+ * Edge proxy for public URLs.
+ *
+ * CRITICAL: never return NextResponse.redirect / 3xx here.
+ * Redirects loop with custom servers / IIS and cause "redirect during render"
+ * noise in the browser. Article `.html` URLs are handled by rewrite only:
  *
  *   /tin-tuc/slug.html → rewrite → /tin-tuc/slug
  *   /tin-tuc.html      → rewrite → /tin-tuc
- *   /tin-tuc/slug      → pass through (also valid)
+ *   /tin-tuc/slug      → pass through
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -33,6 +36,13 @@ export function proxy(request: NextRequest) {
     (method !== "GET" && method !== "HEAD")
   ) {
     return NextResponse.next();
+  }
+
+  // Strip trailing slash via rewrite (not 308) so render URL stays stable.
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/\/+$/, "") || "/";
+    return NextResponse.rewrite(url);
   }
 
   if (/^\/tin-tuc\.html$/i.test(pathname)) {

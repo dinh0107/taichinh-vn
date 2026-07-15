@@ -8,12 +8,15 @@ import {
 import { canonicalUrl, canonicalUrlSync } from "@/lib/seo/site-url";
 import { getSiteSettings } from "@/modules/admin/settings-service";
 import { SETTING_DEFAULTS } from "@/modules/admin/settings-shared";
+import { withHomNayTitlePrefix } from "@/lib/time";
 
 type PageMetaInput = {
   title: string;
   description: string;
   path: string;
   ogType?: "website" | "article";
+  /** Default: true for child module pages; false for home / news articles. */
+  todayPrefix?: boolean; // appends " hôm nay ngày dd/MM/yyyy"
 };
 
 function brandMeta(siteName: string, version: string) {
@@ -31,7 +34,22 @@ function brandMeta(siteName: string, version: string) {
   };
 }
 
-function fullPageTitle(title: string, siteName: string): string {
+/** Public child pages get "… hôm nay ngày dd/MM/yyyy". Exceptions: home, news article detail. */
+export function shouldUseHomNayTitlePrefix(path: string): boolean {
+  const p = (path.replace(/\/+$/, "") || "/").toLowerCase();
+  if (p === "/") return false;
+  if (/^\/tin-tuc\/.+/.test(p)) return false;
+  // Admin / login are not public child pages
+  if (p.startsWith("/admin") || p === "/dang-nhap") return false;
+  return true;
+}
+
+function fullPageTitle(
+  title: string,
+  siteName: string,
+  appendSiteName: boolean
+): string {
+  if (!appendSiteName) return title;
   if (title.includes(siteName) || title.includes(" | ")) return title;
   return `${title} | ${siteName}`;
 }
@@ -42,12 +60,19 @@ export async function buildPageMetadata({
   description,
   path,
   ogType = "website",
+  todayPrefix,
 }: PageMetaInput): Promise<Metadata> {
   const s = await getSiteSettings();
   const siteName = s.site_name || SETTING_DEFAULTS.site_name;
   const v = s.brand_asset_version || "0";
   const brand = brandMeta(siteName, v);
-  const fullTitle = fullPageTitle(title, siteName);
+  const usePrefix =
+    todayPrefix ?? shouldUseHomNayTitlePrefix(path);
+  const titled = usePrefix
+    ? withHomNayTitlePrefix(title, undefined, siteName)
+    : title;
+  // Child pages with date suffix omit "| SiteName"
+  const fullTitle = fullPageTitle(titled, siteName, !usePrefix);
   const url = await canonicalUrl(path);
 
   return {

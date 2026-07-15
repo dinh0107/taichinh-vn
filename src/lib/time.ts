@@ -20,6 +20,38 @@ export function formatDateVi(date: Date | string | null | undefined): string {
   return format(d, "dd/MM/yyyy", { locale: vi });
 }
 
+/** Today's date in Vietnam as dd/MM/yyyy (stable for titles). */
+export function todayDateVi(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(now);
+}
+
+/**
+ * Child-page title date suffix: "… hôm nay ngày dd/MM/yyyy"
+ * e.g. "Tỷ giá hôm nay hôm nay ngày 15/07/2026"
+ * Idempotent if already suffixed. Strips trailing "| siteName" when provided.
+ */
+export function withHomNayTitlePrefix(
+  title: string,
+  now: Date = new Date(),
+  siteName?: string
+): string {
+  let trimmed = title.trim();
+  if (!trimmed) return trimmed;
+  if (siteName) {
+    const escaped = siteName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    trimmed = trimmed
+      .replace(new RegExp(`\\s*\\|\\s*${escaped}\\s*$`, "i"), "")
+      .trim();
+  }
+  if (/hôm nay ngày\s+\d{2}\/\d{2}\/\d{4}\s*$/i.test(trimmed)) return trimmed;
+  return `${trimmed} hôm nay ngày ${todayDateVi(now)}`;
+}
+
 export function formatTimeVi(date: Date): string {
   return format(date, "HH:mm:ss", { locale: vi });
 }

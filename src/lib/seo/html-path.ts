@@ -24,18 +24,33 @@ export function isHtmlExemptPath(path: string): boolean {
   );
 }
 
-/** Public URL path — adds `.html` only for article detail pages. */
+/** Public in-app path: no trailing slash, no surprise redirects. */
+export function normalizeAppPath(path: string): string {
+  if (!path || path === "/") return "/";
+  let p = path.startsWith("/") ? path : `/${path}`;
+  if (p.length > 1 && p.endsWith("/")) p = p.replace(/\/+$/, "");
+  return p;
+}
+
+/** Public URL path — adds `.html` only for article detail pages (canonical/SEO). */
 export function withHtmlExtension(path: string): string {
   if (!path || path === "/") return path || "/";
 
-  let p = path.startsWith("/") ? path : `/${path}`;
-  if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
+  let p = normalizeAppPath(path);
 
   if (isHtmlExemptPath(p)) return p;
   if (/\.html$/i.test(p)) return p;
   if (!isArticleDetailPath(p)) return p;
 
   return `${p}.html`;
+}
+
+/**
+ * Href for Next `<Link>` / soft navigation.
+ * Always App Router path (no `.html`) so render never bounces via rewrite.
+ */
+export function appLinkHref(path: string): string {
+  return stripHtmlExtension(normalizeAppPath(path));
 }
 
 /** Strip trailing `.html` for App Router / revalidatePath. */
