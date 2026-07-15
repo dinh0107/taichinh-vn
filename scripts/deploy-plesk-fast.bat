@@ -43,13 +43,10 @@ if exist "deploy-build.tar.gz" (
     echo ERROR: tar.exe not found. Use Windows 10+ tar or install bsdtar.
     exit /b 1
   )
+  REM Do NOT rmdir _next while iisnode may lock CSS — sync overwrite is safer
   if exist ".next" (
     echo     Removing old .next
     rmdir /s /q ".next" 2>nul
-  )
-  if exist "_next" (
-    echo     Removing old _next
-    rmdir /s /q "_next" 2>nul
   )
   tar -xzf deploy-build.tar.gz
   if errorlevel 1 (
@@ -64,6 +61,14 @@ if not exist ".next\prerender-manifest.json" (
   echo ERROR: Thieu .next — doi GitHub Actions Deploy xong ^(file deploy-build.tar.gz^),
   echo        roi Redeploy Git / chay lai script nay.
   echo   CI job: Deploy to Plesk ^(SFTP^)
+  exit /b 1
+)
+
+REM IIS serves CSS from _next/static — always re-sync from .next/static after extract
+echo ==^> Sync .next\static -^> _next\static ^(CSS^)
+call node scripts\copy-next-static.js
+if errorlevel 1 (
+  echo ERROR: Thieu CSS sau sync. Kiem tra .next\static\css tren server.
   exit /b 1
 )
 

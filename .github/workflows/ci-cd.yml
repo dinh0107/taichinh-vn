@@ -78,10 +78,18 @@ jobs:
         run: |
           set -euo pipefail
           test -f deploy-out/.next/prerender-manifest.json
-          test -d deploy-out/_next/static
-          # Single archive avoids SFTP mkdir/mirror into hidden .next (fails on many Plesk Windows)
+          test -d deploy-out/.next/static
+          # Ensure _next mirrors .next/static (IIS CSS path)
+          mkdir -p deploy-out/_next
+          rm -rf deploy-out/_next/static
+          cp -a deploy-out/.next/static deploy-out/_next/static
+          CSS_COUNT="$(find deploy-out/.next/static -type f -name '*.css' | wc -l)"
+          echo "CSS files in artifact: ${CSS_COUNT}"
+          test "${CSS_COUNT}" -gt 0
           tar -C deploy-out -czf deploy-build.tar.gz .next _next
           ls -lh deploy-build.tar.gz
+          # Spot-check archive contains css
+          tar -tzf deploy-build.tar.gz | grep -E '\.css$' | head -5
 
       # FileZilla thấy /httpdocs → thường là FTP/FTPS :21 (không phải SFTP Windows home).
       - name: Upload deploy-build.tar.gz (FTP/FTPS/SFTP)
