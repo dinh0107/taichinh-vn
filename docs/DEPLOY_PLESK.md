@@ -1,39 +1,38 @@
-# Deploy Plesk — tránh mất CSS
+# Deploy Plesk — tránh mất CSS / 404 chunks
 
-## Vì sao 404 `/_next/static/chunks/...`?
+## Nguyên nhân
 
-HTML và file JS/CSS phải **cùng một bản build**.  
-Plesk Git pull thường **xóa** thư mục untracked (`.next`, `_next`, `deploy-build.tar.gz`) → upload tar trước webhook sẽ bị mất.
+1. HTML và file trong `/_next/static/chunks/*` phải **cùng một build**.
+2. Git pull Plesk thường **xóa** `.next` / `_next` / tar (untracked).
+3. Gọi API Next `apply-deploy-artifact` sẽ **404** nếu `.next` đang chạy chưa build route đó.
 
-## Luồng CI đúng
+## Luồng đúng
 
-1. Build + pack `deploy-build.tar.gz`
-2. **Webhook Git** (pull code) → chờ ~45s
-3. **Upload tar** (sau khi Git xóa xong)
-4. `POST /api/cron/apply-deploy-artifact` → giải nén + sync CSS + touch `web.config`
+```text
+CI pack tar
+  → webhook Git → deploy-plesk-fast.bat ĐỢI tar (tối đa 5 phút)
+  → CI upload tar (trong lúc bat đang đợi)
+  → bat extract + sync CSS + restart
+  → CI poll CSS đến HTTP 200
+```
 
-## Secrets
+## Plesk
 
-| Secret | Dùng cho |
-|--------|----------|
-| `PLESK_SFTP_*` | Upload tar |
-| `PLESK_GIT_WEBHOOK_URL` | Pull code |
-| `CRON_SECRET` | Gọi `apply-deploy-artifact` + ingest tin |
+- Deployment mode: **Manual**
+- Additional actions: `call scripts\deploy-plesk-fast.bat`
 
-Plesk: Deployment = **Manual**; actions: `call scripts\deploy-plesk-fast.bat` (prisma/npm; extract chính do API).
+## Secrets CI
 
-## Sửa tay khi đang 404 CSS
+`PLESK_SFTP_*`, `PLESK_GIT_WEBHOOK_URL`
 
-Trong `httpdocs` (nếu còn tar và `.next` lệch):
+## Sửa tay khi CSS 404
+
+Upload/`deploy-build.tar.gz` vào `httpdocs` rồi:
 
 ```bat
+cd C:\Inetpub\vhosts\giahomnay.site\httpdocs
+tar -xzf deploy-build.tar.gz
 node scripts\copy-next-static.js
 ```
 
-Hoặc upload lại `deploy-build.tar.gz` rồi:
-
-```bat
-curl -X POST -H "Authorization: Bearer CRON_SECRET" -H "Content-Type: application/json" -d "{}" https://giahomnay.site/api/cron/apply-deploy-artifact
-```
-
-Restart Node.js app.
+Restart Node.js app → Ctrl+F5.

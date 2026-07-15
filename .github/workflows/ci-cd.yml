@@ -85,11 +85,14 @@ jobs:
           CSS_COUNT="$(find deploy-out/.next/static -type f -name '*.css' | wc -l)"
           echo "CSS files in artifact: ${CSS_COUNT}"
           test "${CSS_COUNT}" -gt 0
+          # Sample path for health check after deploy
+          SAMPLE_REL="$(find deploy-out/.next/static -type f -name '*.css' | head -1 | sed 's|^deploy-out/.next/static/||')"
+          echo "SAMPLE_CSS=${SAMPLE_REL}" >> "$GITHUB_ENV"
           tar -C deploy-out -czf deploy-build.tar.gz .next _next
           ls -lh deploy-build.tar.gz
           tar -tzf deploy-build.tar.gz | grep -E '\.css$' | head -5
 
-      # 1) Git pull FIRST — Plesk often deletes untracked .next/_next/tar
+      # 1) Webhook → bat bat đầu ĐỢI tar (tối đa 5 phút)
       - name: Trigger Plesk Git pull (webhook)
         env:
           PLESK_GIT_WEBHOOK_URL: ${{ secrets.PLESK_GIT_WEBHOOK_URL }}
@@ -99,7 +102,7 @@ jobs:
             echo "::error::Thiếu secret PLESK_GIT_WEBHOOK_URL"
             exit 1
           fi
-          echo "Calling Plesk Git webhook (code only)..."
+          echo "Calling Plesk Git webhook..."
           code="$(curl -sS -o /tmp/plesk-hook.out -w '%{http_code}' -X POST \
             -H 'Content-Type: application/json' -d '{}' \
             --connect-timeout 30 --max-time 120 \
@@ -112,13 +115,13 @@ jobs:
             echo "GET HTTP ${code}"
           fi
           case "$code" in
-            200|201|202|204) echo "Webhook OK — chờ Git deploy xong..." ;;
+            200|201|202|204) echo "Webhook OK — bat đang chờ tar..." ;;
             *) echo "::error::Webhook HTTP ${code}"; exit 1 ;;
           esac
-          # Cho Plesk pull + additional actions chạy xong
-          sleep 45
+          # Chỉ chờ bat vào vòng wait — KHÔNG chờ bat xong (tránh hết timeout trước khi upload)
+          sleep 20
 
-      # 2) Upload tar AFTER git wipe
+      # 2) Upload tar while bat is waiting
       - name: Upload deploy-build.tar.gz (FTP/FTPS/SFTP)
         env:
           FTP_HOST: ${{ secrets.PLESK_SFTP_HOST }}
@@ -192,27 +195,29 @@ jobs:
             echo "::error::Không upload được tar"
             exit 1
           fi
-          sleep 3
 
-      # 3) Extract tar + sync CSS (không phụ thuộc Git wipe)
-      - name: Apply deploy artifact (extract + CSS)
+      # 3) Chờ bat extract + CSS online (không qua Next API — tránh 404 khi app chưa có route mới)
+      - name: Wait until CSS is live
         env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
           APP_URL: ${{ vars.APP_URL }}
         run: |
           set -euo pipefail
           BASE_URL="${APP_URL:-https://giahomnay.site}"
-          if [ -z "${CRON_SECRET:-}" ]; then
-            echo "::error::Thiếu CRON_SECRET"
-            exit 1
+          SAMPLE="${SAMPLE_CSS:-}"
+          if [ -z "$SAMPLE" ]; then
+            echo "::warning::Không có SAMPLE_CSS — bỏ qua poll"
+            exit 0
           fi
-          code="$(curl -sS -o /tmp/apply.json -w '%{http_code}' -X POST \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            -H "Content-Type: application/json" \
-            -d "{}" \
-            --connect-timeout 30 --max-time 180 \
-            "${BASE_URL%/}/api/cron/apply-deploy-artifact")"
-          echo "HTTP ${code}"
-          cat /tmp/apply.json || true
-          echo
-          test "$code" = "200"
+          URL="${BASE_URL%/}/_next/static/${SAMPLE}"
+          echo "Polling ${URL}"
+          for i in $(seq 1 36); do
+            code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 "$URL" || true)"
+            echo "try ${i}/36 → HTTP ${code}"
+            if [ "$code" = "200" ]; then
+              echo "CSS live OK"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::CSS vẫn 404 sau ~3 phút — kiểm tra Plesk deploy log / deploy-plesk-fast.bat"
+          exit 1
