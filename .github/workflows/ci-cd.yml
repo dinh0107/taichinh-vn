@@ -74,18 +74,18 @@ jobs:
           name: next-build
           path: deploy-out
 
-      - name: Verify build output
+      - name: Pack deploy-build.tar.gz
         run: |
-          echo "=== deploy-out tree (depth 2) ==="
-          find deploy-out -maxdepth 2 -type d | head -50
-          find deploy-out -maxdepth 2 -name 'prerender-manifest.json' || true
+          set -euo pipefail
           test -f deploy-out/.next/prerender-manifest.json
           test -d deploy-out/_next/static
-          du -sh deploy-out/.next deploy-out/_next
+          # Single archive avoids SFTP mkdir/mirror into hidden .next (fails on many Plesk Windows)
+          tar -C deploy-out -czf deploy-build.tar.gz .next _next
+          ls -lh deploy-build.tar.gz
 
-      # Secrets: PLESK_SFTP_HOST, USER, PASSWORD, PORT, REMOTE_PATH
-      # REMOTE_PATH = app root as seen AFTER SFTP login (often "httpdocs" or "." if already chrooted)
-      - name: SFTP upload .next and _next
+      # Upload ONE file; Plesk scripts\deploy-plesk-fast.bat extracts it.
+      # REMOTE_PATH = app root after SFTP login: "httpdocs" or "."
+      - name: SFTP upload deploy-build.tar.gz
         env:
           SFTP_HOST: ${{ secrets.PLESK_SFTP_HOST }}
           SFTP_USER: ${{ secrets.PLESK_SFTP_USER }}
@@ -95,7 +95,6 @@ jobs:
         run: |
           set -euo pipefail
           PORT="${SFTP_PORT:-22}"
-          # trim trailing slashes (keep a single "." if that is the path)
           REMOTE="${SFTP_REMOTE%/}"
           if [ -z "$REMOTE" ]; then REMOTE="."; fi
 
@@ -107,14 +106,11 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq lftp
 
-          # Write base settings (no indent — lftp script)
           cat > /tmp/lftp-deploy.txt <<'EOF'
 set sftp:auto-confirm yes
 set cmd:fail-exit yes
 set net:max-retries 3
-set net:timeout 60
-set mirror:parallel-transfer-count 4
-set mirror:use-pget-n 0
+set net:timeout 120
 EOF
 
           {
@@ -123,15 +119,11 @@ EOF
             echo "cls -1"
             echo "cd ${REMOTE}"
             echo "pwd"
-            echo "cls -1"
-            echo "mkdir -f .next"
-            echo "mkdir -f _next"
-            echo "mirror -R --delete --verbose=1 deploy-out/.next .next"
-            echo "mirror -R --delete --verbose=1 deploy-out/_next _next"
-            echo "cls -1 .next"
+            echo "put deploy-build.tar.gz"
+            echo "cls -1 deploy-build.tar.gz"
             echo "bye"
           } >> /tmp/lftp-deploy.txt
 
-          echo "Remote app root (secret): ${REMOTE}"
+          echo "Remote app root: ${REMOTE}"
           lftp -f /tmp/lftp-deploy.txt
-          echo "SFTP upload complete"
+          echo "SFTP upload complete — run deploy-plesk-fast.bat on server to extract"

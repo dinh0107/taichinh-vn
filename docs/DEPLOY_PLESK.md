@@ -3,8 +3,8 @@
 ## Luồng
 
 1. Push `main` → GitHub Actions: lint → typecheck → `npm run build`
-2. Job **Deploy to Plesk (SFTP)** dùng `lftp mirror` upload `.next/` và `_next/` (tự `mkdir` remote).
-3. Plesk Git pull chạy **chỉ** `deploy-plesk-fast.bat` (npm + prisma, **không** `npm run build`)
+2. Job **Deploy** đóng gói `deploy-build.tar.gz` (`.next` + `_next`) và SFTP **một file** lên app root
+3. Plesk chạy `deploy-plesk-fast.bat` → giải nén tar → prisma → restart (**không** `npm run build`)
 
 ## Secrets GitHub (Settings → Secrets and variables → Actions)
 
@@ -26,36 +26,25 @@ Path phải là thư mục chứa `package.json` / `app.js` **nhìn từ phiên 
 | Login SFTP đã chroot thẳng vào `httpdocs` | `.` |
 | Subfolder app | `httpdocs/subdir` |
 
-**Không** dùng `/httpdocs/.next`. Job sẽ tự `cd` vào path rồi upload `.next` + `_next`.
+**Không** dùng `/httpdocs/.next`. Job chỉ upload `deploy-build.tar.gz` vào REMOTE.
 
-Nếu deploy log báo `cd` / `No such file`: sửa secret REMOTE_PATH theo bảng trên (thử `.` hoặc `httpdocs`).
+Nếu Deploy fail ở bước `cd`: sửa REMOTE_PATH (thử `.` rồi `httpdocs`). Xem log có dòng `pwd` / `cls`.
+
 ## Plesk — Additional deployment actions
-
-Đổi từ:
-
-```bat
-call scripts\deploy-plesk-git.bat
-```
-
-sang:
 
 ```bat
 call scripts\deploy-plesk-fast.bat
 ```
 
-`deploy-plesk-git.bat` vẫn giữ để build tay khẩn cấp trên server — **không** dùng cho auto production.
+Thứ tự: chờ Actions **Deploy** xanh (có `deploy-build.tar.gz` trên server) → rồi Redeploy Git / chạy fast một lần để giải nén.
 
-## Thứ tự / race
-
-Plesk Git và GitHub Actions cùng chạy khi push. Nếu `fast` chạy **trước** khi SFTP xong, có thể báo thiếu `.next` — Redeploy Git một lần sau khi Actions **Deploy** xanh, hoặc tắt Additional actions đến khi upload xong lần đầu.
-
-Khuyến nghị: đợi workflow Deploy thành công lần đầu, rồi mới bật `deploy-plesk-fast.bat`.
+`deploy-plesk-git.bat` chỉ dùng khi cần build tay khẩn cấp trên server.
 
 ## Kiểm tra
 
-- Actions: Check → Production build → Deploy to Plesk (SFTP) = xanh
-- Server: tồn tại `.next\prerender-manifest.json` và `_next\static`
-- Restart / touch `web.config` (script fast đã touch)
+- Actions: Check → Production build → Deploy = xanh
+- Server: có `deploy-build.tar.gz` rồi sau fast có `.next\prerender-manifest.json` và `_next\static`
+- App restart (script fast touch `web.config`)
 
 ## Fallback build trên server
 
