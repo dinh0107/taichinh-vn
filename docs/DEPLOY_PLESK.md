@@ -1,47 +1,39 @@
-# Deploy Plesk — Cách B (khuyến nghị): build trên GitHub, không race
+# Deploy Plesk — tránh mất CSS
 
-## Luồng
+## Vì sao 404 `/_next/static/chunks/...`?
 
-```text
-push main
-  → GitHub Actions: lint → build → upload deploy-build.tar.gz (FTP)
-  → CI gọi Plesk Webhook URL
-  → Plesk pull + call scripts\deploy-plesk-fast.bat
-  → giải nén .next/_next → prisma → restart
-```
+HTML và file JS/CSS phải **cùng một bản build**.  
+Plesk Git pull thường **xóa** thư mục untracked (`.next`, `_next`, `deploy-build.tar.gz`) → upload tar trước webhook sẽ bị mất.
 
-## 1) Plesk Git settings (bắt buộc)
+## Luồng CI đúng
 
-| Mục | Giá trị |
-|-----|---------|
-| **Deployment mode** | **Manual** (không Automatic) |
-| Server path | `\httpdocs` |
-| Enable additional deployment actions | ✓ |
-| Deploy actions | `call scripts\deploy-plesk-fast.bat` |
+1. Build + pack `deploy-build.tar.gz`
+2. **Webhook Git** (pull code) → chờ ~45s
+3. **Upload tar** (sau khi Git xóa xong)
+4. `POST /api/cron/apply-deploy-artifact` → giải nén + sync CSS + touch `web.config`
 
-Automatic sẽ pull ngay khi push — thường **trước** khi CI upload tar xong. Manual + webhook từ CI = đúng thứ tự.
+## Secrets
 
-## 2) GitHub Secrets
+| Secret | Dùng cho |
+|--------|----------|
+| `PLESK_SFTP_*` | Upload tar |
+| `PLESK_GIT_WEBHOOK_URL` | Pull code |
+| `CRON_SECRET` | Gọi `apply-deploy-artifact` + ingest tin |
 
-| Secret | Giá trị |
-|--------|---------|
-| `PLESK_SFTP_HOST` | host FTP |
-| `PLESK_SFTP_USER` | user FTP Plesk (thấy `httpdocs`) |
-| `PLESK_SFTP_PASSWORD` | password |
-| `PLESK_SFTP_PORT` | `21` |
-| `PLESK_SFTP_REMOTE_PATH` | `httpdocs` |
-| `PLESK_GIT_WEBHOOK_URL` | Copy từ Plesk → Git → **Webhook URL** (ô read-only) |
+Plesk: Deployment = **Manual**; actions: `call scripts\deploy-plesk-fast.bat` (prisma/npm; extract chính do API).
 
-## 3) Kiểm tra
+## Sửa tay khi đang 404 CSS
 
-1. Push `main` hoặc Re-run workflow
-2. Actions: Build → Upload → **Trigger Plesk Git deploy** = xanh
-3. Plesk Git log / site cập nhật; có `.next\prerender-manifest.json`
-
-## Fallback
+Trong `httpdocs` (nếu còn tar và `.next` lệch):
 
 ```bat
-call scripts\deploy-plesk-git.bat
+node scripts\copy-next-static.js
 ```
 
-(build tay trên server — chỉ khi khẩn cấp)
+Hoặc upload lại `deploy-build.tar.gz` rồi:
+
+```bat
+curl -X POST -H "Authorization: Bearer CRON_SECRET" https://giahomnay.site/api/cron/apply-deploy-artifact
+```
+
+Restart Node.js app.

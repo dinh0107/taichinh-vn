@@ -24,52 +24,45 @@ if errorlevel 1 (
   exit /b 1
 )
 
-REM Wait for CI tar ( Cách B: webhook sau upload; vẫn retry nếu FS chậm )
+REM Git pull may wipe .next — extract is done by CI via /api/cron/apply-deploy-artifact
+REM Keep this bat for prisma/npm after code pull. Optional local tar if present.
 set WAIT_TRIES=0
 :wait_tar
 if exist "deploy-build.tar.gz" goto extract_tar
-if %WAIT_TRIES% GEQ 12 goto after_wait_tar
+if %WAIT_TRIES% GEQ 2 goto after_wait_tar
 set /a WAIT_TRIES+=1
-echo ==^> Cho deploy-build.tar.gz ^(%WAIT_TRIES%/12^)...
-timeout /t 5 /nobreak >nul
+echo ==^> (optional) Cho deploy-build.tar.gz ^(%WAIT_TRIES%/2^)...
+timeout /t 3 /nobreak >nul
 goto wait_tar
 :after_wait_tar
+echo ==^> Khong co tar — CI se goi apply-deploy-artifact sau upload.
+goto after_extract
 
 :extract_tar
 if exist "deploy-build.tar.gz" (
-  echo ==^> Extract deploy-build.tar.gz from CI
+  echo ==^> Extract deploy-build.tar.gz
   where tar >nul 2>&1
   if errorlevel 1 (
-    echo ERROR: tar.exe not found. Use Windows 10+ tar or install bsdtar.
-    exit /b 1
+    echo WARN: tar.exe missing — skip extract
+    goto after_extract
   )
-  REM Do NOT rmdir _next while iisnode may lock CSS — sync overwrite is safer
-  if exist ".next" (
-    echo     Removing old .next
-    rmdir /s /q ".next" 2>nul
-  )
+  if exist ".next" rmdir /s /q ".next" 2>nul
   tar -xzf deploy-build.tar.gz
   if errorlevel 1 (
-    echo ERROR: tar extract failed
-    exit /b 1
+    echo WARN: tar extract failed
+    goto after_extract
   )
   del /f /q deploy-build.tar.gz 2>nul
-  echo     Extract OK
+  echo ==^> Sync CSS
+  call node scripts\copy-next-static.js
+  if errorlevel 1 echo WARN: CSS sync failed
 )
 
+:after_extract
 if not exist ".next\prerender-manifest.json" (
-  echo ERROR: Thieu .next — doi GitHub Actions Deploy xong ^(file deploy-build.tar.gz^),
-  echo        roi Redeploy Git / chay lai script nay.
-  echo   CI job: Deploy to Plesk ^(SFTP^)
-  exit /b 1
-)
-
-REM IIS serves CSS from _next/static — always re-sync from .next/static after extract
-echo ==^> Sync .next\static -^> _next\static ^(CSS^)
-call node scripts\copy-next-static.js
-if errorlevel 1 (
-  echo ERROR: Thieu CSS sau sync. Kiem tra .next\static\css tren server.
-  exit /b 1
+  echo WARN: Chua co .next — doi CI apply-deploy-artifact.
+) else (
+  echo ==^> .next OK
 )
 
 set NODE_ENV=production
