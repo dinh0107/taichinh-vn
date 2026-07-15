@@ -106,14 +106,11 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq lftp
 
-          cat > /tmp/lftp-deploy.txt <<'EOF'
-set sftp:auto-confirm yes
-set cmd:fail-exit yes
-set net:max-retries 3
-set net:timeout 120
-EOF
-
           {
+            echo "set sftp:auto-confirm yes"
+            echo "set cmd:fail-exit yes"
+            echo "set net:max-retries 3"
+            echo "set net:timeout 120"
             echo "open -u \"${SFTP_USER}\",\"${SFTP_PASS}\" -p ${PORT} sftp://${SFTP_HOST}"
             echo "pwd"
             echo "cls -1"
@@ -122,8 +119,8 @@ EOF
             echo "put deploy-build.tar.gz"
             echo "cls -1 deploy-build.tar.gz"
             echo "bye"
-          } >> /tmp/lftp-deploy.txt
+          } > /tmp/lftp-deploy.txt
 
           echo "Remote app root: ${REMOTE}"
           lftp -f /tmp/lftp-deploy.txt
-          echo "SFTP upload complete — run deploy-plesk-fast.bat on server to extract"
+          echo "SFTP upload complete — extract with deploy-plesk-fast.bat on server"
