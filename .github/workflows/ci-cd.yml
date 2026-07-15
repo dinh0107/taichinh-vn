@@ -83,9 +83,8 @@ jobs:
           test -d deploy-out/_next/static
           du -sh deploy-out/.next deploy-out/_next
 
-      # Secrets: PLESK_SFTP_HOST, PLESK_SFTP_USER, PLESK_SFTP_PASSWORD,
-      #          PLESK_SFTP_PORT (e.g. 22), PLESK_SFTP_REMOTE_PATH (e.g. /httpdocs)
-      # lftp: mkdir remote dirs then mirror (wlixcc put -r fails if .next missing)
+      # Secrets: PLESK_SFTP_HOST, USER, PASSWORD, PORT, REMOTE_PATH
+      # REMOTE_PATH = app root as seen AFTER SFTP login (often "httpdocs" or "." if already chrooted)
       - name: SFTP upload .next and _next
         env:
           SFTP_HOST: ${{ secrets.PLESK_SFTP_HOST }}
@@ -96,24 +95,43 @@ jobs:
         run: |
           set -euo pipefail
           PORT="${SFTP_PORT:-22}"
-          if [ -z "$SFTP_HOST" ] || [ -z "$SFTP_USER" ] || [ -z "$SFTP_PASS" ] || [ -z "$SFTP_REMOTE" ]; then
-            echo "Missing SFTP secrets (HOST/USER/PASSWORD/REMOTE_PATH)"
+          # trim trailing slashes (keep a single "." if that is the path)
+          REMOTE="${SFTP_REMOTE%/}"
+          if [ -z "$REMOTE" ]; then REMOTE="."; fi
+
+          if [ -z "$SFTP_HOST" ] || [ -z "$SFTP_USER" ] || [ -z "$SFTP_PASS" ]; then
+            echo "Missing SFTP secrets (HOST/USER/PASSWORD)"
             exit 1
           fi
+
           sudo apt-get update -qq
           sudo apt-get install -y -qq lftp
-          lftp -c "
-            set sftp:auto-confirm yes
-            set cmd:fail-exit yes
-            set net:max-retries 3
-            set net:timeout 30
-            set mirror:parallel-transfer-count 4
-            open -u \"${SFTP_USER}\",\"${SFTP_PASS}\" -p ${PORT} sftp://${SFTP_HOST}
-            mkdir -pf ${SFTP_REMOTE}
-            mkdir -pf ${SFTP_REMOTE}/.next
-            mkdir -pf ${SFTP_REMOTE}/_next
-            mirror -R --delete --verbose=1 deploy-out/.next ${SFTP_REMOTE}/.next
-            mirror -R --delete --verbose=1 deploy-out/_next ${SFTP_REMOTE}/_next
-            bye
-          "
+
+          # Write base settings (no indent — lftp script)
+          cat > /tmp/lftp-deploy.txt <<'EOF'
+set sftp:auto-confirm yes
+set cmd:fail-exit yes
+set net:max-retries 3
+set net:timeout 60
+set mirror:parallel-transfer-count 4
+set mirror:use-pget-n 0
+EOF
+
+          {
+            echo "open -u \"${SFTP_USER}\",\"${SFTP_PASS}\" -p ${PORT} sftp://${SFTP_HOST}"
+            echo "pwd"
+            echo "cls -1"
+            echo "cd ${REMOTE}"
+            echo "pwd"
+            echo "cls -1"
+            echo "mkdir -f .next"
+            echo "mkdir -f _next"
+            echo "mirror -R --delete --verbose=1 deploy-out/.next .next"
+            echo "mirror -R --delete --verbose=1 deploy-out/_next _next"
+            echo "cls -1 .next"
+            echo "bye"
+          } >> /tmp/lftp-deploy.txt
+
+          echo "Remote app root (secret): ${REMOTE}"
+          lftp -f /tmp/lftp-deploy.txt
           echo "SFTP upload complete"

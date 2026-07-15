@@ -12,12 +12,23 @@
 |--------|--------|--------|
 | `PLESK_SFTP_HOST` | `giahomnay.site` | Host SFTP/SSH |
 | `PLESK_SFTP_USER` | user FTP/SFTP Plesk | Username |
-| `PLESK_SFTP_PASSWORD` | *** | Password (ưu tiên hơn SSH key) |
+| `PLESK_SFTP_PASSWORD` | *** | Password |
 | `PLESK_SFTP_PORT` | `22` | Port (mặc định 22 nếu bỏ trống) |
-| `PLESK_SFTP_REMOTE_PATH` | `/httpdocs` | Thư mục app (chứa `package.json`, `app.js`) |
+| `PLESK_SFTP_REMOTE_PATH` | `httpdocs` hoặc `.` | Thư mục app **sau khi đăng nhập SFTP** |
 
-Remote path là thư mục gốc app trên Plesk — thường `httpdocs` hoặc `httpdocs\subdirectory`, dạng Unix path trên SFTP (`/httpdocs`).
+### `PLESK_SFTP_REMOTE_PATH` — hay sai chỗ này
 
+Path phải là thư mục chứa `package.json` / `app.js` **nhìn từ phiên SFTP**, không phải đường dẫn Windows (`C:\…`).
+
+| Tình huống | Giá trị secret |
+|------------|----------------|
+| Login SFTP vào home domain, app nằm trong `httpdocs` | `httpdocs` |
+| Login SFTP đã chroot thẳng vào `httpdocs` | `.` |
+| Subfolder app | `httpdocs/subdir` |
+
+**Không** dùng `/httpdocs/.next`. Job sẽ tự `cd` vào path rồi upload `.next` + `_next`.
+
+Nếu deploy log báo `cd` / `No such file`: sửa secret REMOTE_PATH theo bảng trên (thử `.` hoặc `httpdocs`).
 ## Plesk — Additional deployment actions
 
 Đổi từ:
