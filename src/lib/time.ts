@@ -31,9 +31,10 @@ export function todayDateVi(now: Date = new Date()): string {
 }
 
 /**
- * Child-page title date suffix: "… hôm nay ngày dd/MM/yyyy"
- * e.g. "Tỷ giá hôm nay hôm nay ngày 15/07/2026"
- * Idempotent if already suffixed. Strips trailing "| siteName" when provided.
+ * Child-page title date: "… hôm nay ngày dd/MM/yyyy"
+ * - "Giá vàng DOJI hôm nay" → "Giá vàng DOJI hôm nay ngày 15/07/2026"
+ * - "Lãi suất ngân hàng" → "Lãi suất ngân hàng hôm nay ngày 15/07/2026"
+ * Idempotent if already dated. Strips trailing "| siteName" when provided.
  */
 export function withHomNayTitlePrefix(
   title: string,
@@ -48,7 +49,19 @@ export function withHomNayTitlePrefix(
       .replace(new RegExp(`\\s*\\|\\s*${escaped}\\s*$`, "i"), "")
       .trim();
   }
-  if (/hôm nay ngày\s+\d{2}\/\d{2}\/\d{4}\s*$/i.test(trimmed)) return trimmed;
+  // Fix legacy double "hôm nay hôm nay ngày …"
+  trimmed = trimmed.replace(/\bhôm nay\s+hôm nay ngày\b/gi, "hôm nay ngày").trim();
+  if (/hôm nay ngày\s+\d{2}\/\d{2}\/\d{4}\s*$/i.test(trimmed)) {
+    // Refresh date to today if already dated
+    return trimmed.replace(
+      /hôm nay ngày\s+\d{2}\/\d{2}\/\d{4}\s*$/i,
+      `hôm nay ngày ${todayDateVi(now)}`
+    );
+  }
+  // Avoid "hôm nay hôm nay ngày …" when title already ends with "hôm nay"
+  if (/hôm nay\s*$/i.test(trimmed)) {
+    return `${trimmed} ngày ${todayDateVi(now)}`;
+  }
   return `${trimmed} hôm nay ngày ${todayDateVi(now)}`;
 }
 

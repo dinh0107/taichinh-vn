@@ -16,7 +16,7 @@ type PageMetaInput = {
   path: string;
   ogType?: "website" | "article";
   /** Default: true for child module pages; false for home / news articles. */
-  todayPrefix?: boolean; // appends " hôm nay ngày dd/MM/yyyy"
+  todayPrefix?: boolean; // "… hôm nay ngày dd/MM/yyyy"
 };
 
 function brandMeta(siteName: string, version: string) {
