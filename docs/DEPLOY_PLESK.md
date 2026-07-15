@@ -16,20 +16,23 @@
 | `PLESK_SFTP_PORT` | `22` | Port (mặc định 22 nếu bỏ trống) |
 | `PLESK_SFTP_REMOTE_PATH` | `httpdocs` hoặc `.` | Thư mục app **sau khi đăng nhập SFTP** |
 
-### `PLESK_SFTP_REMOTE_PATH` — hay sai chỗ này
+### Đúng user SFTP
 
-Path phải là thư mục chứa `package.json` / `app.js` **nhìn từ phiên SFTP**, không phải đường dẫn Windows (`C:\…`).
+Phải dùng **FTP/SFTP của domain trên Plesk** (FTP Access), **không** dùng tài khoản Windows RDP/`C:\Users\...`.
+
+| Đúng | Sai |
+|------|-----|
+| Login thấy `httpdocs`, `web.config`, `package.json` | Login thấy `AppData`, `Documents`, `NTUSER.DAT` |
+| `PLESK_SFTP_REMOTE_PATH` = `httpdocs` hoặc `.` | `C:/Users/...` hoặc path Windows |
+
+Cách lấy user đúng: **Plesk → Websites & Domains → FTP Access** (user home = domain / httpdocs).
+
+### `PLESK_SFTP_REMOTE_PATH`
 
 | Tình huống | Giá trị secret |
 |------------|----------------|
-| Login SFTP vào home domain, app nằm trong `httpdocs` | `httpdocs` |
-| Login SFTP đã chroot thẳng vào `httpdocs` | `.` |
-| Subfolder app | `httpdocs/subdir` |
-
-**Không** dùng `/httpdocs/.next`. Job chỉ upload `deploy-build.tar.gz` vào REMOTE.
-
-Nếu Deploy fail ở bước `cd`: sửa REMOTE_PATH (thử `.` rồi `httpdocs`). Xem log có dòng `pwd` / `cls`.
-
+| Login FTP thấy thư mục `httpdocs` | `httpdocs` |
+| Login FTP đã vào sẵn trong `httpdocs` | `.` |
 ## Plesk — Additional deployment actions
 
 ```bat

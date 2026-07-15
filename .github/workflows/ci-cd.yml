@@ -122,5 +122,18 @@ jobs:
           } > /tmp/lftp-deploy.txt
 
           echo "Remote app root: ${REMOTE}"
-          lftp -f /tmp/lftp-deploy.txt
+          if echo "$REMOTE" | grep -Eqi '^[A-Za-z]:[/\\]|/C:/Users|/Users/'; then
+            echo "::error::PLESK_SFTP_REMOTE_PATH looks like a Windows user path (${REMOTE})."
+            echo "Use Plesk domain FTP user (not Windows RDP user)."
+            echo "REMOTE_PATH must be relative after FTP login, e.g. httpdocs or ."
+            exit 1
+          fi
+
+          lftp -f /tmp/lftp-deploy.txt || {
+            echo "::error::SFTP failed. Login home listed above — if you see AppData/Documents/NTUSER.DAT,"
+            echo "you are on the Windows OS user, not the Plesk subscription FTP account."
+            echo "Fix: Plesk → FTP Access → user whose home is the domain → set PLESK_SFTP_USER/PASSWORD."
+            echo "Then set PLESK_SFTP_REMOTE_PATH to httpdocs or . (never C:/Users/...)."
+            exit 1
+          }
           echo "SFTP upload complete — extract with deploy-plesk-fast.bat on server"
