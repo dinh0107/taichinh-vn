@@ -60,39 +60,47 @@ if not exist ".next\prerender-manifest.json" (
 
 set NODE_ENV=production
 
-if exist "node_modules\next" (
-  echo ==^> node_modules co san — bo qua npm ci
-) else (
+if not exist "node_modules\next" (
   echo ==^> npm ci
   call npm ci --omit=dev
   if errorlevel 1 exit /b 1
+) else (
+  echo ==^> node_modules\next co san
 )
 
-REM Phai dung Prisma trong node_modules (project = v6). npx co the keo Prisma 7 global/cache.
-echo ==^> prisma generate ^(local^)
+REM prisma nam trong dependencies — neu thieu thi cai lai (node_modules cu/thieu goi)
+if not exist "node_modules\.bin\prisma.cmd" (
+  if not exist "node_modules\prisma\package.json" (
+    echo ==^> Thieu prisma — npm ci --omit=dev
+    call npm ci --omit=dev
+    if errorlevel 1 exit /b 1
+  )
+)
+
+echo ==^> prisma generate
 if exist "node_modules\.bin\prisma.cmd" (
   call node_modules\.bin\prisma generate
-) else if exist "node_modules\prisma\build\index.js" (
-  call npx --no-install prisma generate
 ) else (
-  echo ERROR: Thieu node_modules\prisma — chay: npm ci --omit=dev
-  exit /b 1
+  echo ==^> Fallback: npx prisma@6.19.2 generate
+  call npx --yes prisma@6.19.2 generate
 )
 if errorlevel 1 (
   echo.
   echo Prisma generate failed.
-  echo Neu log bao Prisma 7 / url no longer supported:
   echo   1^) Stop Node.js app in Plesk
   echo   2^) rmdir /s /q node_modules
   echo   3^) npm ci --omit=dev
   echo   4^) call scripts\deploy-plesk-fast.bat
-  echo Neu EPERM: Stop app, rmdir node_modules\.prisma, roi generate lai.
   exit /b 1
 )
 
 if exist "prisma\migrations" (
   echo ==^> prisma migrate deploy
-  call npx prisma migrate deploy
+  if exist "node_modules\.bin\prisma.cmd" (
+    call node_modules\.bin\prisma migrate deploy
+  ) else (
+    call npx --yes prisma@6.19.2 migrate deploy
+  )
   if errorlevel 1 echo WARN: migrate failed — check DATABASE_URL
 )
 
