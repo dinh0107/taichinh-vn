@@ -85,26 +85,35 @@ jobs:
 
       # Secrets: PLESK_SFTP_HOST, PLESK_SFTP_USER, PLESK_SFTP_PASSWORD,
       #          PLESK_SFTP_PORT (e.g. 22), PLESK_SFTP_REMOTE_PATH (e.g. /httpdocs)
-      - name: SFTP upload .next
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          server: ${{ secrets.PLESK_SFTP_HOST }}
-          username: ${{ secrets.PLESK_SFTP_USER }}
-          password: ${{ secrets.PLESK_SFTP_PASSWORD }}
-          port: ${{ secrets.PLESK_SFTP_PORT || 22 }}
-          local_path: "./deploy-out/.next/*"
-          remote_path: ${{ secrets.PLESK_SFTP_REMOTE_PATH }}/.next
-          sftp_only: true
-          delete_remote_files: false
-
-      - name: SFTP upload _next
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          server: ${{ secrets.PLESK_SFTP_HOST }}
-          username: ${{ secrets.PLESK_SFTP_USER }}
-          password: ${{ secrets.PLESK_SFTP_PASSWORD }}
-          port: ${{ secrets.PLESK_SFTP_PORT || 22 }}
-          local_path: "./deploy-out/_next/*"
-          remote_path: ${{ secrets.PLESK_SFTP_REMOTE_PATH }}/_next
-          sftp_only: true
-          delete_remote_files: false
+      # lftp: mkdir remote dirs then mirror (wlixcc put -r fails if .next missing)
+      - name: SFTP upload .next and _next
+        env:
+          SFTP_HOST: ${{ secrets.PLESK_SFTP_HOST }}
+          SFTP_USER: ${{ secrets.PLESK_SFTP_USER }}
+          SFTP_PASS: ${{ secrets.PLESK_SFTP_PASSWORD }}
+          SFTP_PORT: ${{ secrets.PLESK_SFTP_PORT }}
+          SFTP_REMOTE: ${{ secrets.PLESK_SFTP_REMOTE_PATH }}
+        run: |
+          set -euo pipefail
+          PORT="${SFTP_PORT:-22}"
+          if [ -z "$SFTP_HOST" ] || [ -z "$SFTP_USER" ] || [ -z "$SFTP_PASS" ] || [ -z "$SFTP_REMOTE" ]; then
+            echo "Missing SFTP secrets (HOST/USER/PASSWORD/REMOTE_PATH)"
+            exit 1
+          fi
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lftp
+          lftp -c "
+            set sftp:auto-confirm yes
+            set cmd:fail-exit yes
+            set net:max-retries 3
+            set net:timeout 30
+            set mirror:parallel-transfer-count 4
+            open -u \"${SFTP_USER}\",\"${SFTP_PASS}\" -p ${PORT} sftp://${SFTP_HOST}
+            mkdir -pf ${SFTP_REMOTE}
+            mkdir -pf ${SFTP_REMOTE}/.next
+            mkdir -pf ${SFTP_REMOTE}/_next
+            mirror -R --delete --verbose=1 deploy-out/.next ${SFTP_REMOTE}/.next
+            mirror -R --delete --verbose=1 deploy-out/_next ${SFTP_REMOTE}/_next
+            bye
+          "
+          echo "SFTP upload complete"

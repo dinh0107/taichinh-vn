@@ -3,7 +3,7 @@
 ## Luồng
 
 1. Push `main` → GitHub Actions: lint → typecheck → `npm run build`
-2. Job **Deploy to Plesk (SFTP)** upload `.next/` và `_next/` lên server
+2. Job **Deploy to Plesk (SFTP)** dùng `lftp mirror` upload `.next/` và `_next/` (tự `mkdir` remote).
 3. Plesk Git pull chạy **chỉ** `deploy-plesk-fast.bat` (npm + prisma, **không** `npm run build`)
 
 ## Secrets GitHub (Settings → Secrets and variables → Actions)
