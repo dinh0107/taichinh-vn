@@ -53,6 +53,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: next-build
+          # .next is a hidden folder — must enable or artifact is empty
+          include-hidden-files: true
           path: |
             .next
             !.next/cache
@@ -74,9 +76,11 @@ jobs:
 
       - name: Verify build output
         run: |
+          echo "=== deploy-out tree (depth 2) ==="
+          find deploy-out -maxdepth 2 -type d | head -50
+          find deploy-out -maxdepth 2 -name 'prerender-manifest.json' || true
           test -f deploy-out/.next/prerender-manifest.json
           test -d deploy-out/_next/static
-          ls -la deploy-out
           du -sh deploy-out/.next deploy-out/_next
 
       # Secrets: PLESK_SFTP_HOST, PLESK_SFTP_USER, PLESK_SFTP_PASSWORD,
