@@ -13,9 +13,10 @@
 | `PLESK_SFTP_HOST` | `giahomnay.site` | Host SFTP/SSH |
 | `PLESK_SFTP_USER` | user FTP/SFTP Plesk | Username |
 | `PLESK_SFTP_PASSWORD` | *** | Password |
-| `PLESK_SFTP_PORT` | `22` | Port (mặc định 22 nếu bỏ trống) |
-| `PLESK_SFTP_REMOTE_PATH` | `httpdocs` hoặc `.` | Thư mục app **sau khi đăng nhập SFTP** |
+| `PLESK_SFTP_PORT` | `21` | Port FileZilla (FTP/FTPS = 21; SFTP = 22) |
+| `PLESK_SFTP_REMOTE_PATH` | `httpdocs` | Đúng như ảnh FileZilla |
 
+CI lần lượt thử **FTPS → FTP → SFTP**. User/pass phải là FTP Access nhìn thấy `httpdocs` (không phải Windows RDP).
 ### Đúng user SFTP
 
 Phải dùng **FTP/SFTP của domain trên Plesk** (FTP Access), **không** dùng tài khoản Windows RDP/`C:\Users\...`.
