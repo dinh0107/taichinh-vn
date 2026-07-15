@@ -170,10 +170,6 @@ export function SiteNavMobile() {
   }
 
   useEffect(() => {
-    closeMenu();
-  }, [pathname]);
-
-  useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
