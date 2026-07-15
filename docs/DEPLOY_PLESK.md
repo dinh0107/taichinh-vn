@@ -33,7 +33,7 @@ node scripts\copy-next-static.js
 Hoặc upload lại `deploy-build.tar.gz` rồi:
 
 ```bat
-curl -X POST -H "Authorization: Bearer CRON_SECRET" https://giahomnay.site/api/cron/apply-deploy-artifact
+curl -X POST -H "Authorization: Bearer CRON_SECRET" -H "Content-Type: application/json" -d "{}" https://giahomnay.site/api/cron/apply-deploy-artifact
 ```
 
 Restart Node.js app.

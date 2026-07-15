@@ -25,6 +25,7 @@ jobs:
           code="$(curl -sS -o /tmp/ingest.json -w '%{http_code}' -X POST \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             -H "Content-Type: application/json" \
+            -d "{}" \
             --connect-timeout 30 --max-time 180 \
             "${BASE_URL%/}/api/cron/ingest-24h-gold")"
           echo "HTTP ${code}"

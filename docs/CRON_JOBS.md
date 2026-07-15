@@ -47,7 +47,7 @@
 2. GitHub Actions secret `CRON_SECRET` = cùng giá trị
 3. (Tuỳ chọn) Plesk cron:
    ```bat
-   curl -X POST -H "Authorization: Bearer %CRON_SECRET%" https://giahomnay.site/api/cron/ingest-24h-gold
+   curl -X POST -H "Authorization: Bearer %CRON_SECRET%" -H "Content-Type: application/json" -d "{}" https://giahomnay.site/api/cron/ingest-24h-gold
    ```
    lịch `0 8 * * *`
 
