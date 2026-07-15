@@ -36,7 +36,7 @@ export function normalizeAppPath(path: string): string {
 export function withHtmlExtension(path: string): string {
   if (!path || path === "/") return path || "/";
 
-  let p = normalizeAppPath(path);
+  const p = normalizeAppPath(path);
 
   if (isHtmlExemptPath(p)) return p;
   if (/\.html$/i.test(p)) return p;
