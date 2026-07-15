@@ -1,57 +1,47 @@
-# Deploy Plesk (build trên GitHub, không build trên server)
+# Deploy Plesk — Cách B (khuyến nghị): build trên GitHub, không race
 
 ## Luồng
 
-1. Push `main` → GitHub Actions: lint → typecheck → `npm run build`
-2. Job **Deploy** đóng gói `deploy-build.tar.gz` (`.next` + `_next`) và SFTP **một file** lên app root
-3. Plesk chạy `deploy-plesk-fast.bat` → giải nén tar → prisma → restart (**không** `npm run build`)
-
-## Secrets GitHub (Settings → Secrets and variables → Actions)
-
-| Secret | Ví dụ | Mô tả |
-|--------|--------|--------|
-| `PLESK_SFTP_HOST` | `giahomnay.site` | Host SFTP/SSH |
-| `PLESK_SFTP_USER` | user FTP/SFTP Plesk | Username |
-| `PLESK_SFTP_PASSWORD` | *** | Password |
-| `PLESK_SFTP_PORT` | `21` | Port FileZilla (FTP/FTPS = 21; SFTP = 22) |
-| `PLESK_SFTP_REMOTE_PATH` | `httpdocs` | Đúng như ảnh FileZilla |
-
-CI lần lượt thử **FTPS → FTP → SFTP**. User/pass phải là FTP Access nhìn thấy `httpdocs` (không phải Windows RDP).
-### Đúng user SFTP
-
-Phải dùng **FTP/SFTP của domain trên Plesk** (FTP Access), **không** dùng tài khoản Windows RDP/`C:\Users\...`.
-
-| Đúng | Sai |
-|------|-----|
-| Login thấy `httpdocs`, `web.config`, `package.json` | Login thấy `AppData`, `Documents`, `NTUSER.DAT` |
-| `PLESK_SFTP_REMOTE_PATH` = `httpdocs` hoặc `.` | `C:/Users/...` hoặc path Windows |
-
-Cách lấy user đúng: **Plesk → Websites & Domains → FTP Access** (user home = domain / httpdocs).
-
-### `PLESK_SFTP_REMOTE_PATH`
-
-| Tình huống | Giá trị secret |
-|------------|----------------|
-| Login FTP thấy thư mục `httpdocs` | `httpdocs` |
-| Login FTP đã vào sẵn trong `httpdocs` | `.` |
-## Plesk — Additional deployment actions
-
-```bat
-call scripts\deploy-plesk-fast.bat
+```text
+push main
+  → GitHub Actions: lint → build → upload deploy-build.tar.gz (FTP)
+  → CI gọi Plesk Webhook URL
+  → Plesk pull + call scripts\deploy-plesk-fast.bat
+  → giải nén .next/_next → prisma → restart
 ```
 
-Thứ tự: chờ Actions **Deploy** xanh (có `deploy-build.tar.gz` trên server) → rồi Redeploy Git / chạy fast một lần để giải nén.
+## 1) Plesk Git settings (bắt buộc)
 
-`deploy-plesk-git.bat` chỉ dùng khi cần build tay khẩn cấp trên server.
+| Mục | Giá trị |
+|-----|---------|
+| **Deployment mode** | **Manual** (không Automatic) |
+| Server path | `\httpdocs` |
+| Enable additional deployment actions | ✓ |
+| Deploy actions | `call scripts\deploy-plesk-fast.bat` |
 
-## Kiểm tra
+Automatic sẽ pull ngay khi push — thường **trước** khi CI upload tar xong. Manual + webhook từ CI = đúng thứ tự.
 
-- Actions: Check → Production build → Deploy = xanh
-- Server: có `deploy-build.tar.gz` rồi sau fast có `.next\prerender-manifest.json` và `_next\static`
-- App restart (script fast touch `web.config`)
+## 2) GitHub Secrets
 
-## Fallback build trên server
+| Secret | Giá trị |
+|--------|---------|
+| `PLESK_SFTP_HOST` | host FTP |
+| `PLESK_SFTP_USER` | user FTP Plesk (thấy `httpdocs`) |
+| `PLESK_SFTP_PASSWORD` | password |
+| `PLESK_SFTP_PORT` | `21` |
+| `PLESK_SFTP_REMOTE_PATH` | `httpdocs` |
+| `PLESK_GIT_WEBHOOK_URL` | Copy từ Plesk → Git → **Webhook URL** (ô read-only) |
+
+## 3) Kiểm tra
+
+1. Push `main` hoặc Re-run workflow
+2. Actions: Build → Upload → **Trigger Plesk Git deploy** = xanh
+3. Plesk Git log / site cập nhật; có `.next\prerender-manifest.json`
+
+## Fallback
 
 ```bat
 call scripts\deploy-plesk-git.bat
 ```
+
+(build tay trên server — chỉ khi khẩn cấp)

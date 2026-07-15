@@ -2,14 +2,12 @@
 REM ============================================================
 REM Plesk Windows — deploy NHANH (KHONG build tren server)
 REM
-REM Production Additional deployment actions (1 dong):
-REM   call scripts\deploy-plesk-fast.bat
+REM Cách B (khuyến nghị):
+REM   Plesk Deployment mode = Manual
+REM   Additional actions: call scripts\deploy-plesk-fast.bat
+REM   CI upload tar xong → gọi PLESK_GIT_WEBHOOK_URL
 REM
-REM Flow:
-REM   1) GitHub Actions: build → SFTP upload deploy-build.tar.gz
-REM   2) Plesk: script nay giai nen .next + _next, prisma, restart
-REM
-REM Secrets / docs: docs/DEPLOY_PLESK.md
+REM Docs: docs/DEPLOY_PLESK.md
 REM ============================================================
 setlocal EnableExtensions
 
@@ -26,7 +24,18 @@ if errorlevel 1 (
   exit /b 1
 )
 
-REM Extract CI artifact if present (uploaded by GitHub Actions)
+REM Wait for CI tar ( Cách B: webhook sau upload; vẫn retry nếu FS chậm )
+set WAIT_TRIES=0
+:wait_tar
+if exist "deploy-build.tar.gz" goto extract_tar
+if %WAIT_TRIES% GEQ 12 goto after_wait_tar
+set /a WAIT_TRIES+=1
+echo ==^> Cho deploy-build.tar.gz ^(%WAIT_TRIES%/12^)...
+timeout /t 5 /nobreak >nul
+goto wait_tar
+:after_wait_tar
+
+:extract_tar
 if exist "deploy-build.tar.gz" (
   echo ==^> Extract deploy-build.tar.gz from CI
   where tar >nul 2>&1

@@ -163,4 +163,40 @@ jobs:
             exit 1
           fi
 
-          echo "Tiếp: chạy deploy-plesk-fast.bat trên server để giải nén."
+      # Cách B: Plesk Deployment = Manual; CI gọi webhook SAU khi có tar trên server
+      - name: Trigger Plesk Git deploy (webhook)
+        env:
+          PLESK_GIT_WEBHOOK_URL: ${{ secrets.PLESK_GIT_WEBHOOK_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PLESK_GIT_WEBHOOK_URL:-}" ]; then
+            echo "::error::Thiếu secret PLESK_GIT_WEBHOOK_URL"
+            echo "Plesk → Git → Repository settings → copy Webhook URL → GitHub Actions secret"
+            echo "Đồng thời đổi Deployment mode = Manual (tránh pull sớm trước khi có tar)."
+            exit 1
+          fi
+          # Chờ FTP flush
+          sleep 5
+          echo "Calling Plesk Git webhook..."
+          # Plesk chấp nhận GET hoặc POST; thử POST rồi GET
+          code="$(curl -sS -o /tmp/plesk-hook.out -w '%{http_code}' -X POST \
+            -H 'Content-Type: application/json' \
+            -d '{}' \
+            --connect-timeout 30 --max-time 120 \
+            "${PLESK_GIT_WEBHOOK_URL}" || true)"
+          echo "POST HTTP ${code}"
+          if [ "$code" != "200" ] && [ "$code" != "201" ] && [ "$code" != "202" ] && [ "$code" != "204" ]; then
+            code="$(curl -sS -o /tmp/plesk-hook.out -w '%{http_code}' -X GET \
+              --connect-timeout 30 --max-time 120 \
+              "${PLESK_GIT_WEBHOOK_URL}" || true)"
+            echo "GET HTTP ${code}"
+          fi
+          head -c 500 /tmp/plesk-hook.out 2>/dev/null || true
+          echo
+          case "$code" in
+            200|201|202|204) echo "Plesk webhook OK — sẽ pull + chạy deploy-plesk-fast.bat" ;;
+            *)
+              echo "::warning::Webhook trả ${code}. Kiểm tra URL / Manual deploy + Pull tay nếu cần."
+              exit 1
+              ;;
+          esac
