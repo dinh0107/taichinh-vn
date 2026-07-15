@@ -68,10 +68,25 @@ if exist "node_modules\next" (
   if errorlevel 1 exit /b 1
 )
 
-echo ==^> prisma generate
-call npx prisma generate
+REM Phai dung Prisma trong node_modules (project = v6). npx co the keo Prisma 7 global/cache.
+echo ==^> prisma generate ^(local^)
+if exist "node_modules\.bin\prisma.cmd" (
+  call node_modules\.bin\prisma generate
+) else if exist "node_modules\prisma\build\index.js" (
+  call npx --no-install prisma generate
+) else (
+  echo ERROR: Thieu node_modules\prisma — chay: npm ci --omit=dev
+  exit /b 1
+)
 if errorlevel 1 (
-  echo EPERM? Stop Node.js app in Plesk, then Redeploy.
+  echo.
+  echo Prisma generate failed.
+  echo Neu log bao Prisma 7 / url no longer supported:
+  echo   1^) Stop Node.js app in Plesk
+  echo   2^) rmdir /s /q node_modules
+  echo   3^) npm ci --omit=dev
+  echo   4^) call scripts\deploy-plesk-fast.bat
+  echo Neu EPERM: Stop app, rmdir node_modules\.prisma, roi generate lai.
   exit /b 1
 )
 
