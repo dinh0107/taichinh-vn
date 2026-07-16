@@ -68,10 +68,10 @@ if not exist "_deploy_staging\.next\static" (
   exit /b 1
 )
 
-echo ==^> Verify CSS trong staging
-call node -e "const fs=require('fs'),path=require('path');function walk(d,a=[]){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p,a);else if(e.name.endsWith('.css'))a.push(p);}return a;}const a=walk(path.join('_deploy_staging','.next','static'));console.log('staging css:',a.length);a.slice(0,5).forEach(f=>console.log(' ',f));if(a.length<1)process.exit(1);"
+echo ==^> Verify CSS + sample JS trong staging
+call node -e "const fs=require('fs'),path=require('path');function walk(d,a={css:[],js:[]}){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p,a);else if(e.name.endsWith('.css'))a.css.push(p);else if(e.name.endsWith('.js'))a.js.push(p);}return a;}const a=walk(path.join('_deploy_staging','.next','static'));console.log('staging css:',a.css.length,'js:',a.js.length);if(a.css.length<1||a.js.length<1)process.exit(1);"
 if errorlevel 1 (
-  echo ERROR: Staging khong co file CSS — khong ghi de .next live
+  echo ERROR: Staging thieu CSS/JS — khong ghi de .next live
   exit /b 1
 )
 
@@ -127,6 +127,13 @@ echo ==^> Sync .next\static -^> _next\static
 call node scripts\copy-next-static.js
 if errorlevel 1 (
   echo ERROR: CSS sync failed
+  exit /b 1
+)
+
+REM Confirm live .next still has JS after swap (catches partial robocopy)
+call node -e "const fs=require('fs'),path=require('path');function n(d,ext){if(!fs.existsSync(d))return 0;let c=0; (function w(p){for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory())w(f);else if(e.name.endsWith(ext))c++;}})(d);return c;}const j=n(path.join('.next','static'),'.js'),c=n(path.join('.next','static'),'.css');console.log('live .next/static js='+j+' css='+c);if(j<1||c<1)process.exit(1);"
+if errorlevel 1 (
+  echo ERROR: .next/static thieu JS/CSS sau swap — deploy aborted
   exit /b 1
 )
 

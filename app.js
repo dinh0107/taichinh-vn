@@ -44,7 +44,7 @@ function syncNextStaticForIis() {
     console.warn("[app.js] _next sync failed:", result.error);
   } else {
     console.log(
-      `[app.js] Synced .next/static → _next/static (${result.files} files, ${result.css} css)`
+      `[app.js] Synced .next/static → _next/static (${result.files} files, ${result.css} css, ${result.js || 0} js)`
     );
   }
   const css = countCss(dir);
@@ -73,6 +73,16 @@ app
       try {
         const parsedUrl = parse(req.url, true);
         let pathname = parsedUrl.pathname || "/";
+
+        // Browsers always request /favicon.ico; site icons live at /api/brand/icon
+        if (pathname === "/favicon.ico") {
+          res.writeHead(302, {
+            Location: "/api/brand/icon",
+            "Cache-Control": "no-store",
+          });
+          res.end();
+          return;
+        }
 
         if (serveNextStatic(req, res, dir, pathname)) {
           return;

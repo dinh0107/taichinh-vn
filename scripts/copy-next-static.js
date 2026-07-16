@@ -14,7 +14,7 @@ if (!result.ok) {
 }
 
 console.log(
-  `[copy-next-static] Synced .next/static → _next/static (${result.files} files, ${result.css} css, removed ${result.removed} stale)`
+  `[copy-next-static] Synced .next/static → _next/static (${result.files} files, ${result.css} css, ${result.js || 0} js, removed ${result.removed} stale)`
 );
 
 if (result.css < 1) {

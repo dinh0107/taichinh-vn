@@ -44,7 +44,7 @@ function copyFileRobust(from, to) {
   }
 }
 
-function mirrorDir(src, dest, stats) {
+function mirrorDir(src, dest, stats, { purgeStale = false } = {}) {
   ensureDir(dest);
   const entries = fs.readdirSync(src, { withFileTypes: true });
   const seen = new Set();
@@ -54,13 +54,18 @@ function mirrorDir(src, dest, stats) {
     const to = path.join(dest, entry.name);
     seen.add(entry.name);
     if (entry.isDirectory()) {
-      mirrorDir(from, to, stats);
+      mirrorDir(from, to, stats, { purgeStale });
     } else {
       copyFileRobust(from, to);
       stats.files += 1;
       if (entry.name.endsWith(".css")) stats.css += 1;
+      if (entry.name.endsWith(".js")) stats.js += 1;
     }
   }
+
+  // ponytail: default keep stale chunks — deleting mid-session causes ChunkLoadError
+  // after deploy while tabs still hold the previous build. Disk grows; purge later.
+  if (!purgeStale) return;
 
   for (const entry of fs.readdirSync(dest, { withFileTypes: true })) {
     if (seen.has(entry.name)) continue;
@@ -76,12 +81,13 @@ function mirrorDir(src, dest, stats) {
 
 /**
  * @param {string} root project root
- * @returns {{ ok: boolean, files: number, css: number, removed: number, error?: string }}
+ * @param {{ purgeStale?: boolean }} [opts]
+ * @returns {{ ok: boolean, files: number, css: number, js: number, removed: number, error?: string }}
  */
-function syncNextStatic(root) {
+function syncNextStatic(root, opts = {}) {
   const src = path.join(root, ".next", "static");
   const dest = path.join(root, "_next", "static");
-  const stats = { files: 0, css: 0, removed: 0 };
+  const stats = { files: 0, css: 0, js: 0, removed: 0 };
 
   if (!fs.existsSync(src)) {
     return { ok: false, ...stats, error: "missing .next/static" };
@@ -97,7 +103,7 @@ function syncNextStatic(root) {
   }
 
   try {
-    mirrorDir(src, dest, stats);
+    mirrorDir(src, dest, stats, { purgeStale: Boolean(opts.purgeStale) });
     if (stats.css < 1) {
       return {
         ok: false,
