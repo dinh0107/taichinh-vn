@@ -25,7 +25,9 @@ export const SETTING_DEFAULTS: SiteSettings = {
   enable_ad_banner: "true",
   enable_affiliate: "true",
   // AI — defaults off until admin configures a key + turns features on
-  ai_model: "gpt-4o-mini",
+  ai_provider: "auto",
+  ai_base_url: "",
+  ai_model: "openai/gpt-4o-mini",
   ai_temperature: "0.7",
   ai_max_tokens: "2000",
   ai_cron_hour: "7",
@@ -46,11 +48,21 @@ export const SETTING_DEFAULTS: SiteSettings = {
   body_scripts: "",
 };
 
+export const AI_PROVIDER_OPTIONS = [
+  { value: "auto", label: "Tự nhận (theo key)" },
+  { value: "openrouter", label: "OpenRouter" },
+  { value: "openai", label: "OpenAI" },
+] as const;
+
 export const AI_MODEL_OPTIONS = [
-  { value: "gpt-4o-mini", label: "gpt-4o-mini (rẻ, nhanh)" },
-  { value: "gpt-4o", label: "gpt-4o (chất lượng cao)" },
-  { value: "gpt-4.1-mini", label: "gpt-4.1-mini" },
-  { value: "gpt-4.1", label: "gpt-4.1" },
+  { value: "openai/gpt-4o-mini", label: "OpenRouter: openai/gpt-4o-mini" },
+  { value: "openai/gpt-4o", label: "OpenRouter: openai/gpt-4o" },
+  { value: "google/gemini-2.0-flash-001", label: "OpenRouter: gemini-2.0-flash" },
+  { value: "anthropic/claude-3.5-sonnet", label: "OpenRouter: claude-3.5-sonnet" },
+  { value: "gpt-4o-mini", label: "OpenAI: gpt-4o-mini" },
+  { value: "gpt-4o", label: "OpenAI: gpt-4o" },
+  { value: "gpt-4.1-mini", label: "OpenAI: gpt-4.1-mini" },
+  { value: "gpt-4.1", label: "OpenAI: gpt-4.1" },
 ] as const;
 
 export const AI_CATEGORY_OPTIONS = [
@@ -62,8 +74,13 @@ export const AI_CATEGORY_OPTIONS = [
   "GENERAL",
 ] as const;
 
+export type AiProvider = "openai" | "openrouter";
+
 export type AiConfig = {
   apiKey: string | null;
+  provider: AiProvider;
+  baseUrl: string;
+  siteUrl: string;
   model: string;
   temperature: number;
   maxTokens: number;
@@ -77,10 +94,33 @@ export type AiConfig = {
   autoFaq: boolean;
 };
 
+export function resolveAiProvider(
+  setting: string | undefined,
+  apiKey: string | null | undefined
+): AiProvider {
+  const s = (setting || "auto").trim().toLowerCase();
+  if (s === "openrouter" || s === "openai") return s;
+  if (apiKey?.startsWith("sk-or-")) return "openrouter";
+  return "openai";
+}
+
+export function resolveAiBaseUrl(
+  provider: AiProvider,
+  customBaseUrl?: string
+): string {
+  const custom = customBaseUrl?.trim().replace(/\/+$/, "");
+  if (custom) return custom;
+  return provider === "openrouter"
+    ? "https://openrouter.ai/api/v1"
+    : "https://api.openai.com/v1";
+}
+
 export function parseAiConfig(
   settings: SiteSettings,
   apiKeyFromDb?: string | null
 ): AiConfig {
+  const apiKey = apiKeyFromDb?.trim() || null;
+  const provider = resolveAiProvider(settings.ai_provider, apiKey);
   const temp = Number(settings.ai_temperature);
   const maxTokens = Number(settings.ai_max_tokens);
   const hour = Number(settings.ai_cron_hour);
@@ -92,9 +132,15 @@ export function parseAiConfig(
       (AI_CATEGORY_OPTIONS as readonly string[]).includes(c)
     );
 
+  const defaultModel =
+    provider === "openrouter" ? "openai/gpt-4o-mini" : "gpt-4o-mini";
+
   return {
-    apiKey: apiKeyFromDb?.trim() || null,
-    model: settings.ai_model || SETTING_DEFAULTS.ai_model,
+    apiKey,
+    provider,
+    baseUrl: resolveAiBaseUrl(provider, settings.ai_base_url),
+    siteUrl: (settings.site_url || SETTING_DEFAULTS.site_url).replace(/\/+$/, ""),
+    model: settings.ai_model?.trim() || defaultModel,
     temperature: Number.isFinite(temp) ? Math.min(2, Math.max(0, temp)) : 0.7,
     maxTokens: Number.isFinite(maxTokens)
       ? Math.min(8000, Math.max(256, Math.round(maxTokens)))

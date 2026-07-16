@@ -103,6 +103,8 @@ const TEXT_KEYS = [
   "gsc_client_email",
   "head_scripts",
   "body_scripts",
+  "ai_provider",
+  "ai_base_url",
   "ai_model",
   "ai_temperature",
   "ai_max_tokens",
@@ -155,6 +157,11 @@ export async function saveSettings(
     if (key === "ai_max_tokens") v = clampNumber(v, 256, 8000, 2000);
     if (key === "ai_cron_hour") v = clampNumber(v, 0, 23, 7);
     if (key === "ai_publish_mode") v = v === "PUBLISHED" ? "PUBLISHED" : "DRAFT";
+    if (key === "ai_provider") {
+      const p = v.toLowerCase();
+      v = p === "openrouter" || p === "openai" || p === "auto" ? p : "auto";
+    }
+    if (key === "ai_base_url") v = v.replace(/\/+$/, "");
     updates.push({ key, value: v });
   }
 

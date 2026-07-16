@@ -216,6 +216,9 @@ contentHtml dùng p, h2, ul, li, strong. Không bịa số liệu ngoài phần 
   const raw = await chatCompletion({
     apiKey: cfg.apiKey,
     model: cfg.model,
+    baseUrl: cfg.baseUrl,
+    referer: cfg.provider === "openrouter" ? cfg.siteUrl : undefined,
+    title: cfg.provider === "openrouter" ? "GiaHomNay AI" : undefined,
     temperature: cfg.temperature,
     maxTokens: cfg.maxTokens,
     json: true,

@@ -13,6 +13,7 @@ import type {
 import {
   AI_MODEL_OPTIONS,
   AI_CATEGORY_OPTIONS,
+  AI_PROVIDER_OPTIONS,
 } from "@/modules/admin/settings-shared";
 import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
 import { cn } from "@/lib/utils";
@@ -295,24 +296,46 @@ export function SettingsForm({
             )}
           >
             {hasOpenAiKey
-              ? "Đã có OpenAI API Key. Bật các tùy chọn bên dưới rồi cấu hình Scheduled Task / cron gọi /api/cron/ai-daily-article."
-              : "Chưa có OpenAI API Key — điền key rồi Lưu. Các job tự động sẽ bỏ qua nếu thiếu key."}
+              ? "Đã có API key. Key sk-or-… → OpenRouter; sk-… → OpenAI (khi provider = Tự nhận)."
+              : "Chưa có API key — dán key OpenRouter (sk-or-v1…) hoặc OpenAI (sk-…) rồi Lưu."}
           </div>
 
           <Field
-            label="OpenAI API Key"
+            label="API Key (OpenAI / OpenRouter)"
             name="openai_api_key"
             type="password"
-            placeholder={hasOpenAiKey ? "••••••••  (đã thiết lập — để trống nếu không đổi)" : "sk-..."}
-            hint="Lưu trong DB (không hiện lại). Có thể dùng biến môi trường OPENAI_API_KEY thay thế."
+            placeholder={
+              hasOpenAiKey
+                ? "••••••••  (đã thiết lập — để trống nếu không đổi)"
+                : "sk-or-v1-... hoặc sk-..."
+            }
+            hint="OpenRouter: https://openrouter.ai/keys — OpenAI: platform.openai.com"
           />
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SelectField
+              label="Nhà cung cấp"
+              name="ai_provider"
+              defaultValue={initial.ai_provider || "auto"}
+              options={[...AI_PROVIDER_OPTIONS]}
+              hint="Tự nhận: sk-or- → OpenRouter."
+            />
+            <Field
+              label="Base URL (tuỳ chọn)"
+              name="ai_base_url"
+              defaultValue={initial.ai_base_url || ""}
+              placeholder="https://openrouter.ai/api/v1"
+              hint="Để trống = mặc định theo nhà cung cấp."
+            />
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <SelectField
               label="Model"
               name="ai_model"
-              defaultValue={initial.ai_model || "gpt-4o-mini"}
+              defaultValue={initial.ai_model || "openai/gpt-4o-mini"}
               options={[...AI_MODEL_OPTIONS]}
+              hint="OpenRouter dùng dạng vendor/model."
             />
             <Field
               label="Temperature"
