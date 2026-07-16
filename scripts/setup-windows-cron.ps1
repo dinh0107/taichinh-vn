@@ -44,8 +44,12 @@ Register-CronTask -Name "sync-gold" -Job "sync-gold" -TriggerArgs "/SC MINUTE /M
 # 24h gold news daily 08:00 local (server timezone — set VN on Plesk)
 Register-CronTask -Name "ingest-24h-gold" -Job "ingest-24h-gold" -TriggerArgs "/SC DAILY /ST 08:00"
 
+# AI daily article 07:00 (khớp mặc định ai_cron_hour; đổi giờ trong Admin thì sửa task)
+Register-CronTask -Name "ai-daily-article" -Job "ai-daily-article" -TriggerArgs "/SC DAILY /ST 07:00"
+
 Write-Host ""
 Write-Host "Done. Verify:"
 Write-Host "  schtasks /Query /TN giahomnay-sync-gold /V /FO LIST"
 Write-Host "  schtasks /Run /TN giahomnay-ingest-24h-gold"
+Write-Host "  schtasks /Run /TN giahomnay-ai-daily-article"
 Write-Host "Then check Admin → Cron & Logs"

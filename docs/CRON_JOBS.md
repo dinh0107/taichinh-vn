@@ -29,18 +29,19 @@
 powershell -ExecutionPolicy Bypass -File scripts\setup-windows-cron.ps1
 ```
 
-Script đăng ký 2 task:
+Script đăng ký task:
 
 | Task | Lịch | Endpoint |
 |------|------|----------|
 | `giahomnay-sync-gold` | mỗi 5 phút | `/api/cron/sync-gold` |
 | `giahomnay-ingest-24h-gold` | 08:00 hàng ngày | `/api/cron/ingest-24h-gold` |
+| `giahomnay-ai-daily-article` | 07:00 hàng ngày | `/api/cron/ai-daily-article` |
 
 3. Chạy thử ngay:
 
 ```bat
-schtasks /Run /TN giahomnay-ingest-24h-gold
-scripts\cron-call.bat ingest-24h-gold
+schtasks /Run /TN giahomnay-ai-daily-article
+scripts\cron-call.bat ai-daily-article
 ```
 
 4. Vào **Admin → Cron & Logs** — phải thấy log `SUCCESS` trong vài giây.
@@ -48,7 +49,7 @@ scripts\cron-call.bat ingest-24h-gold
 Hoặc Plesk → **Scheduled Tasks** → thêm lệnh:
 
 ```bat
-call C:\path\to\httpdocs\scripts\cron-call.bat ingest-24h-gold
+call C:\path\to\httpdocs\scripts\cron-call.bat ai-daily-article
 ```
 
 ## Job Schedule
@@ -60,9 +61,9 @@ call C:\path\to\httpdocs\scripts\cron-call.bat ingest-24h-gold
 | Sync Stocks | `* 9-15 * * 1-5` | `/api/cron/sync-stocks` | P1 |
 | Sync Interest | `0 8 * * *` | `/api/cron/sync-interest` | P2 |
 | Sync Fuel | `0 15 * * *` | `/api/cron/sync-fuel` | P2 |
-| Ingest 24h giá vàng | `0 8 * * *` (07+7) | `/api/cron/ingest-24h-gold` | P1 ✅ |
+| Ingest 24h giá vàng | `0 8 * * *` | `/api/cron/ingest-24h-gold` | P1 ✅ |
+| AI Daily Article | `0 7 * * *` | `/api/cron/ai-daily-article` | P1 ✅ |
 | Generate SEO Pages | `0 6 * * *` | `/api/cron/generate-seo` | P1 |
-| AI Daily Article | `0 7 * * *` | `/api/cron/ai-daily-article` | P2 |
 | Cleanup Old Prices | `0 3 * * 0` | `/api/cron/cleanup` | P3 |
 | Aggregate Traffic | `0 1 * * *` | `/api/cron/aggregate-traffic` | P3 |
 
@@ -82,6 +83,29 @@ call C:\path\to\httpdocs\scripts\cron-call.bat ingest-24h-gold
 2. File `cron.secret` trên server + chạy `scripts\setup-windows-cron.ps1` (bắt buộc để tự chạy)
 3. (Tuỳ chọn) GitHub secret `CRON_SECRET` = cùng giá trị để workflow backup chạy được
 4. Kiểm tra: `schtasks /Run /TN giahomnay-ingest-24h-gold` rồi xem Admin → Cron
+
+## AI Daily Article
+
+- Endpoint: `POST /api/cron/ai-daily-article` + `Authorization: Bearer {CRON_SECRET}`
+- Body tuỳ chọn: `{ "force": true, "category": "GOLD" }` — `force` bỏ qua cờ auto + dedupe trong ngày
+- Đọc Admin → Cài đặt → **Nội dung AI** (`getAiConfig`)
+- Bỏ qua nếu `ai_auto_write` tắt hoặc thiếu API key (vẫn log SUCCESS + reason)
+- Mỗi chuyên mục tối đa **1 bài AI / ngày** (Asia/Ho_Chi_Minh)
+- Số liệu: giá vàng / lãi suất / tỷ giá tùy category
+- Lưu `NewsArticle` (`isAiGenerated`, `source: AI`); FAQ nếu bật `ai_auto_faq`
+- Chế độ đăng: `ai_publish_mode` = `DRAFT` | `PUBLISHED`
+- Task: `giahomnay-ai-daily-article` lúc **07:00** (đổi giờ task nếu đổi `ai_cron_hour`)
+
+### Bật nhanh
+
+1. Admin → Cài đặt → dán OpenAI key, bật **Tự động viết bài SEO hằng ngày**, Lưu
+2. `schtasks /Run /TN giahomnay-ai-daily-article` hoặc:
+
+```bat
+curl -X POST -H "Authorization: Bearer %CRON_SECRET%" -H "Content-Type: application/json" -d "{\"force\":true}" https://giahomnay.site/api/cron/ai-daily-article
+```
+
+3. Admin → Bài viết / Cron & Logs
 
 ## Job Lifecycle
 

@@ -3,13 +3,14 @@ REM Call a cron API on production.
 REM Usage: cron-call.bat <path-segment>
 REM   cron-call.bat sync-gold
 REM   cron-call.bat ingest-24h-gold
+REM   cron-call.bat ai-daily-article
 REM
 REM Secret: env CRON_SECRET, or file cron.secret next to httpdocs (or %~dp0..\cron.secret)
 
 setlocal EnableExtensions
 set "JOB=%~1"
 if "%JOB%"=="" (
-  echo Usage: cron-call.bat sync-gold ^| ingest-24h-gold ^| sync-gsc
+  echo Usage: cron-call.bat sync-gold ^| ingest-24h-gold ^| ai-daily-article ^| sync-gsc
   exit /b 1
 )
 
