@@ -85,7 +85,7 @@ jobs:
           CSS_COUNT="$(find deploy-out/.next/static -type f -name '*.css' | wc -l)"
           echo "CSS files in artifact: ${CSS_COUNT}"
           test "${CSS_COUNT}" -gt 0
-      # Prefer main stylesheet under chunks/ (deterministic) for post-deploy poll
+          # Prefer main stylesheet under chunks/ (deterministic) for post-deploy poll
           SAMPLE_REL="$(find deploy-out/.next/static/chunks -type f -name '*.css' 2>/dev/null | sort | head -1 | sed 's|^deploy-out/.next/static/||')"
           if [ -z "$SAMPLE_REL" ]; then
             SAMPLE_REL="$(find deploy-out/.next/static -type f -name '*.css' | sort | head -1 | sed 's|^deploy-out/.next/static/||')"
