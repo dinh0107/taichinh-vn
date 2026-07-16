@@ -71,16 +71,45 @@ if errorlevel 1 (
   exit /b 1
 )
 
-echo ==^> Robocopy staging\.next → .next ^(khong xoa tree dang lock^)
+REM iisnode giu lock .next/server → robocopy bo sot route cu (vd. AI van goi api.openai.com).
+REM Kill node cua site nay, doi thu muc .next, roi recycle.
+echo ==^> Stop node.exe cua site ^(release file locks^)
+powershell -NoProfile -Command "$root=(Resolve-Path -LiteralPath '.').Path; Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf($root,[StringComparison]::OrdinalIgnoreCase) -ge 0 } | ForEach-Object { Write-Host ('kill PID '+$_.ProcessId); Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 2"
+timeout /t 2 /nobreak >nul
+
+echo ==^> Swap .next ^(staging → live^)
+if exist ".next.prev" (
+  rmdir /s /q ".next.prev" 2>nul
+)
+if exist ".next" (
+  move /Y ".next" ".next.prev" >nul
+  if errorlevel 1 (
+    echo WARN: move .next → .next.prev failed — fallback robocopy
+    goto robocopy_next
+  )
+)
+move /Y "_deploy_staging\.next" ".next" >nul
+if errorlevel 1 (
+  echo WARN: move staging\.next failed — fallback robocopy
+  if exist ".next.prev" if not exist ".next" move /Y ".next.prev" ".next" >nul
+  goto robocopy_next
+)
+echo     .next swapped OK
+goto after_next
+
+:robocopy_next
+echo ==^> Robocopy staging\.next → .next
 if not exist ".next" mkdir ".next"
-robocopy "_deploy_staging\.next" ".next" /E /NFL /NDL /NJH /NJS /nc /ns /np
-set RC=%ERRORLEVEL%
-REM robocopy: 0-7 = success-ish, >=8 = fail
-if %RC% GEQ 8 (
-  echo ERROR: robocopy .next failed rc=%RC%
-  exit /b 1
+if exist "_deploy_staging\.next" (
+  robocopy "_deploy_staging\.next" ".next" /E /NFL /NDL /NJH /NJS /nc /ns /np
+  set RC=%ERRORLEVEL%
+  if %RC% GEQ 8 (
+    echo ERROR: robocopy .next failed rc=%RC%
+    exit /b 1
+  )
 )
 
+:after_next
 if exist "_deploy_staging\_next" (
   echo ==^> Robocopy staging\_next → _next
   if not exist "_next" mkdir "_next"
@@ -97,8 +126,9 @@ if errorlevel 1 (
   exit /b 1
 )
 
-echo ==^> Cleanup staging + tar
+echo ==^> Cleanup staging + tar + .next.prev
 rmdir /s /q "_deploy_staging" 2>nul
+rmdir /s /q ".next.prev" 2>nul
 del /f /q deploy-build.tar.gz 2>nul
 
 if not exist ".next\prerender-manifest.json" (

@@ -30,25 +30,17 @@ Không upload tar trước webhook: git clean sẽ xóa `deploy-build.tar.gz`.
 
 `PLESK_SFTP_*`, `PLESK_GIT_WEBHOOK_URL`
 
-## Sửa tay khi CSS 404
+## Sửa tay khi CSS 404 / AI vẫn gọi OpenAI (code mới không lên)
 
-**Cách A — redeploy CI** (khuyến nghị): push `main` hoặc re-run workflow CI/CD.
+**Triệu chứng AI:** response lỗi vẫn là `OpenAI HTTP…` trong khi repo đã là `AI HTTP…` / `aiClient: "or-v1"` → **iisnode đang giữ `.next` cũ** (CI xanh nhưng file server route không bị ghi đè).
 
-**Cách B — RDP server:**
+**Cách A — Plesk:** Node.js → **Restart** app, rồi re-run CI hoặc trên RDP:
 
 ```bat
 cd C:\Inetpub\vhosts\giahomnay.site\httpdocs
-REM Stop Node app trong Plesk trước nếu robocopy báo lock
-REM Upload deploy-build.tar.gz vào httpdocs rồi:
 call scripts\deploy-plesk-fast.bat
 ```
 
-Hoặc thủ công:
+(Bat mới: kill `node.exe` của site → **swap** thư mục `.next` → tránh lock.)
 
-```bat
-tar -xzf deploy-build.tar.gz -C _deploy_staging
-robocopy _deploy_staging\.next .next /E
-node scripts\copy-next-static.js
-```
-
-Restart Node.js app → Ctrl+F5.
+**Cách B — redeploy CI** sau khi đã pull script deploy mới.

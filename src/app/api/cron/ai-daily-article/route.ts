@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { verifyCronRequest } from "@/lib/cron-auth";
 import { writeDailyAiArticle } from "@/modules/ai/daily-article";
+import { getAiConfig } from "@/modules/admin/settings-service";
 import { revalidatePath } from "next/cache";
 import { NewsCategoryCode } from "@prisma/client";
 
@@ -10,6 +13,19 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const JOB_NAME = "ai-write-articles";
+/** Bumped when AI client behavior changes — use to verify live deploy. */
+const AI_CLIENT = "or-v1";
+
+function readBuildId(): string | null {
+  try {
+    return readFileSync(
+      path.join(process.cwd(), ".next", "BUILD_ID"),
+      "utf8"
+    ).trim();
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(request: NextRequest) {
   if (!(await verifyCronRequest(request))) {
@@ -38,8 +54,10 @@ export async function POST(request: NextRequest) {
     data: { jobName: JOB_NAME, status: "RUNNING" },
   });
   const start = Date.now();
+  const buildId = readBuildId();
 
   try {
+    const cfg = await getAiConfig();
     const result = await writeDailyAiArticle({ force, category });
 
     if (result.created && result.status === "PUBLISHED") {
@@ -61,11 +79,25 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      aiClient: AI_CLIENT,
+      buildId,
+      provider: cfg.provider,
+      baseUrl: cfg.baseUrl,
+      model: cfg.model,
       ...result,
       durationMs: Date.now() - start,
     });
   } catch (error) {
     logger.error({ error }, "AI daily article cron failed");
+    let provider: string | undefined;
+    let baseUrl: string | undefined;
+    try {
+      const cfg = await getAiConfig();
+      provider = cfg.provider;
+      baseUrl = cfg.baseUrl;
+    } catch {
+      /* ignore */
+    }
     await prisma.cronJobLog.update({
       where: { id: log.id },
       data: {
@@ -76,7 +108,14 @@ export async function POST(request: NextRequest) {
       },
     });
     return NextResponse.json(
-      { success: false, error: (error as Error).message },
+      {
+        success: false,
+        aiClient: AI_CLIENT,
+        buildId,
+        provider,
+        baseUrl,
+        error: (error as Error).message,
+      },
       { status: 500 }
     );
   }
