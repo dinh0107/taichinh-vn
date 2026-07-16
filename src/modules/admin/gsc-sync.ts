@@ -86,6 +86,14 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/** MySQL Prisma String default = VARCHAR(191) until @db.Text is pushed. */
+function clipCoverage(value: string | null | undefined, max = 190): string | null {
+  if (value == null) return null;
+  const s = value.trim();
+  if (!s) return null;
+  return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
+}
+
 export async function syncGscToDatabase(): Promise<{
   inspected: number;
   indexed: number;
@@ -160,7 +168,7 @@ export async function syncGscToDatabase(): Promise<{
         where: { id: page.id },
         data: {
           gscIndexStatus: result.status,
-          gscCoverageState: result.coverageState,
+          gscCoverageState: clipCoverage(result.coverageState),
           gscLastCrawlAt: result.lastCrawlAt,
           gscClicks: stats?.clicks ?? 0,
           gscImpressions: stats?.impressions ?? 0,
@@ -175,7 +183,7 @@ export async function syncGscToDatabase(): Promise<{
         where: { id: page.id },
         data: {
           gscIndexStatus: "ERROR",
-          gscCoverageState: (e as Error).message.slice(0, 500),
+          gscCoverageState: clipCoverage((e as Error).message),
           gscSyncedAt: syncedAt,
         },
       });

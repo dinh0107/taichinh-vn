@@ -516,7 +516,7 @@ model SeoPage {
   isIndexed       Boolean        @default(true)
   viewCount       Int            @default(0)
   gscIndexStatus  GscIndexStatus @default(UNKNOWN)
-  gscCoverageState String?
+  gscCoverageState String?       @db.Text
   gscLastCrawlAt  DateTime?
   gscPosition     Float?
   gscClicks       Int            @default(0)
