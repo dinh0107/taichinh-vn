@@ -49,7 +49,13 @@ export async function getGscAccessToken(
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`GSC auth failed (${res.status}): ${text.slice(0, 200)}`);
+    const snip = text.slice(0, 240);
+    if (res.status === 400 || /invalid_grant|invalid_client/i.test(snip)) {
+      throw new Error(
+        `GSC auth failed (${res.status}): private key / client_email sai, hoặc SA chưa được cấp quyền trên property. ${snip}`
+      );
+    }
+    throw new Error(`GSC auth failed (${res.status}): ${snip}`);
   }
 
   const data = (await res.json()) as { access_token: string; expires_in: number };

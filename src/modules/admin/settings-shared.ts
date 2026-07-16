@@ -40,7 +40,7 @@ export const SETTING_DEFAULTS: SiteSettings = {
   ai_auto_write: "false",
   ai_auto_summarize: "false",
   ai_auto_faq: "false",
-  gsc_property_url: "https://taichinh.vn/",
+  gsc_property_url: "",
   gsc_client_email: "",
   /** Raw HTML for <head> — GTM/GA/AdSense head snippets. */
   head_scripts: "",

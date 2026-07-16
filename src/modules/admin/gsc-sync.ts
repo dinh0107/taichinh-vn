@@ -1,6 +1,6 @@
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { getSiteSettings } from "@/modules/admin/settings-service";
+import { getSiteSettingsFresh } from "@/modules/admin/settings-service";
 import { getSiteBaseUrl } from "@/lib/seo/site-url";
 import {
   fetchPageAnalytics,
@@ -28,7 +28,8 @@ export async function getGscConfigStatus(): Promise<GscConfigStatus> {
       missing: ["GSC_ENABLED=false (tạm tắt)"],
     };
   }
-  const settings = await getSiteSettings();
+  // Fresh read — cached getSiteSettings can miss a key vừa Lưu trong Admin.
+  const settings = await getSiteSettingsFresh();
   const propertyUrl =
     settings.gsc_property_url?.trim() ||
     process.env.GSC_PROPERTY_URL?.trim() ||
@@ -38,10 +39,23 @@ export async function getGscConfigStatus(): Promise<GscConfigStatus> {
     settings.gsc_client_email?.trim() ||
     process.env.GSC_CLIENT_EMAIL?.trim() ||
     null;
-  const privateKey =
+
+  let privateKey =
     settings.gsc_private_key?.trim() ||
     process.env.GSC_PRIVATE_KEY?.trim() ||
     null;
+  // Secret may be omitted from bulk map in some paths — read row directly.
+  if (!privateKey) {
+    try {
+      const row = await prisma.siteSetting.findUnique({
+        where: { key: "gsc_private_key" },
+        select: { value: true },
+      });
+      privateKey = row?.value?.trim() || null;
+    } catch {
+      privateKey = null;
+    }
+  }
 
   const missing: string[] = [];
   if (!propertyUrl) missing.push("GSC Property URL");
@@ -62,9 +76,17 @@ export async function resolveGscCredentials(): Promise<GscCredentials | null> {
     return null;
   }
 
-  const settings = await getSiteSettings();
-  const privateKey =
+  const settings = await getSiteSettingsFresh();
+  let privateKey =
     settings.gsc_private_key?.trim() || process.env.GSC_PRIVATE_KEY?.trim() || "";
+  if (!privateKey) {
+    const row = await prisma.siteSetting.findUnique({
+      where: { key: "gsc_private_key" },
+      select: { value: true },
+    });
+    privateKey = row?.value?.trim() || "";
+  }
+  if (!privateKey) return null;
 
   let propertyUrl = status.propertyUrl;
   if (!propertyUrl.endsWith("/") && propertyUrl.startsWith("http")) {
@@ -108,8 +130,13 @@ export async function syncGscToDatabase(): Promise<{
 
   const creds = await resolveGscCredentials();
   if (!creds) {
+    const status = await getGscConfigStatus();
+    const hint =
+      status.missing.length > 0
+        ? ` Thiếu: ${status.missing.join(", ")}.`
+        : "";
     throw new Error(
-      "Chưa cấu hình Google Search Console. Vào Admin → Cài đặt → GSC."
+      `Chưa cấu hình Google Search Console.${hint} Vào Admin → Cài đặt → GSC.`
     );
   }
 

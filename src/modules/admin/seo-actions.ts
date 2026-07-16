@@ -287,10 +287,10 @@ export async function syncGscStatus(): Promise<SeoFormState> {
     return { ok: true, message: result.message };
   } catch (e) {
     logger.error({ e }, "Sync GSC failed");
-    return {
-      ok: false,
-      error: e instanceof Error ? e.message : "Không thể đồng bộ Google Search Console.",
-    };
+    const raw = e instanceof Error ? e.message : "Không thể đồng bộ Google Search Console.";
+    // Short toast-friendly line
+    const error = raw.split("\n")[0]?.slice(0, 280) || raw;
+    return { ok: false, error };
   }
 }
 
