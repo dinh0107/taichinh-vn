@@ -36,6 +36,7 @@ Script đăng ký task:
 | `giahomnay-sync-gold` | mỗi 5 phút | `/api/cron/sync-gold` |
 | `giahomnay-ingest-24h-gold` | 08:00 hàng ngày | `/api/cron/ingest-24h-gold` |
 | `giahomnay-ai-daily-article` | 07:00 hàng ngày | `/api/cron/ai-daily-article` |
+| `giahomnay-generate-sitemap` | 02:00 hàng ngày | `/api/cron/generate-sitemap` |
 
 3. Chạy thử ngay:
 
@@ -63,6 +64,7 @@ call C:\path\to\httpdocs\scripts\cron-call.bat ai-daily-article
 | Sync Fuel | `0 15 * * *` | `/api/cron/sync-fuel` | P2 |
 | Ingest 24h giá vàng | `0 8 * * *` | `/api/cron/ingest-24h-gold` | P1 ✅ |
 | AI Daily Article | `0 7 * * *` | `/api/cron/ai-daily-article` | P1 ✅ |
+| Generate Sitemap | `0 2 * * *` | `/api/cron/generate-sitemap` | P1 ✅ |
 | Generate SEO Pages | `0 6 * * *` | `/api/cron/generate-seo` | P1 |
 | Cleanup Old Prices | `0 3 * * 0` | `/api/cron/cleanup` | P3 |
 | Aggregate Traffic | `0 1 * * *` | `/api/cron/aggregate-traffic` | P3 |
@@ -106,6 +108,18 @@ curl -X POST -H "Authorization: Bearer %CRON_SECRET%" -H "Content-Type: applicat
 ```
 
 3. Admin → Bài viết / Cron & Logs
+
+## Generate Sitemap
+
+- Endpoint: `POST /api/cron/generate-sitemap` + Bearer `CRON_SECRET`
+- Sitemap vẫn dynamic tại `/sitemap.xml` (`src/app/sitemap.ts`)
+- Job: `revalidatePath` + warm fetch; ghi log `generate-sitemap`
+- Task: `giahomnay-generate-sitemap` lúc **02:00**
+
+```bat
+scripts\cron-call.bat generate-sitemap
+schtasks /Run /TN giahomnay-generate-sitemap
+```
 
 ## Job Lifecycle
 

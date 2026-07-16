@@ -10,7 +10,7 @@ REM Secret: env CRON_SECRET, or file cron.secret next to httpdocs (or %~dp0..\cr
 setlocal EnableExtensions
 set "JOB=%~1"
 if "%JOB%"=="" (
-  echo Usage: cron-call.bat sync-gold ^| ingest-24h-gold ^| ai-daily-article ^| sync-gsc
+  echo Usage: cron-call.bat sync-gold ^| ingest-24h-gold ^| ai-daily-article ^| generate-sitemap ^| sync-gsc
   exit /b 1
 )
 

@@ -47,9 +47,13 @@ Register-CronTask -Name "ingest-24h-gold" -Job "ingest-24h-gold" -TriggerArgs "/
 # AI daily article 07:00 (khớp mặc định ai_cron_hour; đổi giờ trong Admin thì sửa task)
 Register-CronTask -Name "ai-daily-article" -Job "ai-daily-article" -TriggerArgs "/SC DAILY /ST 07:00"
 
+# Refresh sitemap cache 02:00
+Register-CronTask -Name "generate-sitemap" -Job "generate-sitemap" -TriggerArgs "/SC DAILY /ST 02:00"
+
 Write-Host ""
 Write-Host "Done. Verify:"
 Write-Host "  schtasks /Query /TN giahomnay-sync-gold /V /FO LIST"
 Write-Host "  schtasks /Run /TN giahomnay-ingest-24h-gold"
 Write-Host "  schtasks /Run /TN giahomnay-ai-daily-article"
+Write-Host "  schtasks /Run /TN giahomnay-generate-sitemap"
 Write-Host "Then check Admin → Cron & Logs"
