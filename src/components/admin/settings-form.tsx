@@ -10,7 +10,13 @@ import type {
   SiteSettings,
   SaveSettingsState,
 } from "@/modules/admin/settings-shared";
+import {
+  AI_MODEL_OPTIONS,
+  AI_CATEGORY_OPTIONS,
+} from "@/modules/admin/settings-shared";
+import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
 import { cn } from "@/lib/utils";
+import type { NewsCategoryCode } from "@prisma/client";
 
 const initialState: SaveSettingsState = { ok: false };
 
@@ -24,6 +30,9 @@ function Field({
   textarea,
   rows = 4,
   mono,
+  min,
+  max,
+  step,
 }: {
   label: string;
   name: string;
@@ -34,6 +43,9 @@ function Field({
   textarea?: boolean;
   rows?: number;
   mono?: boolean;
+  min?: number | string;
+  max?: number | string;
+  step?: number | string;
 }) {
   const cls = cn(
     "w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100",
@@ -57,6 +69,9 @@ function Field({
           name={name}
           defaultValue={defaultValue}
           placeholder={placeholder}
+          min={min}
+          max={max}
+          step={step}
           className={cls}
         />
       )}
@@ -92,6 +107,38 @@ function Toggle({
   );
 }
 
+function SelectField({
+  label,
+  name,
+  hint,
+  defaultValue,
+  options,
+}: {
+  label: string;
+  name: string;
+  hint?: string;
+  defaultValue?: string;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
+      <select
+        name={name}
+        defaultValue={defaultValue}
+        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {hint && <span className="mt-1 block text-xs text-slate-400">{hint}</span>}
+    </label>
+  );
+}
+
 export function SettingsForm({
   initial,
   secretFlags,
@@ -104,6 +151,13 @@ export function SettingsForm({
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(saveSettings, initialState);
   const lastShown = useRef<SaveSettingsState | null>(null);
+  const selectedCats = new Set(
+    (initial.ai_write_categories || "")
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean)
+  );
+  const hasOpenAiKey = Boolean(secretFlags.openai_api_key);
 
   useEffect(() => {
     if (state === initialState || lastShown.current === state) return;
@@ -200,36 +254,6 @@ export function SettingsForm({
           </div>
         </AdminCard>
 
-        <AdminCard title="Nội dung AI" action={<Bot className="h-4 w-4 text-slate-400" />}>
-          <div className="space-y-4 p-5">
-            <Field
-              label="OpenAI API Key"
-              name="openai_api_key"
-              type="password"
-              placeholder={secretFlags.openai_api_key ? "••••••••  (đã thiết lập)" : "sk-..."}
-              hint="Để trống nếu không đổi."
-            />
-            <div className="divide-y divide-slate-100">
-              <Toggle
-                label="Tự động viết bài SEO hằng ngày"
-                name="ai_auto_write"
-                hint="Chạy lúc 7:00 mỗi ngày"
-                defaultChecked={initial.ai_auto_write === "true"}
-              />
-              <Toggle
-                label="Tự động tóm tắt tin tức"
-                name="ai_auto_summarize"
-                defaultChecked={initial.ai_auto_summarize === "true"}
-              />
-              <Toggle
-                label="Tự sinh FAQ cho landing page"
-                name="ai_auto_faq"
-                defaultChecked={initial.ai_auto_faq === "true"}
-              />
-            </div>
-          </div>
-        </AdminCard>
-
         {gscEnabled && (
           <AdminCard title="Google Search Console" action={<KeyRound className="h-4 w-4 text-slate-400" />}>
             <div className="space-y-4 p-5">
@@ -259,6 +283,145 @@ export function SettingsForm({
           </AdminCard>
         )}
       </div>
+
+      <AdminCard title="Nội dung AI" action={<Bot className="h-4 w-4 text-slate-400" />}>
+        <div className="space-y-5 p-5">
+          <div
+            className={cn(
+              "rounded-lg border px-3 py-2.5 text-sm",
+              hasOpenAiKey
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-amber-200 bg-amber-50 text-amber-900"
+            )}
+          >
+            {hasOpenAiKey
+              ? "Đã có OpenAI API Key. Bật các tùy chọn bên dưới rồi cấu hình Scheduled Task / cron gọi /api/cron/ai-daily-article."
+              : "Chưa có OpenAI API Key — điền key rồi Lưu. Các job tự động sẽ bỏ qua nếu thiếu key."}
+          </div>
+
+          <Field
+            label="OpenAI API Key"
+            name="openai_api_key"
+            type="password"
+            placeholder={hasOpenAiKey ? "••••••••  (đã thiết lập — để trống nếu không đổi)" : "sk-..."}
+            hint="Lưu trong DB (không hiện lại). Có thể dùng biến môi trường OPENAI_API_KEY thay thế."
+          />
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <SelectField
+              label="Model"
+              name="ai_model"
+              defaultValue={initial.ai_model || "gpt-4o-mini"}
+              options={[...AI_MODEL_OPTIONS]}
+            />
+            <Field
+              label="Temperature"
+              name="ai_temperature"
+              type="number"
+              min={0}
+              max={2}
+              step={0.1}
+              defaultValue={initial.ai_temperature || "0.7"}
+              hint="0 = chặt chẽ, 2 = sáng tạo."
+            />
+            <Field
+              label="Max tokens"
+              name="ai_max_tokens"
+              type="number"
+              min={256}
+              max={8000}
+              step={1}
+              defaultValue={initial.ai_max_tokens || "2000"}
+            />
+            <Field
+              label="Giờ chạy cron (0–23)"
+              name="ai_cron_hour"
+              type="number"
+              min={0}
+              max={23}
+              step={1}
+              defaultValue={initial.ai_cron_hour || "7"}
+              hint="Giờ máy chủ — khớp Task Scheduler."
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SelectField
+              label="Chế độ đăng bài AI"
+              name="ai_publish_mode"
+              defaultValue={initial.ai_publish_mode === "PUBLISHED" ? "PUBLISHED" : "DRAFT"}
+              options={[
+                { value: "DRAFT", label: "Lưu nháp (duyệt tay)" },
+                { value: "PUBLISHED", label: "Đăng luôn" },
+              ]}
+              hint="Khuyến nghị nháp đến khi ổn định chất lượng."
+            />
+            <div>
+              <span className="mb-1.5 block text-sm font-medium text-slate-700">
+                Chuyên mục bài tự động
+              </span>
+              <div className="flex flex-wrap gap-2 rounded-lg border border-slate-200 p-3">
+                {AI_CATEGORY_OPTIONS.map((code) => (
+                  <label
+                    key={code}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                  >
+                    <input
+                      type="checkbox"
+                      name="ai_write_categories"
+                      value={code}
+                      defaultChecked={selectedCats.has(code)}
+                      className="accent-amber-500"
+                    />
+                    {NEWS_CATEGORY_LABELS[code as NewsCategoryCode]}
+                  </label>
+                ))}
+              </div>
+              <span className="mt-1 block text-xs text-slate-400">
+                Cron chọn topic theo các chuyên mục đã tick.
+              </span>
+            </div>
+          </div>
+
+          <Field
+            label="System prompt"
+            name="ai_system_prompt"
+            defaultValue={initial.ai_system_prompt}
+            textarea
+            rows={3}
+            hint="Vai trò / giọng văn cố định cho mọi lần gọi AI."
+          />
+          <Field
+            label="Prompt viết bài"
+            name="ai_article_prompt"
+            defaultValue={initial.ai_article_prompt}
+            textarea
+            rows={4}
+            hint="Placeholder: {{topic}}, {{date}}, {{data}}."
+          />
+
+          <div className="divide-y divide-slate-100 border-t border-slate-100 pt-2">
+            <Toggle
+              label="Tự động viết bài SEO hằng ngày"
+              name="ai_auto_write"
+              hint={`Cron /api/cron/ai-daily-article lúc ${initial.ai_cron_hour || "7"}:00`}
+              defaultChecked={initial.ai_auto_write === "true"}
+            />
+            <Toggle
+              label="Tự động tóm tắt tin tức"
+              name="ai_auto_summarize"
+              hint="Rút gọn bài crawl (vd. 24h) trước khi đăng."
+              defaultChecked={initial.ai_auto_summarize === "true"}
+            />
+            <Toggle
+              label="Tự sinh FAQ cho landing page"
+              name="ai_auto_faq"
+              hint="Bổ sung FAQ Schema trên trang SEO programmatic."
+              defaultChecked={initial.ai_auto_faq === "true"}
+            />
+          </div>
+        </div>
+      </AdminCard>
 
       <AdminCard
         title="Script Google / Tracking"

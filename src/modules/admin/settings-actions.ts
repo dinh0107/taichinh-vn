@@ -103,6 +103,13 @@ const TEXT_KEYS = [
   "gsc_client_email",
   "head_scripts",
   "body_scripts",
+  "ai_model",
+  "ai_temperature",
+  "ai_max_tokens",
+  "ai_cron_hour",
+  "ai_publish_mode",
+  "ai_system_prompt",
+  "ai_article_prompt",
 ] as const;
 
 // Secret fields: only overwritten when a new non-empty value is provided.
@@ -117,6 +124,21 @@ const BOOL_KEYS = [
   "ai_auto_faq",
 ] as const;
 
+const AI_CATEGORY_VALUES = new Set([
+  "GOLD",
+  "STOCKS",
+  "BANKING",
+  "REAL_ESTATE",
+  "ECONOMY",
+  "GENERAL",
+]);
+
+function clampNumber(raw: string, min: number, max: number, fallback: number): string {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return String(fallback);
+  return String(Math.min(max, Math.max(min, n)));
+}
+
 export async function saveSettings(
   _prev: SaveSettingsState,
   formData: FormData
@@ -127,8 +149,22 @@ export async function saveSettings(
 
   for (const key of TEXT_KEYS) {
     const value = formData.get(key);
-    if (typeof value === "string") updates.push({ key, value: value.trim() });
+    if (typeof value !== "string") continue;
+    let v = value.trim();
+    if (key === "ai_temperature") v = clampNumber(v, 0, 2, 0.7);
+    if (key === "ai_max_tokens") v = clampNumber(v, 256, 8000, 2000);
+    if (key === "ai_cron_hour") v = clampNumber(v, 0, 23, 7);
+    if (key === "ai_publish_mode") v = v === "PUBLISHED" ? "PUBLISHED" : "DRAFT";
+    updates.push({ key, value: v });
   }
+
+  const cats = formData
+    .getAll("ai_write_categories")
+    .filter((v): v is string => typeof v === "string" && AI_CATEGORY_VALUES.has(v));
+  updates.push({
+    key: "ai_write_categories",
+    value: cats.length > 0 ? cats.join(",") : "GOLD",
+  });
 
   for (const key of BOOL_KEYS) {
     updates.push({ key, value: formData.get(key) === "on" ? "true" : "false" });

@@ -19,7 +19,7 @@ export default async function AdminSettingsPage() {
     <div className="space-y-6">
       <AdminPageTitle
         title="Cài đặt"
-        description="Cấu hình chung của nền tảng, API và kiếm tiền."
+        description="Thương hiệu, API, AI viết bài, quảng cáo và tracking."
       />
 
       <AdminCard

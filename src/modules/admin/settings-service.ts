@@ -1,6 +1,11 @@
 import { unstable_cache } from "next/cache";
 import prisma from "@/lib/db";
-import { SETTING_DEFAULTS, type SiteSettings } from "./settings-shared";
+import {
+  SETTING_DEFAULTS,
+  parseAiConfig,
+  type AiConfig,
+  type SiteSettings,
+} from "./settings-shared";
 import { isNextProductionBuild } from "@/lib/build-phase";
 
 const SECRET_KEYS = ["cron_secret", "openai_api_key", "gsc_private_key"] as const;
@@ -52,5 +57,29 @@ export async function getSecretFlags(): Promise<Record<string, boolean>> {
   } catch {
     // keep defaults (all false)
   }
+  if (!flags.openai_api_key && process.env.OPENAI_API_KEY?.trim()) {
+    flags.openai_api_key = true;
+  }
   return flags;
+}
+
+/** Typed AI settings for cron / article generation (includes API key when present). */
+export async function getAiConfig(): Promise<AiConfig> {
+  const settings = await getSiteSettingsFresh();
+  let apiKey: string | null = null;
+  if (!isNextProductionBuild()) {
+    try {
+      const row = await prisma.siteSetting.findUnique({
+        where: { key: "openai_api_key" },
+        select: { value: true },
+      });
+      apiKey = row?.value?.trim() || null;
+    } catch {
+      apiKey = null;
+    }
+  }
+  if (!apiKey && process.env.OPENAI_API_KEY?.trim()) {
+    apiKey = process.env.OPENAI_API_KEY.trim();
+  }
+  return parseAiConfig(settings, apiKey);
 }

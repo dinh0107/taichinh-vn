@@ -5,7 +5,8 @@
 ```
 ┌──────────────────┐     POST /api/cron/*     ┌──────────────┐
 │ Cron scheduler   │ ────────────────────────▶│  Next.js App │
-│ (cron / GH Act.) │   Bearer CRON_SECRET     │              │
+│ (Windows Task /  │   Bearer CRON_SECRET     │              │
+│  Plesk / GH Act) │                          │              │
 └──────────────────┘                          └──────┬───────┘
                                                │
                     ┌──────────────────────────┼──────────────────┐
@@ -14,6 +15,40 @@
               │ External │            │   MySQL    │      │  Redis   │
               │   APIs   │            │            │      │  Cache   │
               └──────────┘            └────────────┘      └──────────┘
+```
+
+> **Quan trọng:** App **không** tự chạy cron. Phải có scheduler bên ngoài gọi HTTP.
+> Sau khi bỏ Docker, crontab trong container không còn — nếu chưa cấu hình Task Scheduler / Plesk thì Admin → Cron sẽ trống.
+
+## Bật lịch trên Windows Plesk (khuyến nghị)
+
+1. Tạo file `cron.secret` **ngay cạnh** `httpdocs` (một dòng = `cron_secret` trong Admin → Cài đặt). File này đã có trong `.gitignore`.
+2. Trên server (RDP / PowerShell **Admin**), trong thư mục site:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup-windows-cron.ps1
+```
+
+Script đăng ký 2 task:
+
+| Task | Lịch | Endpoint |
+|------|------|----------|
+| `giahomnay-sync-gold` | mỗi 5 phút | `/api/cron/sync-gold` |
+| `giahomnay-ingest-24h-gold` | 08:00 hàng ngày | `/api/cron/ingest-24h-gold` |
+
+3. Chạy thử ngay:
+
+```bat
+schtasks /Run /TN giahomnay-ingest-24h-gold
+scripts\cron-call.bat ingest-24h-gold
+```
+
+4. Vào **Admin → Cron & Logs** — phải thấy log `SUCCESS` trong vài giây.
+
+Hoặc Plesk → **Scheduled Tasks** → thêm lệnh:
+
+```bat
+call C:\path\to\httpdocs\scripts\cron-call.bat ingest-24h-gold
 ```
 
 ## Job Schedule
@@ -35,8 +70,8 @@
 
 - Nguồn: [24h — Giá vàng](https://www.24h.com.vn/gia-vang-c161e3047.html)
 - Endpoint: `POST /api/cron/ingest-24h-gold` + `Authorization: Bearer {CRON_SECRET}`
-- Lịch khuyến nghị: **08:00 Asia/Ho_Chi_Minh** (`0 8 * * *` trên server, hoặc GitHub Actions `0 1 * * *` UTC)
-- Workflow: [`.github/workflows/ingest-24h-gold.yml`](../.github/workflows/ingest-24h-gold.yml)
+- Lịch khuyến nghị: **08:00 Asia/Ho_Chi_Minh** trên **Windows Task Scheduler** (xem mục trên)
+- Backup: GitHub Actions [`.github/workflows/ingest-24h-gold.yml`](../.github/workflows/ingest-24h-gold.yml) (`0 1 * * *` UTC) — GitHub có thể trễ hoặc tạm dừng schedule nếu repo ít activity; **không** dựa vào đây làm nguồn chính
 - Dedup theo `sourceUrl`; đăng `PUBLISHED` + category `GOLD`; ghi nguồn 24h.com.vn
 
 **Bản quyền:** chỉ dùng khi đã có thỏa thuận / chấp nhận rủi ro tái bản. Bài có dòng nguồn + link gốc.
@@ -44,12 +79,9 @@
 ### Cấu hình
 
 1. Admin → Cài đặt → `cron_secret` (hoặc `.env` `CRON_SECRET`)
-2. GitHub Actions secret `CRON_SECRET` = cùng giá trị
-3. (Tuỳ chọn) Plesk cron:
-   ```bat
-   curl -X POST -H "Authorization: Bearer %CRON_SECRET%" -H "Content-Type: application/json" -d "{}" https://giahomnay.site/api/cron/ingest-24h-gold
-   ```
-   lịch `0 8 * * *`
+2. File `cron.secret` trên server + chạy `scripts\setup-windows-cron.ps1` (bắt buộc để tự chạy)
+3. (Tuỳ chọn) GitHub secret `CRON_SECRET` = cùng giá trị để workflow backup chạy được
+4. Kiểm tra: `schtasks /Run /TN giahomnay-ingest-24h-gold` rồi xem Admin → Cron
 
 ## Job Lifecycle
 
