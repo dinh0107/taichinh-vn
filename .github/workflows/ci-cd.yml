@@ -85,8 +85,11 @@ jobs:
           CSS_COUNT="$(find deploy-out/.next/static -type f -name '*.css' | wc -l)"
           echo "CSS files in artifact: ${CSS_COUNT}"
           test "${CSS_COUNT}" -gt 0
-          # Sample path for health check after deploy
-          SAMPLE_REL="$(find deploy-out/.next/static -type f -name '*.css' | head -1 | sed 's|^deploy-out/.next/static/||')"
+      # Prefer main stylesheet under chunks/ (deterministic) for post-deploy poll
+          SAMPLE_REL="$(find deploy-out/.next/static/chunks -type f -name '*.css' 2>/dev/null | sort | head -1 | sed 's|^deploy-out/.next/static/||')"
+          if [ -z "$SAMPLE_REL" ]; then
+            SAMPLE_REL="$(find deploy-out/.next/static -type f -name '*.css' | sort | head -1 | sed 's|^deploy-out/.next/static/||')"
+          fi
           echo "SAMPLE_CSS=${SAMPLE_REL}" >> "$GITHUB_ENV"
           tar -C deploy-out -czf deploy-build.tar.gz .next _next
           ls -lh deploy-build.tar.gz
@@ -116,19 +119,21 @@ jobs:
             echo "GET HTTP ${code}"
           fi
           case "$code" in
-            200|201|202|204) echo "Webhook OK — bat đang chờ tar..." ;;
+            200|201|202|204) echo "Webhook OK — đợi git pull rồi upload tar (re-put nếu bị clean)..." ;;
             *) echo "::error::Webhook HTTP ${code}"; exit 1 ;;
           esac
-          sleep 20
+          # Git pull trên Plesk thường 15–60s; sleep ngắn rồi vòng re-upload xử lý race.
+          sleep 25
 
-      # 2) Upload tar while bat is waiting (sau git clean)
-      - name: Upload deploy-build.tar.gz (FTP/FTPS/SFTP)
+      # 2+3) Upload tar (lặp lại nếu git clean nuốt) + poll CSS hash của build mới
+      - name: Upload tar and wait until CSS is live
         env:
           FTP_HOST: ${{ secrets.PLESK_SFTP_HOST }}
           FTP_USER: ${{ secrets.PLESK_SFTP_USER }}
           FTP_PASS: ${{ secrets.PLESK_SFTP_PASSWORD }}
           FTP_PORT: ${{ secrets.PLESK_SFTP_PORT }}
           FTP_REMOTE: ${{ secrets.PLESK_SFTP_REMOTE_PATH }}
+          APP_URL: ${{ vars.APP_URL }}
         run: |
           set -euo pipefail
 
@@ -141,6 +146,15 @@ jobs:
           if [ -z "$REMOTE" ] || echo "$REMOTE" | grep -Eqi 'Users/'; then
             REMOTE="httpdocs"
           fi
+
+          BASE_URL="${APP_URL:-https://giahomnay.site}"
+          SAMPLE="${SAMPLE_CSS:-}"
+          if [ -z "$SAMPLE" ]; then
+            echo "::error::Không có SAMPLE_CSS từ bước pack"
+            exit 1
+          fi
+          URL="${BASE_URL%/}/_next/static/${SAMPLE}"
+          echo "Target CSS: ${URL}"
 
           sudo apt-get update -qq
           sudo apt-get install -y -qq lftp
@@ -155,12 +169,43 @@ jobs:
           fi
           TRIES+=("ftps|21" "ftp|21" "sftp|22")
 
-          upload_ok=0
+          PROTO=""
+          PORT=""
           for try in "${TRIES[@]}"; do
-            PROTO="${try%%|*}"
-            PORT="${try##*|}"
-            echo "==> Thử ${PROTO}://${FTP_HOST}:${PORT}  cd ${REMOTE}"
+            P="${try%%|*}"
+            N="${try##*|}"
+            echo "==> Probe ${P}://${FTP_HOST}:${N}"
+            set +e
+            lftp -c "
+              set ssl:verify-certificate no
+              set ftp:ssl-allow yes
+              set ftp:ssl-force false
+              set ftp:passive-mode yes
+              set sftp:auto-confirm yes
+              set cmd:fail-exit yes
+              set net:max-retries 1
+              set net:timeout 30
+              open -u \"${FTP_USER}\",\"${FTP_PASS}\" -p ${N} ${P}://${FTP_HOST}
+              cd /
+              cd ${REMOTE}
+              pwd
+              bye
+            "
+            rc=$?
+            set -e
+            if [ "$rc" -eq 0 ]; then
+              PROTO="$P"
+              PORT="$N"
+              echo "==> Dùng ${PROTO}:${PORT}"
+              break
+            fi
+          done
+          if [ -z "$PROTO" ]; then
+            echo "::error::Không kết nối được FTP/SFTP"
+            exit 1
+          fi
 
+          upload_tar() {
             set +e
             lftp -c "
               set ssl:verify-certificate no
@@ -173,51 +218,47 @@ jobs:
               set net:timeout 90
               open -u \"${FTP_USER}\",\"${FTP_PASS}\" -p ${PORT} ${PROTO}://${FTP_HOST}
               cd /
-              cls -1
               cd ${REMOTE}
-              pwd
               put -O . deploy-build.tar.gz
               cls -1 deploy-build.tar.gz
               bye
             "
-            rc=$?
+            local rc=$?
             set -e
+            return $rc
+          }
 
-            if [ "$rc" -eq 0 ]; then
-              echo "==> Upload OK → /${REMOTE}/deploy-build.tar.gz"
-              upload_ok=1
-              break
+          # ~8 phút: re-upload mỗi 30s (tránh git clean nuốt tar trước khi bat chờ),
+          # poll CSS mỗi 5s.
+          MAX=96
+          upload_ok=0
+          for i in $(seq 1 "$MAX"); do
+            # Re-put tar mỗi 6 vòng (~30s) — lần 1 luôn upload
+            if [ "$i" -eq 1 ] || [ $((i % 6)) -eq 1 ]; then
+              echo "==> [${i}/${MAX}] Upload deploy-build.tar.gz"
+              if upload_tar; then
+                upload_ok=1
+                echo "    upload OK"
+              else
+                echo "    upload FAIL (sẽ thử lại)"
+              fi
             fi
-            echo "==> ${PROTO}:${PORT} thất bại (rc=${rc})"
-          done
 
-          if [ "$upload_ok" -ne 1 ]; then
-            echo "::error::Không upload được tar"
-            exit 1
-          fi
-
-      # 3) Chờ bat extract staging + CSS online
-      - name: Wait until CSS is live
-        env:
-          APP_URL: ${{ vars.APP_URL }}
-        run: |
-          set -euo pipefail
-          BASE_URL="${APP_URL:-https://giahomnay.site}"
-          SAMPLE="${SAMPLE_CSS:-}"
-          if [ -z "$SAMPLE" ]; then
-            echo "::warning::Không có SAMPLE_CSS — bỏ qua poll"
-            exit 0
-          fi
-          URL="${BASE_URL%/}/_next/static/${SAMPLE}"
-          echo "Polling ${URL}"
-          for i in $(seq 1 48); do
             code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 "$URL" || true)"
-            echo "try ${i}/48 → HTTP ${code}"
+            echo "try ${i}/${MAX} → HTTP ${code}"
             if [ "$code" = "200" ]; then
               echo "CSS live OK"
               exit 0
             fi
             sleep 5
           done
-          echo "::error::CSS vẫn 404 sau ~4 phút — kiểm tra Plesk deploy log / deploy-plesk-fast.bat"
+
+          if [ "$upload_ok" -ne 1 ]; then
+            echo "::error::Không upload được tar lần nào"
+            exit 1
+          fi
+          echo "::error::CSS vẫn 404 sau ~8 phút — kiểm tra Plesk deploy log / deploy-plesk-fast.bat"
+          echo "SAMPLE=${SAMPLE}"
+          echo "Live homepage CSS (để so):"
+          curl -sS "${BASE_URL%/}/" | grep -oE '/_next/static/[^\" ]+\.css' | head -5 || true
           exit 1

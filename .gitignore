@@ -18,6 +18,13 @@
 /_next/
 /out/
 
+# Plesk deploy (CI tar + flags — untracked, git clean removes them)
+/deploy-build.tar.gz
+/deploy-waiting.flag
+/deploy-ok.flag
+/_deploy_staging/
+/.next.prev/
+
 # production
 /build
 

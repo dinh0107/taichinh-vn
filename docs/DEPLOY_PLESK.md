@@ -11,15 +11,15 @@
 
 ```text
 CI pack tar
-  → webhook Git (git clean) → deploy-plesk-fast.bat ĐỢI tar
-  → CI upload tar (sau git clean)
+  → webhook Git (git clean) → deploy-plesk-fast.bat ĐỢI tar (deploy-waiting.flag)
+  → CI upload tar + **re-put mỗi ~30s** trong lúc poll CSS
+       (tránh race: upload lúc git clean còn chạy → tar bị xóa)
   → bat: extract → _deploy_staging (verify CSS)
-       robocopy staging → .next (KHÔNG rmdir khi iisnode lock)
-       copy-next-static + restart
-  → CI poll CSS đến HTTP 200
+       swap/robocopy → .next + copy-next-static + restart
+  → CI poll đúng hash CSS của build mới đến HTTP 200 (~8 phút)
 ```
 
-Không upload tar trước webhook: git clean sẽ xóa `deploy-build.tar.gz`.
+Không upload tar một lần rồi chỉ chờ: nếu git pull chậm hơn sleep của CI, `git clean` sẽ xóa tar trước khi bat kịp nhận → CSS hash mới 404 mãi.
 
 ## Plesk
 

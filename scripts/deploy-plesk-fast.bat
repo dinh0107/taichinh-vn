@@ -29,21 +29,25 @@ if errorlevel 1 (
   exit /b 1
 )
 
-REM Doi CI upload tar (toi da 60 x 5s = 5 phut)
+REM Doi CI upload tar (toi da 72 x 5s = 6 phut)
+REM Viet flag de CI biet bat dang cho (tranh upload luc git clean).
+echo waiting> "deploy-waiting.flag"
 set WAIT_TRIES=0
 :wait_tar
 if exist "deploy-build.tar.gz" goto extract_tar
-if %WAIT_TRIES% GEQ 60 (
-  echo ERROR: Timeout — khong thay deploy-build.tar.gz sau 5 phut.
-  echo CI phai upload tar TRUOC hoac TRONG luc script nay dang doi.
+if %WAIT_TRIES% GEQ 72 (
+  del /f /q "deploy-waiting.flag" 2>nul
+  echo ERROR: Timeout — khong thay deploy-build.tar.gz sau 6 phut.
+  echo CI phai upload tar SAU webhook, va re-put neu git clean xoa som.
   exit /b 1
 )
 set /a WAIT_TRIES+=1
-echo ==^> Cho deploy-build.tar.gz ^(%WAIT_TRIES%/60^)...
+echo ==^> Cho deploy-build.tar.gz ^(%WAIT_TRIES%/72^)...
 timeout /t 5 /nobreak >nul
 goto wait_tar
 
 :extract_tar
+del /f /q "deploy-waiting.flag" 2>nul
 echo ==^> Extract deploy-build.tar.gz → _deploy_staging
 if exist "_deploy_staging" (
   rmdir /s /q "_deploy_staging" 2>nul
@@ -125,6 +129,9 @@ if errorlevel 1 (
   echo ERROR: CSS sync failed
   exit /b 1
 )
+
+REM Marker cho debug / CI (untracked — git clean se xoa lan sau)
+echo ok %DATE% %TIME%> "deploy-ok.flag"
 
 echo ==^> Cleanup staging + tar + .next.prev
 rmdir /s /q "_deploy_staging" 2>nul
