@@ -1,15 +1,12 @@
 # Register Windows Task Scheduler jobs that POST /api/cron/*.
-# Run ONCE on the Plesk Windows server (as Administrator):
+# Run as Administrator:
 #   cd C:\Inetpub\vhosts\giahomnay.site\httpdocs
 #   powershell -ExecutionPolicy Bypass -File scripts\setup-windows-cron.ps1
 #
-# Prerequisites:
-#   1. cron.secret — one line = Admin cron_secret — in EITHER:
-#        httpdocs\cron.secret
-#        OR parent of httpdocs (vhost home, cạnh thư mục httpdocs)
-#      OR env CRON_SECRET
-#   2. curl in PATH
-#   3. PowerShell / CMD chạy với quyền Administrator (schtasks cần quyền cao)
+# cron.secret (one line = Admin cron_secret) in:
+#   httpdocs\cron.secret
+#   OR parent of httpdocs (vhost home)
+# OR set env CRON_SECRET
 
 param(
   [string]$Httpdocs = (Split-Path $PSScriptRoot -Parent),
@@ -29,12 +26,12 @@ $secretCandidates = @(
 $secretFile = $null
 foreach ($p in $secretCandidates) {
   if (Test-Path -LiteralPath $p) {
-    $raw = (Get-Content -LiteralPath $p -Raw -ErrorAction SilentlyContinue)
-    if ($raw -and $raw.Trim().Length -gt 0) {
+    $raw = Get-Content -LiteralPath $p -Raw -ErrorAction SilentlyContinue
+    if ($null -ne $raw -and $raw.Trim().Length -gt 0) {
       $secretFile = $p
       break
     }
-    Write-Host "WARN: $p exists but EMPTY — skip"
+    Write-Host "WARN: $p exists but EMPTY - skip"
   }
 }
 
@@ -58,16 +55,16 @@ function Register-CronTask {
     [string]$TriggerArgs
   )
   $taskName = "giahomnay-$Name"
-  schtasks /Delete /TN $taskName /F 2>$null | Out-Null
-  # Escape for schtasks /TR: wrap cmd carefully
-  $tr = "cmd /c `"set BASE_URL=$BaseUrl&& `"$bat`" $Job`""
-  $cmd = "schtasks /Create /TN `"$taskName`" /TR `"$tr`" $TriggerArgs /RU SYSTEM /F"
-  Write-Host $cmd
-  cmd /c $cmd
+  & schtasks.exe /Delete /TN $taskName /F 2>$null | Out-Null
+
+  # cmd.exe uses & not &&; keep string ASCII-only for Windows PowerShell 5.1
+  $tr = 'cmd /c set BASE_URL=' + $BaseUrl + '& "' + $bat + '" ' + $Job
+  Write-Host ("Creating " + $taskName + " ...")
+  & schtasks.exe /Create /TN $taskName /TR $tr $TriggerArgs.Split(' ') /RU SYSTEM /F
   if ($LASTEXITCODE -ne 0) {
-    throw "Failed to create $taskName (rc=$LASTEXITCODE). Chay CMD/PowerShell as Administrator."
+    throw ("Failed to create " + $taskName + " (rc=" + $LASTEXITCODE + "). Run CMD as Administrator.")
   }
-  Write-Host "OK $taskName"
+  Write-Host ("OK " + $taskName)
 }
 
 Register-CronTask -Name "sync-gold" -Job "sync-gold" -TriggerArgs "/SC MINUTE /MO 5"
@@ -79,4 +76,4 @@ Write-Host ""
 Write-Host "Done. Verify:"
 Write-Host "  schtasks /Query /TN giahomnay-sync-gold"
 Write-Host "  schtasks /Run /TN giahomnay-generate-sitemap"
-Write-Host "Then check Admin → Cron & Logs"
+Write-Host "Then check Admin - Cron and Logs"
