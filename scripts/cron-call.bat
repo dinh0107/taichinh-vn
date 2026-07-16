@@ -1,11 +1,8 @@
 @echo off
 REM Call a cron API on production.
 REM Usage: cron-call.bat <path-segment>
-REM   cron-call.bat sync-gold
-REM   cron-call.bat ingest-24h-gold
-REM   cron-call.bat ai-daily-article
-REM
-REM Secret: env CRON_SECRET, or file cron.secret next to httpdocs (or %~dp0..\cron.secret)
+REM Secret: env CRON_SECRET, or cron.secret in:
+REM   httpdocs\cron.secret  OR  parent\cron.secret (canh httpdocs)
 
 setlocal EnableExtensions
 set "JOB=%~1"
@@ -22,7 +19,14 @@ if "%CRON_SECRET%"=="" (
   )
 )
 if "%CRON_SECRET%"=="" (
-  echo ERROR: missing CRON_SECRET env or cron.secret file
+  if exist "%~dp0..\..\cron.secret" (
+    set /p CRON_SECRET=<"%~dp0..\..\cron.secret"
+  )
+)
+if "%CRON_SECRET%"=="" (
+  echo ERROR: missing CRON_SECRET env or cron.secret
+  echo   Tried: %~dp0..\cron.secret
+  echo   Tried: %~dp0..\..\cron.secret
   exit /b 1
 )
 
