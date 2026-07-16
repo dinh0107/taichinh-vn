@@ -20,6 +20,19 @@ export function formatDateVi(date: Date | string | null | undefined): string {
   return format(d, "dd/MM/yyyy", { locale: vi });
 }
 
+/** Current hour 0–23 in Asia/Ho_Chi_Minh. */
+export function hourVn(now: Date = new Date()): number {
+  const h = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ,
+    hour: "2-digit",
+    hour12: false,
+  }).format(now);
+  // en-GB can yield "24" for midnight in some engines — normalize
+  const n = Number(h);
+  if (n === 24) return 0;
+  return Number.isFinite(n) ? n : 0;
+}
+
 /** Today's date in Vietnam as dd/MM/yyyy (stable for titles). */
 export function todayDateVi(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-GB", {

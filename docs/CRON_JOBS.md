@@ -23,22 +23,30 @@
 ## Bật lịch trên Windows Plesk (khuyến nghị)
 
 1. Tạo file `cron.secret` **ngay cạnh** `httpdocs` (một dòng = `cron_secret` trong Admin → Cài đặt). File này đã có trong `.gitignore`.
-2. Trên server (RDP / PowerShell **Admin**), trong thư mục site:
+2. Trên server (RDP / CMD **Run as administrator**), trong `httpdocs`:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\setup-windows-cron.ps1
+```bat
+cd /d C:\Inetpub\vhosts\giahomnay.site\httpdocs
+call scripts\setup-windows-cron.bat
 ```
 
-Script đăng ký task:
+(Hoặc PowerShell Admin: `powershell -ExecutionPolicy Bypass -File scripts\setup-windows-cron.ps1`)
+
+Danh sách task đọc từ `scripts\cron-tasks.manifest`:
 
 | Task | Lịch | Endpoint |
 |------|------|----------|
-| `giahomnay-sync-gold` | mỗi 5 phút | `/api/cron/sync-gold` |
-| `giahomnay-ingest-24h-gold` | 08:00 hàng ngày | `/api/cron/ingest-24h-gold` |
-| `giahomnay-ai-daily-article` | 07:00 hàng ngày | `/api/cron/ai-daily-article` |
-| `giahomnay-generate-sitemap` | 02:00 hàng ngày | `/api/cron/generate-sitemap` |
+| `giahomnay-sync-gold` | 5 phút | `/api/cron/sync-gold` |
+| `giahomnay-sync-forex` | 30 phút | `/api/cron/sync-forex` |
+| `giahomnay-sync-stocks` | T2–T6 9:00–16:00, mỗi 15 phút | `/api/cron/sync-stocks` |
+| `giahomnay-sync-interest` | 06:00 | `/api/cron/sync-interest` |
+| `giahomnay-sync-fuel` | 15:00 | `/api/cron/sync-fuel` |
+| `giahomnay-ingest-24h-gold` | 08:00 | `/api/cron/ingest-24h-gold` |
+| `giahomnay-ai-daily-article` | mỗi giờ (lọc `ai_cron_hour` VN) | `/api/cron/ai-daily-article` |
+| `giahomnay-generate-sitemap` | 02:00 | `/api/cron/generate-sitemap` |
+| `giahomnay-sync-gsc` | 03:00 | `/api/cron/sync-gsc` (cần `GSC_ENABLED`) |
 
-3. Chạy thử ngay:
+3. Chạy thử:
 
 ```bat
 schtasks /Run /TN giahomnay-ai-daily-article
@@ -58,16 +66,17 @@ call C:\path\to\httpdocs\scripts\cron-call.bat ai-daily-article
 | Job | Cron | Endpoint | Priority |
 |-----|------|----------|----------|
 | Sync Gold | `*/5 * * * *` | `/api/cron/sync-gold` | P0 ✅ |
-| Sync Forex | `*/10 * * * *` | `/api/cron/sync-forex` | P1 |
-| Sync Stocks | `* 9-15 * * 1-5` | `/api/cron/sync-stocks` | P1 |
-| Sync Interest | `0 8 * * *` | `/api/cron/sync-interest` | P2 |
-| Sync Fuel | `0 15 * * *` | `/api/cron/sync-fuel` | P2 |
+| Sync Forex | `*/30 * * * *` | `/api/cron/sync-forex` | P1 ✅ |
+| Sync Stocks | `*/15 9-15 * * 1-5` | `/api/cron/sync-stocks` | P1 ✅ |
+| Sync Interest | `0 6 * * *` | `/api/cron/sync-interest` | P2 ✅ |
+| Sync Fuel | `0 15 * * *` | `/api/cron/sync-fuel` | P2 ✅ |
 | Ingest 24h giá vàng | `0 8 * * *` | `/api/cron/ingest-24h-gold` | P1 ✅ |
-| AI Daily Article | `0 7 * * *` | `/api/cron/ai-daily-article` | P1 ✅ |
+| AI Daily Article | hourly + `ai_cron_hour` | `/api/cron/ai-daily-article` | P1 ✅ |
 | Generate Sitemap | `0 2 * * *` | `/api/cron/generate-sitemap` | P1 ✅ |
-| Generate SEO Pages | `0 6 * * *` | `/api/cron/generate-seo` | P1 |
-| Cleanup Old Prices | `0 3 * * 0` | `/api/cron/cleanup` | P3 |
-| Aggregate Traffic | `0 1 * * *` | `/api/cron/aggregate-traffic` | P3 |
+| Sync GSC | `0 3 * * *` | `/api/cron/sync-gsc` | P2 ✅ |
+| Generate SEO Pages | `0 6 * * *` | `/api/cron/generate-seo` | P1 (chưa có route) |
+| Cleanup Old Prices | `0 3 * * 0` | `/api/cron/cleanup` | P3 (chưa có route) |
+| Aggregate Traffic | `0 1 * * *` | `/api/cron/aggregate-traffic` | P3 (chưa có route) |
 
 ## Ingest tin giá vàng 24h
 
@@ -96,7 +105,8 @@ call C:\path\to\httpdocs\scripts\cron-call.bat ai-daily-article
 - Số liệu: giá vàng / lãi suất / tỷ giá tùy category
 - Lưu `NewsArticle` (`isAiGenerated`, `source: AI`); FAQ nếu bật `ai_auto_faq`
 - Chế độ đăng: `ai_publish_mode` = `DRAFT` | `PUBLISHED`
-- Task: `giahomnay-ai-daily-article` lúc **07:00** (đổi giờ task nếu đổi `ai_cron_hour`)
+- Task: `giahomnay-ai-daily-article` **mỗi giờ**; job chỉ viết khi giờ VN = Admin `ai_cron_hour` (đổi giờ trong Cài đặt là đủ, không cần sửa schtasks)
+- `force: true` bỏ qua kiểm tra giờ + auto + dedupe
 
 ### Bật nhanh
 

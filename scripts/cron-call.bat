@@ -7,7 +7,9 @@ REM   httpdocs\cron.secret  OR  parent\cron.secret (canh httpdocs)
 setlocal EnableExtensions
 set "JOB=%~1"
 if "%JOB%"=="" (
-  echo Usage: cron-call.bat sync-gold ^| ingest-24h-gold ^| ai-daily-article ^| generate-sitemap ^| sync-gsc
+  echo Usage: cron-call.bat ^<job^>
+  echo   sync-gold sync-forex sync-stocks sync-interest sync-fuel
+  echo   ingest-24h-gold ai-daily-article generate-sitemap sync-gsc
   exit /b 1
 )
 

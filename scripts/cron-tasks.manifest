@@ -1,0 +1,16 @@
+@echo off
+REM Single source of truth for giahomnay-* Task Scheduler jobs.
+REM Used by setup-windows-cron.bat (do not run directly).
+
+REM name|api-path|schtasks args (space-separated, no quotes inside)
+REM --- data sync ---
+sync-gold|sync-gold|/SC MINUTE /MO 5
+sync-forex|sync-forex|/SC MINUTE /MO 30
+sync-stocks|sync-stocks|/SC WEEKLY /D MON,TUE,WED,THU,FRI /ST 09:00 /RI 15 /DU 07:00
+sync-interest|sync-interest|/SC DAILY /ST 06:00
+sync-fuel|sync-fuel|/SC DAILY /ST 15:00
+REM --- content / SEO ---
+ingest-24h-gold|ingest-24h-gold|/SC DAILY /ST 08:00
+ai-daily-article|ai-daily-article|/SC HOURLY /MO 1
+generate-sitemap|generate-sitemap|/SC DAILY /ST 02:00
+sync-gsc|sync-gsc|/SC DAILY /ST 03:00

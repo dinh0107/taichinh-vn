@@ -364,7 +364,7 @@ export function SettingsForm({
               max={23}
               step={1}
               defaultValue={initial.ai_cron_hour || "7"}
-              hint="Giờ máy chủ — khớp Task Scheduler."
+              hint="Giờ VN (0–23). Task gọi mỗi giờ; job chỉ viết bài đúng giờ này."
             />
           </div>
 
@@ -427,7 +427,7 @@ export function SettingsForm({
             <Toggle
               label="Tự động viết bài SEO hằng ngày"
               name="ai_auto_write"
-              hint={`Cron /api/cron/ai-daily-article lúc ${initial.ai_cron_hour || "7"}:00`}
+              hint={`Mỗi ngày lúc ${initial.ai_cron_hour || "7"}:00 (giờ VN) — Task Scheduler gọi mỗi giờ, job tự bỏ qua giờ khác.`}
               defaultChecked={initial.ai_auto_write === "true"}
             />
             <Toggle

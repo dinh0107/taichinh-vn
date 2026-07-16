@@ -3,6 +3,7 @@
  * Run: npx tsx src/modules/ai/daily-article.check.ts
  */
 import { fillArticlePrompt, parseArticleJson } from "./daily-article";
+import { hourVn } from "@/lib/time";
 
 function assert(cond: unknown, msg: string): asserts cond {
   if (!cond) throw new Error(msg);
@@ -29,5 +30,8 @@ const parsed = parseArticleJson(
 );
 assert(parsed.title.includes("Vàng"), "title");
 assert(parsed.faqs.length === 1, "faqs");
+
+const h = hourVn(new Date("2026-07-16T00:30:00+00:00"));
+assert(h === 7, `hourVn UTC 00:30 -> VN 7, got ${h}`);
 
 console.log("daily-article helpers ok");

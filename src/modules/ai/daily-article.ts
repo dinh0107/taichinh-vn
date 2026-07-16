@@ -4,7 +4,7 @@ import prisma from "@/lib/db";
 import { chatCompletion } from "@/lib/openai";
 import { logger } from "@/lib/logger";
 import { slugify } from "@/lib/utils";
-import { todayDateVi } from "@/lib/time";
+import { todayDateVi, hourVn } from "@/lib/time";
 import { getAiConfig } from "@/modules/admin/settings-service";
 import { NEWS_CATEGORY_LABELS } from "@/modules/admin/labels";
 import { getCurrentGoldPrices } from "@/modules/gold/service";
@@ -177,6 +177,15 @@ export async function writeDailyAiArticle(opts?: {
   }
   if (!cfg.apiKey) {
     return { skipped: true, reason: "Thiếu OpenAI API Key" };
+  }
+
+  // Task Scheduler gọi mỗi giờ; chỉ chạy thật đúng ai_cron_hour (giờ VN).
+  const nowHour = hourVn();
+  if (!opts?.force && nowHour !== cfg.cronHour) {
+    return {
+      skipped: true,
+      reason: `Chưa tới giờ (VN ${nowHour}:00, cấu hình ${cfg.cronHour}:00)`,
+    };
   }
 
   const category =
