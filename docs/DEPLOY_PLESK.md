@@ -4,17 +4,22 @@
 
 1. HTML và file trong `/_next/static/chunks/*` phải **cùng một build**.
 2. Git pull Plesk thường **xóa** `.next` / `_next` / tar (untracked).
-3. Gọi API Next `apply-deploy-artifact` sẽ **404** nếu `.next` đang chạy chưa build route đó.
+3. `rmdir .next` khi **iisnode đang mở file** → xóa/extract dở (JS còn, CSS mất).
+4. Sync `_next` khi `.next` không có CSS sẽ **xoá CSS cũ** trên disk.
 
 ## Luồng đúng
 
 ```text
 CI pack tar
-  → webhook Git → deploy-plesk-fast.bat ĐỢI tar (tối đa 5 phút)
-  → CI upload tar (trong lúc bat đang đợi)
-  → bat extract + sync CSS + restart
+  → webhook Git (git clean) → deploy-plesk-fast.bat ĐỢI tar
+  → CI upload tar (sau git clean)
+  → bat: extract → _deploy_staging (verify CSS)
+       robocopy staging → .next (KHÔNG rmdir khi iisnode lock)
+       copy-next-static + restart
   → CI poll CSS đến HTTP 200
 ```
+
+Không upload tar trước webhook: git clean sẽ xóa `deploy-build.tar.gz`.
 
 ## Plesk
 
@@ -27,11 +32,22 @@ CI pack tar
 
 ## Sửa tay khi CSS 404
 
-Upload/`deploy-build.tar.gz` vào `httpdocs` rồi:
+**Cách A — redeploy CI** (khuyến nghị): push `main` hoặc re-run workflow CI/CD.
+
+**Cách B — RDP server:**
 
 ```bat
 cd C:\Inetpub\vhosts\giahomnay.site\httpdocs
-tar -xzf deploy-build.tar.gz
+REM Stop Node app trong Plesk trước nếu robocopy báo lock
+REM Upload deploy-build.tar.gz vào httpdocs rồi:
+call scripts\deploy-plesk-fast.bat
+```
+
+Hoặc thủ công:
+
+```bat
+tar -xzf deploy-build.tar.gz -C _deploy_staging
+robocopy _deploy_staging\.next .next /E
 node scripts\copy-next-static.js
 ```
 

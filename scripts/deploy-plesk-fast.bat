@@ -2,10 +2,10 @@
 REM ============================================================
 REM Plesk Windows — deploy NHANH (KHONG build tren server)
 REM
-REM CI order (bat PHAI doi tar, khong ket thuc som):
-REM   1) Webhook → bat nay bat dau DOI deploy-build.tar.gz (toi da ~5 phut)
-REM   2) CI upload tar trong luc bat dang doi
-REM   3) bat extract + sync CSS + prisma + restart
+REM Quan trong (tranh mat CSS):
+REM   - KHONG rmdir .next khi iisnode dang chay (file lock → extract do)
+REM   - Extract tar vao thu muc staging, verify CSS, roi robocopy
+REM   - CI: webhook truoc, upload tar sau (tranh git clean xoa tar)
 REM
 REM Docs: docs/DEPLOY_PLESK.md
 REM ============================================================
@@ -23,6 +23,11 @@ if errorlevel 1 (
   echo Node.js not in PATH
   exit /b 1
 )
+where tar >nul 2>&1
+if errorlevel 1 (
+  echo ERROR: tar.exe not found
+  exit /b 1
+)
 
 REM Doi CI upload tar (toi da 60 x 5s = 5 phut)
 set WAIT_TRIES=0
@@ -30,7 +35,7 @@ set WAIT_TRIES=0
 if exist "deploy-build.tar.gz" goto extract_tar
 if %WAIT_TRIES% GEQ 60 (
   echo ERROR: Timeout — khong thay deploy-build.tar.gz sau 5 phut.
-  echo CI phai upload tar SAU webhook, trong luc script nay dang doi.
+  echo CI phai upload tar TRUOC hoac TRONG luc script nay dang doi.
   exit /b 1
 )
 set /a WAIT_TRIES+=1
@@ -39,22 +44,51 @@ timeout /t 5 /nobreak >nul
 goto wait_tar
 
 :extract_tar
-echo ==^> Extract deploy-build.tar.gz
-where tar >nul 2>&1
-if errorlevel 1 (
-  echo ERROR: tar.exe not found
-  exit /b 1
+echo ==^> Extract deploy-build.tar.gz → _deploy_staging
+if exist "_deploy_staging" (
+  rmdir /s /q "_deploy_staging" 2>nul
 )
-if exist ".next" (
-  echo     Removing old .next
-  rmdir /s /q ".next" 2>nul
-)
-tar -xzf deploy-build.tar.gz
+mkdir "_deploy_staging" 2>nul
+tar -xzf deploy-build.tar.gz -C "_deploy_staging"
 if errorlevel 1 (
   echo ERROR: tar extract failed
   exit /b 1
 )
-del /f /q deploy-build.tar.gz 2>nul
+
+if not exist "_deploy_staging\.next\prerender-manifest.json" (
+  echo ERROR: Staging thieu .next sau extract
+  exit /b 1
+)
+if not exist "_deploy_staging\.next\static" (
+  echo ERROR: Staging thieu .next\static
+  exit /b 1
+)
+
+echo ==^> Verify CSS trong staging
+call node -e "const fs=require('fs'),path=require('path');function walk(d,a=[]){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p,a);else if(e.name.endsWith('.css'))a.push(p);}return a;}const a=walk(path.join('_deploy_staging','.next','static'));console.log('staging css:',a.length);a.slice(0,5).forEach(f=>console.log(' ',f));if(a.length<1)process.exit(1);"
+if errorlevel 1 (
+  echo ERROR: Staging khong co file CSS — khong ghi de .next live
+  exit /b 1
+)
+
+echo ==^> Robocopy staging\.next → .next ^(khong xoa tree dang lock^)
+if not exist ".next" mkdir ".next"
+robocopy "_deploy_staging\.next" ".next" /E /NFL /NDL /NJH /NJS /nc /ns /np
+set RC=%ERRORLEVEL%
+REM robocopy: 0-7 = success-ish, >=8 = fail
+if %RC% GEQ 8 (
+  echo ERROR: robocopy .next failed rc=%RC%
+  exit /b 1
+)
+
+if exist "_deploy_staging\_next" (
+  echo ==^> Robocopy staging\_next → _next
+  if not exist "_next" mkdir "_next"
+  robocopy "_deploy_staging\_next" "_next" /E /NFL /NDL /NJH /NJS /nc /ns /np
+  if %ERRORLEVEL% GEQ 8 (
+    echo WARN: robocopy _next rc=%ERRORLEVEL% — van thu sync tu .next
+  )
+)
 
 echo ==^> Sync .next\static -^> _next\static
 call node scripts\copy-next-static.js
@@ -63,8 +97,12 @@ if errorlevel 1 (
   exit /b 1
 )
 
+echo ==^> Cleanup staging + tar
+rmdir /s /q "_deploy_staging" 2>nul
+del /f /q deploy-build.tar.gz 2>nul
+
 if not exist ".next\prerender-manifest.json" (
-  echo ERROR: Thieu .next sau extract
+  echo ERROR: Thieu .next sau robocopy
   exit /b 1
 )
 

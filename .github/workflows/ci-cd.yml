@@ -92,7 +92,8 @@ jobs:
           ls -lh deploy-build.tar.gz
           tar -tzf deploy-build.tar.gz | grep -E '\.css$' | head -5
 
-      # 1) Webhook → bat bat đầu ĐỢI tar (tối đa 5 phút)
+      # 1) Webhook trước — git clean xóa untracked; bat bắt đầu ĐỢI tar
+      #    (upload tar TRƯỚC webhook sẽ bị git xóa mất file)
       - name: Trigger Plesk Git pull (webhook)
         env:
           PLESK_GIT_WEBHOOK_URL: ${{ secrets.PLESK_GIT_WEBHOOK_URL }}
@@ -118,10 +119,9 @@ jobs:
             200|201|202|204) echo "Webhook OK — bat đang chờ tar..." ;;
             *) echo "::error::Webhook HTTP ${code}"; exit 1 ;;
           esac
-          # Chỉ chờ bat vào vòng wait — KHÔNG chờ bat xong (tránh hết timeout trước khi upload)
           sleep 20
 
-      # 2) Upload tar while bat is waiting
+      # 2) Upload tar while bat is waiting (sau git clean)
       - name: Upload deploy-build.tar.gz (FTP/FTPS/SFTP)
         env:
           FTP_HOST: ${{ secrets.PLESK_SFTP_HOST }}
@@ -196,7 +196,7 @@ jobs:
             exit 1
           fi
 
-      # 3) Chờ bat extract + CSS online (không qua Next API — tránh 404 khi app chưa có route mới)
+      # 3) Chờ bat extract staging + CSS online
       - name: Wait until CSS is live
         env:
           APP_URL: ${{ vars.APP_URL }}
@@ -210,14 +210,14 @@ jobs:
           fi
           URL="${BASE_URL%/}/_next/static/${SAMPLE}"
           echo "Polling ${URL}"
-          for i in $(seq 1 36); do
+          for i in $(seq 1 48); do
             code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 "$URL" || true)"
-            echo "try ${i}/36 → HTTP ${code}"
+            echo "try ${i}/48 → HTTP ${code}"
             if [ "$code" = "200" ]; then
               echo "CSS live OK"
               exit 0
             fi
             sleep 5
           done
-          echo "::error::CSS vẫn 404 sau ~3 phút — kiểm tra Plesk deploy log / deploy-plesk-fast.bat"
+          echo "::error::CSS vẫn 404 sau ~4 phút — kiểm tra Plesk deploy log / deploy-plesk-fast.bat"
           exit 1

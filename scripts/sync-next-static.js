@@ -1,6 +1,7 @@
 /**
  * Shared IIS static sync: .next/static → _next/static
  * Avoids full-tree delete (Windows/iisnode often locks files → partial sync → missing CSS).
+ * Never wipe destination CSS if source has no CSS (prevents unstyled live site).
  */
 const fs = require("node:fs");
 const path = require("node:path");
@@ -9,12 +10,25 @@ function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
+function countCssFiles(dir) {
+  if (!fs.existsSync(dir)) return 0;
+  let n = 0;
+  const walk = (d) => {
+    for (const ent of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, ent.name);
+      if (ent.isDirectory()) walk(p);
+      else if (ent.name.endsWith(".css")) n += 1;
+    }
+  };
+  walk(dir);
+  return n;
+}
+
 function copyFileRobust(from, to) {
   ensureDir(path.dirname(to));
   try {
     fs.copyFileSync(from, to);
   } catch {
-    // Locked destination: write temp then replace
     const tmp = `${to}.${process.pid}.tmp`;
     fs.copyFileSync(from, tmp);
     try {
@@ -48,7 +62,6 @@ function mirrorDir(src, dest, stats) {
     }
   }
 
-  // Remove stale files/dirs in dest that are not in src (best-effort)
   for (const entry of fs.readdirSync(dest, { withFileTypes: true })) {
     if (seen.has(entry.name)) continue;
     const stale = path.join(dest, entry.name);
@@ -74,8 +87,24 @@ function syncNextStatic(root) {
     return { ok: false, ...stats, error: "missing .next/static" };
   }
 
+  const srcCss = countCssFiles(src);
+  if (srcCss < 1) {
+    return {
+      ok: false,
+      ...stats,
+      error: "no CSS in .next/static — refuse to sync (would wipe live CSS)",
+    };
+  }
+
   try {
     mirrorDir(src, dest, stats);
+    if (stats.css < 1) {
+      return {
+        ok: false,
+        ...stats,
+        error: "copied 0 CSS files despite source having CSS",
+      };
+    }
     return { ok: true, ...stats };
   } catch (err) {
     return {
@@ -86,4 +115,4 @@ function syncNextStatic(root) {
   }
 }
 
-module.exports = { syncNextStatic };
+module.exports = { syncNextStatic, countCssFiles };
