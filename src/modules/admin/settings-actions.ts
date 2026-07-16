@@ -135,10 +135,18 @@ const AI_CATEGORY_VALUES = new Set([
   "GENERAL",
 ]);
 
-function clampNumber(raw: string, min: number, max: number, fallback: number): string {
+function clampNumber(
+  raw: string,
+  min: number,
+  max: number,
+  fallback: number,
+  integer = false
+): string {
+  if (!raw.trim()) return String(fallback);
   const n = Number(raw);
   if (!Number.isFinite(n)) return String(fallback);
-  return String(Math.min(max, Math.max(min, n)));
+  const clamped = Math.min(max, Math.max(min, n));
+  return String(integer ? Math.round(clamped) : clamped);
 }
 
 export async function saveSettings(
@@ -154,8 +162,8 @@ export async function saveSettings(
     if (typeof value !== "string") continue;
     let v = value.trim();
     if (key === "ai_temperature") v = clampNumber(v, 0, 2, 0.7);
-    if (key === "ai_max_tokens") v = clampNumber(v, 256, 8000, 2000);
-    if (key === "ai_cron_hour") v = clampNumber(v, 0, 23, 7);
+    if (key === "ai_max_tokens") v = clampNumber(v, 256, 8000, 2000, true);
+    if (key === "ai_cron_hour") v = clampNumber(v, 0, 23, 7, true);
     if (key === "ai_publish_mode") v = v === "PUBLISHED" ? "PUBLISHED" : "DRAFT";
     if (key === "ai_provider") {
       const p = v.toLowerCase();

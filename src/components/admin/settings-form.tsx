@@ -34,6 +34,7 @@ function Field({
   min,
   max,
   step,
+  autoComplete,
 }: {
   label: string;
   name: string;
@@ -47,6 +48,7 @@ function Field({
   min?: number | string;
   max?: number | string;
   step?: number | string;
+  autoComplete?: string;
 }) {
   const cls = cn(
     "w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100",
@@ -73,6 +75,7 @@ function Field({
           min={min}
           max={max}
           step={step}
+          autoComplete={autoComplete}
           className={cls}
         />
       )}
@@ -159,6 +162,13 @@ export function SettingsForm({
       .filter(Boolean)
   );
   const hasOpenAiKey = Boolean(secretFlags.openai_api_key);
+  const modelOptions = (() => {
+    const current = (initial.ai_model || "").trim();
+    if (!current || AI_MODEL_OPTIONS.some((o) => o.value === current)) {
+      return [...AI_MODEL_OPTIONS];
+    }
+    return [{ value: current, label: `Hiện tại: ${current}` }, ...AI_MODEL_OPTIONS];
+  })();
 
   useEffect(() => {
     if (state === initialState || lastShown.current === state) return;
@@ -172,8 +182,8 @@ export function SettingsForm({
   }, [state, router]);
 
   return (
-    <form action={formAction} className="space-y-6">
-      <div className="sticky top-2 z-10 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+    <form action={formAction} noValidate className="space-y-6">
+      <div className="sticky top-16 z-40 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm lg:top-2">
         <p className="text-sm text-amber-900">
           Đổi tên / mô tả xong phải bấm <strong>Lưu thay đổi</strong>. Upload logo/favicon
           bấm <strong>Tải lên</strong> trong từng ô ảnh.
@@ -222,6 +232,7 @@ export function SettingsForm({
               type="password"
               placeholder={secretFlags.cron_secret ? "••••••••  (đã thiết lập)" : "Chưa thiết lập"}
               hint="Dùng cho Scheduled Task: Authorization Bearer …. Nếu Plesk không có Environment, đặt tại đây rồi Save."
+              autoComplete="new-password"
             />
             <Field label="Redis URL" name="redis_url" defaultValue={initial.redis_url} />
           </div>
@@ -310,6 +321,7 @@ export function SettingsForm({
                 : "sk-or-v1-... hoặc sk-..."
             }
             hint="OpenRouter: https://openrouter.ai/keys — OpenAI: platform.openai.com"
+            autoComplete="new-password"
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -334,7 +346,7 @@ export function SettingsForm({
               label="Model"
               name="ai_model"
               defaultValue={initial.ai_model || "openai/gpt-4o-mini"}
-              options={[...AI_MODEL_OPTIONS]}
+              options={modelOptions}
               hint="OpenRouter dùng dạng vendor/model."
             />
             <Field
@@ -343,7 +355,7 @@ export function SettingsForm({
               type="number"
               min={0}
               max={2}
-              step={0.1}
+              step="any"
               defaultValue={initial.ai_temperature || "0.7"}
               hint="0 = chặt chẽ, 2 = sáng tạo."
             />
@@ -353,7 +365,7 @@ export function SettingsForm({
               type="number"
               min={256}
               max={8000}
-              step={1}
+              step="any"
               defaultValue={initial.ai_max_tokens || "2000"}
             />
             <Field
@@ -362,7 +374,7 @@ export function SettingsForm({
               type="number"
               min={0}
               max={23}
-              step={1}
+              step="any"
               defaultValue={initial.ai_cron_hour || "7"}
               hint="Giờ VN (0–23). Task gọi mỗi giờ; job chỉ viết bài đúng giờ này."
             />
