@@ -50,6 +50,11 @@ export default async function AdminSeoPage({
     getSeoStats(),
   ]);
 
+  const gscErrorSample = pages.find(
+    (p) => p.gscIndexStatus === "ERROR" && p.gscCoverageState
+  )?.gscCoverageState;
+  const gscErrorCount = pages.filter((p) => p.gscIndexStatus === "ERROR").length;
+
   return (
     <div className="space-y-6">
       <AdminPageTitle
@@ -69,6 +74,27 @@ export default async function AdminSeoPage({
           </div>
         }
       />
+
+      {gscOn && gscErrorCount > 0 && gscErrorSample && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+          <p className="font-semibold">
+            GSC: {gscErrorCount} trang báo «Lỗi API»
+          </p>
+          <p className="mt-1 break-words text-xs text-red-800/90" title={gscErrorSample}>
+            Chi tiết: {gscErrorSample}
+          </p>
+          <p className="mt-2 text-xs text-red-700/80">
+            Kiểm tra Property URL ={" "}
+            <code className="rounded bg-red-100 px-1">https://giahomnay.site/</code>, SA
+            đã Add user trên Search Console, rồi bấm <strong>Đồng bộ GSC</strong> lại.
+            Nếu thấy lỗi cột <code className="rounded bg-red-100 px-1">gscCoverageState</code>
+            , chạy SQL:{" "}
+            <code className="rounded bg-red-100 px-1">
+              ALTER TABLE seo_pages MODIFY gscCoverageState TEXT NULL;
+            </code>
+          </p>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -196,6 +222,14 @@ export default async function AdminSeoPage({
                     {gscOn && (
                       <td className="px-5 py-3.5 text-center">
                         <Badge tone={gsc.tone}>{gsc.label}</Badge>
+                        {p.gscCoverageState && (
+                          <p
+                            className="mx-auto mt-1 max-w-[11rem] truncate text-[10px] leading-snug text-slate-400"
+                            title={p.gscCoverageState}
+                          >
+                            {p.gscCoverageState}
+                          </p>
+                        )}
                         {p.gscPosition != null && p.gscPosition > 0 && (
                           <p className="mt-1 text-[10px] text-slate-400">
                             Pos {p.gscPosition.toFixed(1)}
