@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
 
@@ -11,19 +11,49 @@ const FILES = {
 
 type Kind = keyof typeof FILES;
 
-async function readBrandFile(filename: string): Promise<Buffer | null> {
+const CACHE = "public, max-age=86400, must-revalidate";
+
+async function resolveBrandFile(
+  filename: string
+): Promise<{ buf: Buffer; mtimeMs: number } | null> {
   const roots = [
     path.join(process.cwd(), "public", filename),
     path.join(process.cwd(), filename),
   ];
   for (const file of roots) {
     try {
-      return await readFile(file);
+      const [buf, meta] = await Promise.all([readFile(file), stat(file)]);
+      if (buf.length) return { buf, mtimeMs: meta.mtimeMs };
     } catch {
       // try next
     }
   }
   return null;
+}
+
+function pngHeaders(length: number, mtimeMs: number) {
+  return {
+    "Content-Type": "image/png",
+    "Content-Length": String(length),
+    "Cache-Control": CACHE,
+    ETag: `"brand-${length}-${Math.trunc(mtimeMs)}"`,
+  };
+}
+
+export async function HEAD(
+  _request: Request,
+  context: { params: Promise<{ kind: string }> }
+) {
+  const { kind: raw } = await context.params;
+  if (!(raw in FILES)) {
+    return new NextResponse(null, { status: 404 });
+  }
+  const file = await resolveBrandFile(FILES[raw as Kind]);
+  if (!file) return new NextResponse(null, { status: 404 });
+  return new NextResponse(null, {
+    status: 200,
+    headers: pngHeaders(file.buf.length, file.mtimeMs),
+  });
 }
 
 export async function GET(
@@ -35,17 +65,13 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   const kind = raw as Kind;
-  const buf = await readBrandFile(FILES[kind]);
-  if (!buf) {
+  const file = await resolveBrandFile(FILES[kind]);
+  if (!file) {
     return NextResponse.json({ error: "Asset missing" }, { status: 404 });
   }
 
-  return new NextResponse(new Uint8Array(buf), {
+  return new NextResponse(new Uint8Array(file.buf), {
     status: 200,
-    headers: {
-      "Content-Type": "image/png",
-      "Cache-Control": "no-store, must-revalidate",
-      "CDN-Cache-Control": "no-store",
-    },
+    headers: pngHeaders(file.buf.length, file.mtimeMs),
   });
 }

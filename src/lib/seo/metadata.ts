@@ -27,8 +27,11 @@ function brandMeta(siteName: string, version: string) {
     icon,
     wordmark,
     icons: {
-      icon: [{ url: icon, type: "image/png" as const }],
-      shortcut: icon,
+      icon: [
+        { url: "/favicon.ico", type: "image/png" as const, sizes: "any" },
+        { url: icon, type: "image/png" as const },
+      ],
+      shortcut: "/favicon.ico",
       apple: [{ url: icon, type: "image/png" as const }],
     },
   };

@@ -10,7 +10,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       {
         userAgent: "*",
         // Allow brand assets used as OG/favicon (Google: longest path wins)
-        allow: ["/", "/api/brand/"],
+        allow: ["/", "/favicon.ico", "/api/brand/"],
         disallow: ["/admin", "/api/", "/dang-nhap"],
       },
     ],

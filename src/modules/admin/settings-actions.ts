@@ -11,6 +11,7 @@ import {
   type SaveSettingsState,
   type UploadState,
 } from "./settings-shared";
+import { readPngSize } from "@/lib/png-size";
 
 function revalidatePublicSite() {
   revalidateTag(SITE_SETTINGS_TAG, "max");
@@ -60,12 +61,38 @@ export async function uploadBrandAsset(
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Google Search: favicon must be square (≥48px). Reject wordmarks here.
+    if (kind === "favicon") {
+      const size = readPngSize(buffer);
+      if (!size) {
+        return { ok: false, error: "Không đọc được PNG. Vui lòng chọn file PNG hợp lệ." };
+      }
+      if (size.width !== size.height) {
+        return {
+          ok: false,
+          error: `Favicon phải là ảnh vuông (hiện ${size.width}×${size.height}). Google sẽ không hiện icon nếu không vuông.`,
+        };
+      }
+      if (size.width < 48) {
+        return {
+          ok: false,
+          error: `Favicon tối thiểu 48×48px (hiện ${size.width}×${size.height}).`,
+        };
+      }
+    }
+
     const publicDir = path.join(process.cwd(), "public");
     await mkdir(publicDir, { recursive: true });
     const filename = TARGETS[kind];
     // Next.js serves from public/; IIS often looks at site root — write both.
     await writeFile(path.join(publicDir, filename), buffer);
     await writeFile(path.join(process.cwd(), filename), buffer);
+    if (kind === "favicon") {
+      // Stable URL for Googlebot / browsers that only request /favicon.ico
+      await writeFile(path.join(publicDir, "favicon.ico"), buffer);
+      await writeFile(path.join(process.cwd(), "favicon.ico"), buffer);
+    }
 
     const version = String(Date.now());
     await prisma.siteSetting.upsert({

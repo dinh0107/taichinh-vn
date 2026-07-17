@@ -1,4 +1,5 @@
 import { absoluteUrl } from "@/lib/utils";
+import { siteBaseUrlSync } from "@/lib/seo/site-url";
 import { todayDateVi, withHomNayTitlePrefix } from "@/lib/time";
 import type { GoldPriceItem } from "@/modules/gold/types";
 
@@ -147,30 +148,93 @@ export function buildNewsArticleSchema(input: {
   url: string;
   image?: string | null;
   publishedAt?: Date | null;
+  modifiedAt?: Date | null;
   siteName?: string;
+  /** Category label, e.g. "Giá vàng" */
+  articleSection?: string | null;
+  /** Byline — source name or site editorial desk */
+  authorName?: string | null;
+  authorUrl?: string | null;
 }): JsonLd {
   const siteName = input.siteName || "Giá Hôm Nay";
-  return {
+  const published = input.publishedAt?.toISOString();
+  const modified =
+    input.modifiedAt?.toISOString() || published;
+  const imageUrl = toAbsoluteAssetUrl(input.image);
+  const logoUrl = absoluteUrl("/api/brand/logo");
+
+  const authorName = input.authorName?.trim() || siteName;
+  const authorUrl = input.authorUrl?.trim() || undefined;
+  const isOrgAuthor =
+    authorName === siteName || Boolean(authorUrl);
+  const author: JsonLd = {
+    "@type": isOrgAuthor ? "Organization" : "Person",
+    name: authorName,
+  };
+  if (authorUrl) author.url = authorUrl;
+  else if (authorName === siteName) author.url = absoluteUrl("/");
+
+  const schema: JsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
     headline: input.title,
     description: input.description,
     url: input.url,
-    datePublished: input.publishedAt?.toISOString(),
-    dateModified: input.publishedAt?.toISOString(),
-    image: input.image ? [input.image] : undefined,
+    inLanguage: "vi",
+    isAccessibleForFree: true,
+    datePublished: published,
+    dateModified: modified,
+    author,
     publisher: {
       "@type": "Organization",
       name: siteName,
       url: absoluteUrl("/"),
-      logo: absoluteUrl("/api/brand/logo"),
-      image: absoluteUrl("/api/brand/logo"),
+      logo: {
+        "@type": "ImageObject",
+        url: logoUrl,
+        width: 1024,
+        height: 410,
+      },
     },
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": input.url,
     },
   };
+
+  if (imageUrl) {
+    schema.image = [
+      {
+        "@type": "ImageObject",
+        url: imageUrl,
+      },
+    ];
+  } else {
+    // Google Article requires image — fall back to site logo
+    schema.image = [
+      {
+        "@type": "ImageObject",
+        url: logoUrl,
+        width: 1024,
+        height: 410,
+      },
+    ];
+  }
+
+  if (input.articleSection?.trim()) {
+    schema.articleSection = input.articleSection.trim();
+  }
+
+  return schema;
+}
+
+/** Absolute URL for assets; do not force .html on image/API paths. */
+function toAbsoluteAssetUrl(src?: string | null): string | undefined {
+  const s = src?.trim();
+  if (!s) return undefined;
+  if (/^https?:\/\//i.test(s)) return s;
+  const path = s.startsWith("/") ? s : `/${s}`;
+  return `${siteBaseUrlSync()}${path}`;
 }
 
 export function buildGoldSeoMetadata(

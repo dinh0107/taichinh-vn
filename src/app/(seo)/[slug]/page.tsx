@@ -37,7 +37,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const siteName = s.site_name || "Giá Hôm Nay";
   const v = s.brand_asset_version || "0";
-  const icon = `/api/brand/icon?v=${v}`;
   const url = page.canonicalUrl ?? canonicalUrlSync(`/${slug}`);
   const title = withHomNayTitlePrefix(
     page.ogTitle || page.title,
@@ -60,10 +59,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: page.ogImage
         ? [{ url: page.ogImage }]
         : [{ url: `/api/brand/logo?v=${v}`, alt: siteName }],
-    },
-    icons: {
-      icon: [{ url: icon, type: "image/png" }],
-      apple: [{ url: icon, type: "image/png" }],
     },
   };
 

@@ -25,6 +25,7 @@ export type PublicArticleDetail = PublicArticleSummary & {
   seoTitle: string | null;
   seoDescription: string | null;
   ogImage: string | null;
+  updatedAt: Date;
   faqs: { question: string; answer: string }[];
 };
 
@@ -68,6 +69,7 @@ export async function getPublishedArticleBySlug(
         category: true,
         featuredImage: true,
         publishedAt: true,
+        updatedAt: true,
         isAiGenerated: true,
         source: true,
         sourceUrl: true,
@@ -146,6 +148,7 @@ export async function getArticleBySlugAnyStatus(
         category: true,
         featuredImage: true,
         publishedAt: true,
+        updatedAt: true,
         isAiGenerated: true,
         source: true,
         sourceUrl: true,
@@ -180,6 +183,7 @@ export async function getArticleByIdForAdmin(
         category: true,
         featuredImage: true,
         publishedAt: true,
+        updatedAt: true,
         isAiGenerated: true,
         source: true,
         sourceUrl: true,

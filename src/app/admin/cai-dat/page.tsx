@@ -40,7 +40,7 @@ export default async function AdminSettingsPage() {
             label="Favicon / icon"
             src="/api/brand/icon"
             initialVersion={Number(settings.brand_asset_version || 0)}
-            hint="PNG vuông, khuyến nghị 512×512px, tối đa 2MB."
+            hint="Bắt buộc PNG vuông ≥48×48 (khuyến nghị 512×512). Không dùng logo ngang — Google sẽ không hiện icon trên kết quả tìm kiếm."
             previewClassName="h-16 w-16"
           />
         </div>

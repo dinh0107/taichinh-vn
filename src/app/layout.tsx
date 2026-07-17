@@ -57,8 +57,12 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [{ url: wordmark, width: 1024, height: 410, alt: name }],
     },
     icons: {
-      icon: [{ url: icon, type: "image/png" }],
-      shortcut: icon,
+      // /favicon.ico is stable + crawlable (Google SERP). Versioned API busts browser cache.
+      icon: [
+        { url: "/favicon.ico", type: "image/png", sizes: "any" },
+        { url: icon, type: "image/png" },
+      ],
+      shortcut: "/favicon.ico",
       apple: [{ url: icon, type: "image/png" }],
     },
     other: {
@@ -79,7 +83,8 @@ export default async function RootLayout({
   return (
     <html lang="vi" className={beVietnamPro.variable}>
       <head>
-        {/* Extra favicon links — browsers cache <link rel=icon> aggressively */}
+        {/* Stable /favicon.ico for Google; versioned API for browser cache bust */}
+        <link rel="icon" href="/favicon.ico" type="image/png" sizes="any" />
         <link rel="icon" href={`/api/brand/icon?v=${v}`} type="image/png" />
         <link rel="apple-touch-icon" href={`/api/brand/icon?v=${v}`} />
       </head>

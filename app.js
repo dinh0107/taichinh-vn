@@ -74,14 +74,29 @@ app
         const parsedUrl = parse(req.url, true);
         let pathname = parsedUrl.pathname || "/";
 
-        // Browsers always request /favicon.ico; site icons live at /api/brand/icon
+        // Serve favicon bytes at /favicon.ico (no redirect — Google SERP + browsers).
         if (pathname === "/favicon.ico") {
-          res.writeHead(302, {
-            Location: "/api/brand/icon",
-            "Cache-Control": "no-store",
-          });
-          res.end();
-          return;
+          const candidates = [
+            path.join(dir, "public", "logo-icon.png"),
+            path.join(dir, "logo-icon.png"),
+            path.join(dir, "public", "favicon.ico"),
+            path.join(dir, "favicon.ico"),
+          ];
+          for (const file of candidates) {
+            try {
+              const buf = fs.readFileSync(file);
+              if (!buf.length) continue;
+              res.writeHead(200, {
+                "Content-Type": "image/png",
+                "Content-Length": buf.length,
+                "Cache-Control": "public, max-age=86400",
+              });
+              res.end(buf);
+              return;
+            } catch {
+              // try next
+            }
+          }
         }
 
         if (serveNextStatic(req, res, dir, pathname)) {

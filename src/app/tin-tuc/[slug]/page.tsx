@@ -44,35 +44,41 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const siteName = s.site_name || "Giá Hôm Nay";
   const v = s.brand_asset_version || "0";
-  const icon = `/api/brand/icon?v=${v}`;
   const title = article.seoTitle || article.title;
   const fullTitle = title.includes(siteName) ? title : `${title} | ${siteName}`;
   const description =
     article.seoDescription ||
     article.excerpt ||
     `${article.title} — Tin tức tài chính ${siteName}`;
+  const url = absoluteUrl(`/tin-tuc/${slug}`);
   const image =
     article.ogImage ||
     article.featuredImage ||
-    `/api/brand/logo?v=${v}`;
+    absoluteUrl(`/api/brand/logo?v=${v}`);
 
   return {
     title: { absolute: fullTitle },
     description,
+    alternates: { canonical: url },
     openGraph: {
       title: fullTitle,
       description,
+      url,
       type: "article",
       locale: "vi_VN",
       siteName,
       publishedTime: article.publishedAt?.toISOString(),
-      images: [{ url: image }],
+      modifiedTime: article.updatedAt?.toISOString(),
+      authors: [article.source?.trim() || siteName],
+      section: NEWS_CATEGORY_LABELS[article.category],
+      images: [{ url: image, alt: article.title }],
     },
-    icons: {
-      icon: [{ url: icon, type: "image/png" }],
-      apple: [{ url: icon, type: "image/png" }],
+    twitter: {
+      card: "summary_large_image",
+      title: fullTitle,
+      description,
+      images: [image],
     },
-    alternates: { canonical: absoluteUrl(`/tin-tuc/${slug}`) },
   };
 }
 
@@ -87,20 +93,32 @@ export default async function ArticleDetailPage({ params }: Props) {
   const related = await getRelatedArticles(slug, article.category);
   const siteName = settings.site_name || "Giá Hôm Nay";
   const publishedLabel = formatDateVi(article.publishedAt);
+  const pageUrl = absoluteUrl(`/tin-tuc/${slug}`);
+  const brandV = settings.brand_asset_version || "0";
 
   const jsonLd = [
     buildBreadcrumbSchema([
       { name: "Trang chủ", url: absoluteUrl("/") },
       { name: "Tin tức", url: absoluteUrl("/tin-tuc") },
-      { name: article.title, url: absoluteUrl(`/tin-tuc/${slug}`) },
+      { name: article.title, url: pageUrl },
     ]),
     buildNewsArticleSchema({
       title: article.title,
-      description: article.excerpt || article.seoDescription || article.title,
-      url: absoluteUrl(`/tin-tuc/${slug}`),
-      image: article.ogImage || article.featuredImage,
+      description:
+        article.excerpt ||
+        article.seoDescription ||
+        article.title,
+      url: pageUrl,
+      image:
+        article.ogImage ||
+        article.featuredImage ||
+        `/api/brand/logo?v=${brandV}`,
       publishedAt: article.publishedAt,
+      modifiedAt: article.updatedAt,
       siteName,
+      articleSection: NEWS_CATEGORY_LABELS[article.category],
+      authorName: article.source || siteName,
+      authorUrl: article.sourceUrl,
     }),
     ...(article.faqs.length > 0 ? [buildFaqSchema(article.faqs)] : []),
   ];

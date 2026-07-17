@@ -36,7 +36,6 @@ export async function generateMetadata(): Promise<Metadata> {
   ]);
   const siteName = s.site_name || "Giá Hôm Nay";
   const v = s.brand_asset_version || "0";
-  const icon = `/api/brand/icon?v=${v}`;
   const seo = buildGoldSeoMetadata("Giá vàng hôm nay", prices, siteName);
   return {
     title: { absolute: seo.title },
@@ -46,10 +45,6 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [{ url: `/api/brand/logo?v=${v}`, alt: siteName }],
     },
     alternates: { canonical: await canonicalUrl("/gia-vang") },
-    icons: {
-      icon: [{ url: icon, type: "image/png" }],
-      apple: [{ url: icon, type: "image/png" }],
-    },
   };
 }
 
