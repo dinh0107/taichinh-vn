@@ -11,15 +11,15 @@
 
 ```text
 CI pack tar
-  → webhook Git (git clean) → deploy-plesk-fast.bat ĐỢI tar (deploy-waiting.flag)
-  → CI upload tar + **re-put mỗi ~30s** trong lúc poll CSS
-       (tránh race: upload lúc git clean còn chạy → tar bị xóa)
-  → bat: extract → _deploy_staging (verify CSS)
-       swap/robocopy → .next + copy-next-static + restart
-  → CI poll đúng hash CSS của build mới đến HTTP 200 (~8 phút)
+  → webhook Git (git clean) → deploy-plesk-fast.bat ĐỢI tar
+  → CI sleep ~45s rồi upload tar vào httpdocs **và** parent (tránh git clean)
+  → CI POST /api/cron/apply-deploy-artifact (detached apply-deploy-tar.bat)
+       kill node → extract staging → swap .next → sync CSS
+  → (song song) bat Plesk cũng có thể nhận tar nếu còn đang chờ
+  → CI poll hash CSS build mới đến HTTP 200
 ```
 
-Không upload tar một lần rồi chỉ chờ: nếu git pull chậm hơn sleep của CI, `git clean` sẽ xóa tar trước khi bat kịp nhận → CSS hash mới 404 mãi.
+Nếu chỉ thấy `upload OK` + `try N → HTTP 404`: tar lên rồi nhưng **chưa extract**. Kiểm tra secret `CRON_SECRET` trên GitHub (= Admin cron_secret) và log Plesk / `deploy-ok.flag`.
 
 ## Plesk
 

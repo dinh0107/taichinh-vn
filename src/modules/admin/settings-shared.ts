@@ -17,6 +17,8 @@ export const SETTING_DEFAULTS: SiteSettings = {
   site_name: "Giá Hôm Nay",
   site_url: "https://giahomnay.site",
   site_description: "Nền tảng tài chính cá nhân Việt Nam",
+  /** SĐT công khai — schema FinancialService (hết cảnh báo telephone). */
+  site_phone: "",
   brand_asset_version: "0",
   gold_api_endpoint: "https://giavang.now/en/api",
   redis_url: "redis://localhost:6379",

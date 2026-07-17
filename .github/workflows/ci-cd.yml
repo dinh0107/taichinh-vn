@@ -122,8 +122,8 @@ jobs:
             200|201|202|204) echo "Webhook OK — đợi git pull rồi upload tar (re-put nếu bị clean)..." ;;
             *) echo "::error::Webhook HTTP ${code}"; exit 1 ;;
           esac
-          # Git pull trên Plesk thường 15–60s; sleep ngắn rồi vòng re-upload xử lý race.
-          sleep 25
+          # Git pull trên Plesk thường 30–90s; sleep rồi vòng re-upload + apply API.
+          sleep 45
 
       # 2+3) Upload tar (lặp lại nếu git clean nuốt) + poll CSS hash của build mới
       - name: Upload tar and wait until CSS is live
@@ -134,6 +134,7 @@ jobs:
           FTP_PORT: ${{ secrets.PLESK_SFTP_PORT }}
           FTP_REMOTE: ${{ secrets.PLESK_SFTP_REMOTE_PATH }}
           APP_URL: ${{ vars.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           set -euo pipefail
 
@@ -207,6 +208,7 @@ jobs:
 
           upload_tar() {
             set +e
+            # httpdocs + parent (git clean trong httpdocs không xóa parent)
             lftp -c "
               set ssl:verify-certificate no
               set ftp:ssl-allow yes
@@ -220,7 +222,8 @@ jobs:
               cd /
               cd ${REMOTE}
               put -O . deploy-build.tar.gz
-              cls -1 deploy-build.tar.gz
+              cd ..
+              put -O . deploy-build.tar.gz
               bye
             "
             local rc=$?
@@ -228,17 +231,36 @@ jobs:
             return $rc
           }
 
-          # ~8 phút: re-upload mỗi 30s (tránh git clean nuốt tar trước khi bat chờ),
-          # poll CSS mỗi 5s.
+          trigger_apply() {
+            if [ -z "${CRON_SECRET:-}" ]; then
+              echo "    (skip apply API — thiếu CRON_SECRET)"
+              return 0
+            fi
+            set +e
+            local out code
+            out="$(curl -sS -o /tmp/apply-deploy.out -w '%{http_code}' -X POST \
+              -H "Authorization: Bearer ${CRON_SECRET}" \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              --connect-timeout 20 --max-time 60 \
+              "${BASE_URL%/}/api/cron/apply-deploy-artifact" || true)"
+            code="$out"
+            set -e
+            echo "    apply-deploy-artifact HTTP ${code}"
+            head -c 240 /tmp/apply-deploy.out 2>/dev/null || true
+            echo ""
+          }
+
+          # ~8 phút: re-upload mỗi 30s + kick apply API; poll CSS mỗi 5s.
           MAX=96
           upload_ok=0
           for i in $(seq 1 "$MAX"); do
-            # Re-put tar mỗi 6 vòng (~30s) — lần 1 luôn upload
             if [ "$i" -eq 1 ] || [ $((i % 6)) -eq 1 ]; then
-              echo "==> [${i}/${MAX}] Upload deploy-build.tar.gz"
+              echo "==> [${i}/${MAX}] Upload deploy-build.tar.gz (httpdocs + parent)"
               if upload_tar; then
                 upload_ok=1
                 echo "    upload OK"
+                trigger_apply
               else
                 echo "    upload FAIL (sẽ thử lại)"
               fi
@@ -257,7 +279,7 @@ jobs:
             echo "::error::Không upload được tar lần nào"
             exit 1
           fi
-          echo "::error::CSS vẫn 404 sau ~8 phút — kiểm tra Plesk deploy log / deploy-plesk-fast.bat"
+          echo "::error::CSS vẫn 404 sau ~8 phút — kiểm tra Plesk deploy log / apply-deploy-tar.bat"
           echo "SAMPLE=${SAMPLE}"
           echo "Live homepage CSS (để so):"
           curl -sS "${BASE_URL%/}/" | grep -oE '/_next/static/[^\" ]+\.css' | head -5 || true

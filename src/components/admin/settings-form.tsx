@@ -209,6 +209,13 @@ export function SettingsForm({
               hint="Dùng cho sitemap, OpenGraph, canonical."
             />
             <Field
+              label="Số điện thoại (schema)"
+              name="site_phone"
+              defaultValue={initial.site_phone || ""}
+              placeholder="+84 28 1234 5678"
+              hint="Tùy chọn — điền để hết cảnh báo Rich Results «telephone»."
+            />
+            <Field
               label="Mô tả mặc định"
               name="site_description"
               defaultValue={initial.site_description}

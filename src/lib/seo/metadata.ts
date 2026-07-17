@@ -121,13 +121,16 @@ export function buildModulePageJsonLd(input: {
   breadcrumbLabel: string;
   faqs?: { question: string; answer: string }[];
   siteName?: string;
+  image?: string;
+  telephone?: string;
 }): JsonLd[] {
   const pageUrl = canonicalUrlSync(input.path);
   const schemas: JsonLd[] = [
     buildFinancialServiceSchema(
       input.serviceName,
       input.serviceDescription,
-      input.siteName
+      input.siteName,
+      { image: input.image, telephone: input.telephone }
     ),
   ];
   if (input.path !== "/") {

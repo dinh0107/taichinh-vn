@@ -96,6 +96,7 @@ const TEXT_KEYS = [
   "site_name",
   "site_url",
   "site_description",
+  "site_phone",
   "gold_api_endpoint",
   "redis_url",
   "adsense_publisher_id",

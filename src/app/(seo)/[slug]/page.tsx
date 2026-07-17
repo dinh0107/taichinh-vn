@@ -13,6 +13,7 @@ import {
 } from "@/modules/seo/service";
 import { getSiteSettings } from "@/modules/admin/settings-service";
 import { withHomNayTitlePrefix } from "@/lib/time";
+import { absoluteUrl } from "@/lib/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -87,6 +88,7 @@ export default async function SeoLandingPage({ params }: Props) {
   const homeUrl = canonicalUrlSync("/");
   const goldHubUrl = canonicalUrlSync("/gia-vang");
   const siteName = s.site_name || "Giá Hôm Nay";
+  const v = s.brand_asset_version || "0";
 
   const jsonLd = [
     buildBreadcrumbSchema([
@@ -96,7 +98,10 @@ export default async function SeoLandingPage({ params }: Props) {
         : []),
       { name: page.title, url: pageUrl },
     ]),
-    buildFinancialServiceSchema(page.title, page.metaDescription, siteName),
+    buildFinancialServiceSchema(page.title, page.metaDescription, siteName, {
+      image: absoluteUrl(`/api/brand/logo?v=${v}`),
+      telephone: s.site_phone?.trim() || undefined,
+    }),
     ...(page.faqs.length > 0 ? [buildFaqSchema(page.faqs)] : []),
   ];
 

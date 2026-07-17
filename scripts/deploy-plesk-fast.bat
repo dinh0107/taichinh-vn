@@ -35,6 +35,11 @@ echo waiting> "deploy-waiting.flag"
 set WAIT_TRIES=0
 :wait_tar
 if exist "deploy-build.tar.gz" goto extract_tar
+if exist "..\deploy-build.tar.gz" (
+  echo ==^> Tim thay tar o parent — move vao httpdocs
+  move /Y "..\deploy-build.tar.gz" "deploy-build.tar.gz" >nul
+  if exist "deploy-build.tar.gz" goto extract_tar
+)
 if %WAIT_TRIES% GEQ 72 (
   del /f /q "deploy-waiting.flag" 2>nul
   echo ERROR: Timeout — khong thay deploy-build.tar.gz sau 6 phut.

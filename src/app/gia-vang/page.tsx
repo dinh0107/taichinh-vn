@@ -17,7 +17,7 @@ import {
   generateGoldFaqs,
 } from "@/lib/seo/schema";
 import { canonicalUrl } from "@/lib/seo/site-url";
-import { formatNumber, formatUsd, cn } from "@/lib/utils";
+import { formatNumber, formatUsd, cn, absoluteUrl } from "@/lib/utils";
 import { formatDateTimeVi } from "@/lib/time";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { PageBottomArticle } from "@/components/seo/page-bottom-article";
@@ -67,6 +67,8 @@ export default async function GoldPage() {
   const homeUrl = await canonicalUrl("/");
   const pageUrl = await canonicalUrl("/gia-vang");
   const siteName = settings.site_name || "Giá Hôm Nay";
+  const v = settings.brand_asset_version || "0";
+  const brandImage = absoluteUrl(`/api/brand/logo?v=${v}`);
 
   const jsonLd = [
     buildBreadcrumbSchema([
@@ -76,7 +78,11 @@ export default async function GoldPage() {
     buildFinancialServiceSchema(
       "Giá vàng Việt Nam",
       "Dịch vụ tra cứu giá vàng SJC, DOJI, PNJ realtime",
-      siteName
+      siteName,
+      {
+        image: brandImage,
+        telephone: settings.site_phone?.trim() || undefined,
+      }
     ),
     buildGoldPriceSchema(prices),
     buildFaqSchema(faqs),

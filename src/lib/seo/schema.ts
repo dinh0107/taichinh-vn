@@ -35,24 +35,44 @@ export function buildFaqSchema(faqs: { question: string; answer: string }[]): Js
 export function buildFinancialServiceSchema(
   name: string,
   description: string,
-  siteName = "Giá Hôm Nay"
+  siteName = "Giá Hôm Nay",
+  opts?: { image?: string; telephone?: string }
 ): JsonLd {
-  return {
+  const image = opts?.image?.trim() || absoluteUrl("/api/brand/logo");
+  const telephone = opts?.telephone?.trim() || undefined;
+  const org: JsonLd = {
+    "@type": "Organization",
+    name: siteName,
+    url: absoluteUrl("/"),
+    logo: image,
+    image,
+  };
+  if (telephone) org.telephone = telephone;
+
+  const schema: JsonLd = {
     "@context": "https://schema.org",
     "@type": "FinancialService",
     name,
     description,
     url: absoluteUrl("/"),
+    image,
+    logo: image,
+    // Tra cứu giá miễn phí — không bán hàng tại cửa hàng
+    priceRange: "Miễn phí",
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "VN",
+      addressLocality: "Toàn quốc",
+      addressRegion: "Việt Nam",
+    },
     areaServed: {
       "@type": "Country",
       name: "Vietnam",
     },
-    provider: {
-      "@type": "Organization",
-      name: siteName,
-      url: absoluteUrl("/"),
-    },
+    provider: org,
   };
+  if (telephone) schema.telephone = telephone;
+  return schema;
 }
 
 export function buildGoldPriceSchema(prices: GoldPriceItem[]): JsonLd {
@@ -143,6 +163,8 @@ export function buildNewsArticleSchema(input: {
       "@type": "Organization",
       name: siteName,
       url: absoluteUrl("/"),
+      logo: absoluteUrl("/api/brand/logo"),
+      image: absoluteUrl("/api/brand/logo"),
     },
     mainEntityOfPage: {
       "@type": "WebPage",
