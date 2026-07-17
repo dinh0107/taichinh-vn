@@ -6,6 +6,7 @@ import { getInterestRatesByBank } from "@/modules/interest/service";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
 import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
+import { interestDetailHref } from "@/lib/seo/detail-links";
 import { cn } from "@/lib/utils";
 
 export const revalidate = 300;
@@ -129,7 +130,7 @@ export default async function InterestPage() {
         </div>
       </ModuleSection>
 
-      <div className="surface-card p-5 md:p-6">
+      <div id="cong-cu-tinh-lai" className="surface-card p-5 md:p-6">
         <SavingsCalculator />
       </div>
 
@@ -192,7 +193,7 @@ export default async function InterestPage() {
               {BANKS.map((b, i) => (
                 <li key={b.name}>
                   <Link
-                    href="/lai-suat"
+                    href={interestDetailHref(b.name) ?? "/lai-suat"}
                     className={cn(
                       "inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold",
                       i === 0
@@ -209,10 +210,10 @@ export default async function InterestPage() {
           <div>
             <h3 className="mb-2 text-sm font-bold">Công cụ</h3>
             <Link
-              href="/lai-suat"
+              href="/lai-suat#cong-cu-tinh-lai"
               className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
             >
-              So sánh lãi suất ngân hàng
+              Tính lãi tiết kiệm
             </Link>
           </div>
         </div>

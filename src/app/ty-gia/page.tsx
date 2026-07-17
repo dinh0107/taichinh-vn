@@ -7,6 +7,7 @@ import { ChangeBadge } from "@/components/ui/change-badge";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
 import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
+import { fxDetailHref } from "@/lib/seo/detail-links";
 import { formatNumber, cn } from "@/lib/utils";
 
 export const revalidate = 300;
@@ -32,17 +33,6 @@ const CURRENCIES = [
   { code: "JPY", flag: "🇯🇵", name: "Yên Nhật" },
   { code: "CNY", flag: "🇨🇳", name: "Nhân dân tệ" },
   { code: "KRW", flag: "🇰🇷", name: "Won Hàn" },
-];
-
-const BANK_LINKS = [
-  { label: "Vietcombank", featured: true },
-  { label: "BIDV" },
-  { label: "VietinBank" },
-  { label: "Agribank" },
-  { label: "ACB" },
-  { label: "Techcombank" },
-  { label: "VPBank" },
-  { label: "MB Bank" },
 ];
 
 const MOCK_BANK_RATES: Record<string, Record<string, Rate>> = {
@@ -187,23 +177,23 @@ export default async function ForexPage() {
 
       <ModuleSection
         title="Liên kết chi tiết"
-        description="Đi tới các trang chi tiết theo thương hiệu, chủ đề và bộ lọc liên quan"
+        description="Đi tới trang tỷ giá chi tiết theo từng ngoại tệ"
       >
-        <h3 className="mb-2 text-sm font-bold">Tỷ giá ngân hàng</h3>
+        <h3 className="mb-2 text-sm font-bold">Tỷ giá theo ngoại tệ</h3>
         <ul className="flex flex-wrap gap-2">
-          {BANK_LINKS.map((b) => (
-            <li key={b.label}>
+          {CURRENCIES.map((c, i) => (
+            <li key={c.code}>
               <Link
-                href="/ty-gia"
+                href={fxDetailHref(c.code) ?? "/ty-gia"}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold",
-                  b.featured
+                  i === 0
                     ? "border-blue-200 bg-blue-50 text-blue-700"
                     : "border-[var(--border-soft)] bg-white text-slate-700 hover:border-blue-200"
                 )}
               >
-                {b.label}
-                {b.featured && <span className="text-[10px]">Nổi bật</span>}
+                <span aria-hidden>{c.flag}</span>
+                {c.code} · {c.name}
               </Link>
             </li>
           ))}

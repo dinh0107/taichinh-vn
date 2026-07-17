@@ -9,6 +9,7 @@ import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { formatNumber, cn } from "@/lib/utils";
 import { getPublishedArticles } from "@/modules/news/service";
+import { fuelDetailHref } from "@/lib/seo/detail-links";
 import { ChevronRight } from "lucide-react";
 
 export const revalidate = 300;
@@ -82,13 +83,17 @@ export default async function FuelPage() {
             {highlight.map((f) => {
               const down = (f.changePct ?? f.change) < 0;
               const up = (f.changePct ?? f.change) > 0;
-              return (
-                <div
-                  key={f.code}
-                  className="rounded-xl border border-[var(--border-soft)] bg-white px-3.5 py-3"
-                >
-                  <p className="line-clamp-2 text-xs font-medium text-slate-500">
+              const href = fuelDetailHref(f.code);
+              const inner = (
+                <>
+                  <p className="line-clamp-2 flex items-center justify-between gap-2 text-xs font-medium text-slate-500">
                     {f.type}
+                    {href && (
+                      <ChevronRight
+                        className="h-4 w-4 shrink-0 text-blue-600"
+                        aria-hidden
+                      />
+                    )}
                   </p>
                   <p className="data-value mt-2 text-xl font-extrabold text-[var(--text-primary)]">
                     {formatNumber(f.price)}
@@ -107,6 +112,22 @@ export default async function FuelPage() {
                           .replace(".", ",")}%`
                       : `${f.change > 0 ? "+" : ""}${formatNumber(f.change)}`}
                   </p>
+                </>
+              );
+              return href ? (
+                <Link
+                  key={f.code}
+                  href={href}
+                  className="group rounded-xl border border-[var(--border-soft)] bg-white px-3.5 py-3 transition hover:border-blue-600/25 hover:bg-blue-50/40"
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div
+                  key={f.code}
+                  className="rounded-xl border border-[var(--border-soft)] bg-white px-3.5 py-3"
+                >
+                  {inner}
                 </div>
               );
             })}
@@ -192,8 +213,8 @@ export default async function FuelPage() {
           (GiaHomNay). Bảng gồm RON 95, E10, E5, Diesel, dầu hỏa… kèm % thay đổi
           và giá vùng 1/vùng 2 khi API cung cấp.
         </p>
-        <p className="mt-3 inline-flex items-center text-sm font-semibold text-blue-600">
-          Nguồn: Petrolimex widget <ChevronRight className="h-4 w-4" />
+        <p className="mt-3 text-sm text-[var(--text-muted)]">
+          Nguồn: Petrolimex widget (GiaHomNay)
         </p>
       </ModuleSection>
 

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { LineChart } from "lucide-react";
 import { formatNumber, cn } from "@/lib/utils";
 import { formatDateTimeVi } from "@/lib/time";
+import { goldDetailHref } from "@/lib/seo/detail-links";
 import type { GoldPriceItem } from "@/modules/gold/types";
 
 type Unit = "chi" | "luong";
@@ -101,6 +102,7 @@ export function HomeGoldTable({ prices }: { prices: GoldPriceItem[] }) {
                   const buy = p.buy * mul;
                   const sell = p.sell * mul;
                   const spread = sell - buy;
+                  const detailHref = goldDetailHref(p) ?? "/gia-vang";
                   return (
                     <tr
                       key={p.code}
@@ -108,7 +110,7 @@ export function HomeGoldTable({ prices }: { prices: GoldPriceItem[] }) {
                     >
                       <td className="px-4 py-3.5">
                         <Link
-                          href="/gia-vang"
+                          href={detailHref}
                           className="font-semibold text-[var(--text-primary)] hover:text-blue-700"
                         >
                           {p.nameVi}
@@ -137,7 +139,7 @@ export function HomeGoldTable({ prices }: { prices: GoldPriceItem[] }) {
                       </td>
                       <td className="px-4 py-3.5 text-center">
                         <Link
-                          href="/gia-vang"
+                          href={detailHref}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-blue-600 transition hover:bg-blue-50"
                           aria-label={`Biểu đồ ${p.nameVi}`}
                         >

@@ -1,10 +1,12 @@
+import Link from "next/link";
 import { PageHeader, ModuleSection } from "@/components/layout/page-header";
 import { MarketPageShell } from "@/components/layout/market-page-shell";
 import { getStockIndices } from "@/modules/stocks/service";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
 import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { stockDetailHref } from "@/lib/seo/detail-links";
+import { ChevronRight, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const revalidate = 300;
@@ -69,31 +71,52 @@ export default async function StocksPage() {
 
       <ModuleSection title="Chỉ số thị trường">
         <div className="grid gap-3 md:grid-cols-3">
-          {indices.map((idx) => (
-            <div
-              key={idx.code}
-              className="rounded-xl border border-[var(--border-soft)] bg-white p-4"
-            >
-              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
-                {idx.code}
-              </p>
-              <p className="data-value mt-2 text-2xl font-extrabold text-[var(--text-primary)]">
-                {idx.value.toLocaleString("vi-VN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-              <p
-                className={cn(
-                  "mt-1 text-sm font-bold",
-                  idx.change >= 0 ? "text-emerald-600" : "text-[var(--accent-red)]"
-                )}
+          {indices.map((idx) => {
+            const href = stockDetailHref(idx.code);
+            const inner = (
+              <>
+                <p className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                  {idx.code}
+                  {href && (
+                    <ChevronRight className="h-4 w-4 text-blue-600" aria-hidden />
+                  )}
+                </p>
+                <p className="data-value mt-2 text-2xl font-extrabold text-[var(--text-primary)]">
+                  {idx.value.toLocaleString("vi-VN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+                <p
+                  className={cn(
+                    "mt-1 text-sm font-bold",
+                    idx.change >= 0
+                      ? "text-emerald-600"
+                      : "text-[var(--accent-red)]"
+                  )}
+                >
+                  {idx.change >= 0 ? "+" : ""}
+                  {idx.change.toFixed(2)} ({idx.pct.toFixed(2)}%)
+                </p>
+              </>
+            );
+            return href ? (
+              <Link
+                key={idx.code}
+                href={href}
+                className="group rounded-xl border border-[var(--border-soft)] bg-white p-4 transition hover:border-blue-600/25 hover:bg-blue-50/40"
               >
-                {idx.change >= 0 ? "+" : ""}
-                {idx.change.toFixed(2)} ({idx.pct.toFixed(2)}%)
-              </p>
-            </div>
-          ))}
+                {inner}
+              </Link>
+            ) : (
+              <div
+                key={idx.code}
+                className="rounded-xl border border-[var(--border-soft)] bg-white p-4"
+              >
+                {inner}
+              </div>
+            );
+          })}
         </div>
       </ModuleSection>
 

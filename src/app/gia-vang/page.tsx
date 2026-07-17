@@ -25,6 +25,7 @@ import { PageHeader, ModuleSection } from "@/components/layout/page-header";
 import { MarketPageShell } from "@/components/layout/market-page-shell";
 import { getSiteSettings } from "@/modules/admin/settings-service";
 import { getPublishedArticles } from "@/modules/news/service";
+import { goldDetailHref } from "@/lib/seo/detail-links";
 import { ChevronRight } from "lucide-react";
 
 export const revalidate = 300;
@@ -111,7 +112,7 @@ export default async function GoldPage() {
           {domestic.map((p) => (
             <Link
               key={p.code}
-              href="/gia-vang"
+              href={goldDetailHref(p) ?? "/gia-vang-hom-nay"}
               className="group rounded-xl border border-[var(--border-soft)] bg-white p-4 transition hover:border-blue-600/25 hover:bg-blue-50/40"
             >
               <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">

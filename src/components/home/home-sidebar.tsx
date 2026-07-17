@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatNumber, cn } from "@/lib/utils";
+import { fxDetailHref, fuelDetailHref } from "@/lib/seo/detail-links";
 
 type Rate = { buy: number; sell: number; ch: number };
 type FuelRow = {
@@ -81,7 +82,7 @@ export function HomeSidebar({
             return (
               <li key={code}>
                 <Link
-                  href="/ty-gia"
+                  href={fxDetailHref(code) ?? "/ty-gia"}
                   className="block rounded-xl border border-[var(--border-soft)] bg-white px-3 py-2.5 transition duration-200 hover:border-blue-600/25 hover:bg-blue-600/5"
                 >
                   <p className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 text-sm">
@@ -128,7 +129,7 @@ export function HomeSidebar({
             return (
               <li key={f.code}>
                 <Link
-                  href="/gia-xang"
+                  href={fuelDetailHref(f.code) ?? "/gia-xang"}
                   className="block rounded-xl border border-[var(--border-soft)] bg-white px-3 py-2.5 transition duration-200 hover:border-blue-600/25 hover:bg-blue-600/5"
                 >
                   <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-start gap-2 text-sm">
