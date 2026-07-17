@@ -6,6 +6,7 @@ import { FuelRetailTable } from "@/modules/fuel/components/fuel-retail-table";
 import { ChangeBadge } from "@/components/ui/change-badge";
 import { ModuleJsonLd } from "@/components/seo/module-json-ld";
 import { PageBottomArticle } from "@/components/seo/page-bottom-article";
+import { HomeNewsSection } from "@/components/home/home-news-section";
 import { buildPageMetadata, MODULE_FAQS } from "@/lib/seo/metadata";
 import { formatNumber, cn } from "@/lib/utils";
 import { getPublishedArticles } from "@/modules/news/service";
@@ -171,38 +172,12 @@ export default async function FuelPage() {
         </ModuleSection>
       )}
 
-      <ModuleSection
+      <HomeNewsSection
+        articles={articles}
         title="Tin tức xăng dầu"
-        description="Cập nhật tin nhanh và phân tích mới nhất về xăng dầu."
+        description="Cập nhật tin nhanh và phân tích mới nhất về xăng dầu"
         href="/tin-tuc"
-        linkLabel="Xem tất cả tin"
-      >
-        {articles.length === 0 ? (
-          <p className="text-sm text-[var(--text-secondary)]">
-            Chưa có bài viết nào trong chuyên mục này.
-          </p>
-        ) : (
-          <ul className="divide-y divide-slate-100">
-            {articles.map((a, i) => (
-              <li key={a.slug}>
-                <Link
-                  href={`/tin-tuc/${a.slug}`}
-                  className="group flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
-                >
-                  <span className="text-sm font-semibold group-hover:text-blue-700">
-                    {a.title}
-                  </span>
-                  {i === 0 && (
-                    <span className="shrink-0 rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase text-blue-700">
-                      Nổi bật
-                    </span>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </ModuleSection>
+      />
 
       <ModuleSection title="Giá xăng dầu hôm nay bao nhiêu?">
         <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
