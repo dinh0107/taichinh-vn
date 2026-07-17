@@ -22,6 +22,17 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts"],
   },
+  // Canonicalize host: www.giahomnay.site → giahomnay.site (avoid duplicate content).
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.giahomnay.site" }],
+        destination: "https://giahomnay.site/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

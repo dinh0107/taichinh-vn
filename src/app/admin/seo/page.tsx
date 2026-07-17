@@ -117,27 +117,18 @@ export default async function AdminSeoPage({
           delta="Sitemap + noindex"
           positive
         />
-        {gscOn ? (
-          <StatCard
-            label="GSC đã index"
-            value={`${stats.gscIndexed}/${stats.total || 0}`}
-            icon={Link2}
-            accent="violet"
-            delta={
-              stats.lastGscSync
-                ? `Đồng bộ ${formatRelativeTime(stats.lastGscSync)}`
-                : "Chưa đồng bộ GSC"
-            }
-            positive={stats.gscIndexed > 0}
-          />
-        ) : (
-          <StatCard
-            label="Lượt xem trang"
-            value={stats.totalClicks.toLocaleString()}
-            icon={Link2}
-            accent="violet"
-          />
-        )}
+        <StatCard
+          label={gscOn ? "GSC lượt nhấp" : "GSC chưa bật"}
+          value={gscOn ? stats.gscClicks.toLocaleString() : "—"}
+          icon={Link2}
+          accent="violet"
+          delta={
+            gscOn
+              ? `${stats.gscImpressions.toLocaleString()} lượt hiển thị`
+              : undefined
+          }
+          positive={gscOn && stats.gscClicks > 0}
+        />
       </div>
 
       <AdminCard title="Bộ lọc">
@@ -188,7 +179,9 @@ export default async function AdminSeoPage({
                   {gscOn && (
                     <th className="px-5 py-3 text-center font-semibold">GSC index</th>
                   )}
-                  <th className="px-5 py-3 text-right font-semibold">Lượt xem</th>
+                  <th className="px-5 py-3 text-right font-semibold">
+                    GSC nhấp / hiển thị
+                  </th>
                   <th className="px-5 py-3 text-right font-semibold">Hành động</th>
                 </tr>
               </thead>
@@ -237,8 +230,13 @@ export default async function AdminSeoPage({
                         )}
                       </td>
                     )}
-                    <td className="px-5 py-3.5 text-right font-bold tabular-nums text-slate-700">
-                      {p.viewCount.toLocaleString()}
+                    <td className="px-5 py-3.5 text-right tabular-nums">
+                      <p className="font-bold text-slate-700">
+                        {p.gscClicks.toLocaleString()} nhấp
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        {p.gscImpressions.toLocaleString()} hiển thị
+                      </p>
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1.5">
