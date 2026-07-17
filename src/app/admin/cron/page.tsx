@@ -72,6 +72,14 @@ export default async function AdminCronPage() {
                   <tr key={j.name} className="hover:bg-slate-50/60">
                     <td className="px-5 py-3.5 font-mono font-semibold text-slate-900">
                       {j.name}
+                      {j.error && (
+                        <p
+                          className="mt-1 max-w-md whitespace-normal break-words font-sans text-[11px] font-normal leading-snug text-red-600"
+                          title={j.error}
+                        >
+                          {j.error}
+                        </p>
+                      )}
                     </td>
                     <td className="px-5 py-3.5 font-mono text-xs text-slate-500">
                       {j.schedule}
@@ -112,7 +120,7 @@ export default async function AdminCronPage() {
                 <span className="shrink-0 font-semibold text-slate-500">
                   [{l.job}]
                 </span>
-                <span className="text-slate-700">{l.message}</span>
+                <span className="break-words text-slate-700">{l.message}</span>
               </div>
             ))}
           </div>

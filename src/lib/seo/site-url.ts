@@ -2,7 +2,7 @@ import { getSiteSettings } from "@/modules/admin/settings-service";
 import { isNextProductionBuild } from "@/lib/build-phase";
 import { withHtmlExtension } from "@/lib/seo/html-path";
 
-const PRODUCTION_FALLBACK = "https://taichinh.vn";
+const PRODUCTION_FALLBACK = "https://giahomnay.site";
 
 export async function getSiteBaseUrl(): Promise<string> {
   if (isNextProductionBuild()) {

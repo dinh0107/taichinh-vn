@@ -273,7 +273,7 @@ export function SettingsForm({
                 label="GSC Property URL"
                 name="gsc_property_url"
                 defaultValue={initial.gsc_property_url}
-                placeholder="https://taichinh.vn/"
+                placeholder="https://giahomnay.site/"
                 hint="URL property trong GSC (URL-prefix phải có dấu / cuối)."
               />
               <Field

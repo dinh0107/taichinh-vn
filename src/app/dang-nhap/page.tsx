@@ -33,7 +33,7 @@ export default async function LoginPage({
           </div>
           <h1 className="flex items-center gap-2 text-lg font-bold text-white">
             <ShieldCheck className="h-5 w-5 text-amber-400" />
-            TaiChinh.vn Admin
+            Quản trị viên
           </h1>
           <p className="mt-1 text-sm text-slate-400">
             Đăng nhập để truy cập bảng điều khiển

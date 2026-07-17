@@ -70,7 +70,7 @@ function goldTemplates(): SeoTemplate[] {
       pageType,
       title: g.title,
       h1: g.title,
-      metaDescription: `Cập nhật ${lower} mới nhất. So sánh giá mua/bán, biểu đồ và FAQ — TaiChinh.vn.`,
+      metaDescription: `Cập nhật ${lower} mới nhất. So sánh giá mua/bán, biểu đồ và FAQ — Giá Hôm Nay.`,
       config,
     };
   });
@@ -82,7 +82,7 @@ function fxTemplates(): SeoTemplate[] {
     pageType: "FX_CURRENCY" as const,
     title: `Tỷ giá ${c.label} hôm nay`,
     h1: `Tỷ giá ${c.label} hôm nay`,
-    metaDescription: `Tỷ giá ${c.name} (${c.label}/VND) mua/bán tại các ngân hàng lớn. Cập nhật liên tục trên TaiChinh.vn.`,
+    metaDescription: `Tỷ giá ${c.name} (${c.label}/VND) mua/bán tại các ngân hàng lớn. Cập nhật liên tục trên Giá Hôm Nay.`,
     config: { currency: c.label },
   }));
 }
@@ -93,7 +93,7 @@ function interestTemplates(): SeoTemplate[] {
     pageType: "INTEREST_BANK" as const,
     title: `Lãi suất ${b.name}`,
     h1: `Lãi suất tiết kiệm ${b.name}`,
-    metaDescription: `So sánh lãi suất tiết kiệm ${b.name} các kỳ hạn. Tính lãi tiền gửi nhanh — TaiChinh.vn.`,
+    metaDescription: `So sánh lãi suất tiết kiệm ${b.name} các kỳ hạn. Tính lãi tiền gửi nhanh — Giá Hôm Nay.`,
     config: { bankSlug: b.slug, bankName: b.name },
   }));
 }
@@ -104,7 +104,7 @@ function fuelTemplates(): SeoTemplate[] {
     pageType: "FUEL_TYPE" as const,
     title: `Giá ${f.label.toLowerCase()} hôm nay`,
     h1: `Giá ${f.label.toLowerCase()} hôm nay`,
-    metaDescription: `Giá bán lẻ ${f.label} mới nhất sau kỳ điều hành. Lịch sử biến động trên TaiChinh.vn.`,
+    metaDescription: `Giá bán lẻ ${f.label} mới nhất sau kỳ điều hành. Lịch sử biến động trên Giá Hôm Nay.`,
     config: { fuelCode: f.code },
   }));
 }
@@ -115,7 +115,7 @@ function stockTemplates(): SeoTemplate[] {
     pageType: "STOCK_INDEX" as const,
     title: `${i.label} hôm nay`,
     h1: `Chỉ số ${i.label} hôm nay`,
-    metaDescription: `Cập nhật ${i.label} — điểm số, biến động phiên giao dịch mới nhất trên TaiChinh.vn.`,
+    metaDescription: `Cập nhật ${i.label} — điểm số, biến động phiên giao dịch mới nhất trên Giá Hôm Nay.`,
     config: { indexCode: i.code },
   }));
 }
@@ -127,7 +127,7 @@ function moduleHubTemplates(): SeoTemplate[] {
     pageType: "CUSTOM" as const,
     title: d.label,
     h1: d.label,
-    metaDescription: `Nội dung SEO trang ${d.label} (${d.path}) trên TaiChinh.vn.`,
+    metaDescription: `Nội dung SEO trang ${d.label} (${d.path}) trên Giá Hôm Nay.`,
     hubOnly: true,
   }));
 }

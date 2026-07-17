@@ -13,7 +13,7 @@ export const NAV_ITEMS = [
 ] as const;
 
 export function SiteHeader({
-  siteName = "TaiChinh.vn",
+  siteName = "Giá Hôm Nay",
   brandVersion = "0",
 }: {
   siteName?: string;
@@ -57,7 +57,7 @@ export function SiteHeader({
 }
 
 export function SiteFooter({
-  siteName = "TaiChinh.vn",
+  siteName = "Giá Hôm Nay",
   siteDescription = "Cổng thông tin tài chính cập nhật liên tục từ các nguồn chính thức và uy tín.",
 }: {
   siteName?: string;

@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
     getCurrentGoldPrices(),
     getSiteSettings(),
   ]);
-  const siteName = s.site_name || "TaiChinh.vn";
+  const siteName = s.site_name || "Giá Hôm Nay";
   const v = s.brand_asset_version || "0";
   const icon = `/api/brand/icon?v=${v}`;
   const seo = buildGoldSeoMetadata("Giá vàng hôm nay", prices, siteName);
@@ -66,7 +66,7 @@ export default async function GoldPage() {
   const domestic = prices.filter((p) => p.currency !== "USD").slice(0, 6);
   const homeUrl = await canonicalUrl("/");
   const pageUrl = await canonicalUrl("/gia-vang");
-  const siteName = settings.site_name || "TaiChinh.vn";
+  const siteName = settings.site_name || "Giá Hôm Nay";
 
   const jsonLd = [
     buildBreadcrumbSchema([

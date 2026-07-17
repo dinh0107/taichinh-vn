@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   ]);
   if (!page) return { title: "Không tìm thấy" };
 
-  const siteName = s.site_name || "TaiChinh.vn";
+  const siteName = s.site_name || "Giá Hôm Nay";
   const v = s.brand_asset_version || "0";
   const icon = `/api/brand/icon?v=${v}`;
   const url = page.canonicalUrl ?? canonicalUrlSync(`/${slug}`);
@@ -86,7 +86,7 @@ export default async function SeoLandingPage({ params }: Props) {
   const pageUrl = page.canonicalUrl ?? canonicalUrlSync(`/${slug}`);
   const homeUrl = canonicalUrlSync("/");
   const goldHubUrl = canonicalUrlSync("/gia-vang");
-  const siteName = s.site_name || "TaiChinh.vn";
+  const siteName = s.site_name || "Giá Hôm Nay";
 
   const jsonLd = [
     buildBreadcrumbSchema([

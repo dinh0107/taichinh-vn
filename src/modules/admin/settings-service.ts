@@ -17,7 +17,19 @@ async function fetchSiteSettingsFromDb(): Promise<SiteSettings> {
   try {
     const rows = await prisma.siteSetting.findMany();
     const map: SiteSettings = { ...SETTING_DEFAULTS };
-    for (const row of rows) map[row.key] = row.value;
+    for (const row of rows) {
+      const legacyValue = row.value.trim().toLowerCase();
+      if (row.key === "site_name" && legacyValue === "taichinh.vn") {
+        map[row.key] = SETTING_DEFAULTS.site_name;
+      } else if (
+        row.key === "site_url" &&
+        /^https?:\/\/(www\.)?taichinh\.vn\/?$/.test(legacyValue)
+      ) {
+        map[row.key] = SETTING_DEFAULTS.site_url;
+      } else {
+        map[row.key] = row.value;
+      }
+    }
     return map;
   } catch {
     return { ...SETTING_DEFAULTS };

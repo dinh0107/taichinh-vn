@@ -34,7 +34,7 @@ export function AdminSidebar() {
           T
         </div>
         <div className="leading-tight">
-          <p className="text-sm font-bold text-white">TaiChinh.vn</p>
+          <p className="text-sm font-bold text-white">Giá Hôm Nay</p>
           <p className="text-[10px] uppercase tracking-wider text-slate-500">
             Admin Panel
           </p>

@@ -284,9 +284,18 @@ export async function syncGscStatus(): Promise<SeoFormState> {
   try {
     const result = await syncGscToDatabase();
     revalidatePath("/admin/seo");
-    return { ok: true, message: result.message };
+    // Partial failures still ok:true but message carries the real GSC error text.
+    return {
+      ok: result.errors === 0,
+      message: result.errors === 0 ? result.message : undefined,
+      // Cap toast length; full text still in cronJobLog / SEO banner.
+      error:
+        result.errors > 0
+          ? result.message.slice(0, 400)
+          : undefined,
+    };
   } catch (e) {
-    logger.error({ e }, "Sync GSC failed");
+    logger.error({ err: e }, "Sync GSC failed");
     const raw = e instanceof Error ? e.message : "Không thể đồng bộ Google Search Console.";
     // Short toast-friendly line
     const error = raw.split("\n")[0]?.slice(0, 280) || raw;

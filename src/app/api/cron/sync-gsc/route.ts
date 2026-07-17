@@ -25,29 +25,33 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await syncGscToDatabase();
+    const hasErrors = result.errors > 0 || /Analytics lỗi:/i.test(result.message);
     await prisma.cronJobLog.update({
       where: { id: log.id },
       data: {
-        status: "SUCCESS",
+        status: hasErrors && result.inspected === 0 ? "FAILED" : "SUCCESS",
         finishedAt: new Date(),
         durationMs: Date.now() - start,
         recordsSync: result.inspected,
+        // Surface GSC error details in Admin → Cron logs (not only pino).
+        error: hasErrors ? result.message : null,
       },
     });
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
-    logger.error({ error }, "Cron sync-gsc failed");
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error({ err: error }, "Cron sync-gsc failed");
     await prisma.cronJobLog.update({
       where: { id: log.id },
       data: {
         status: "FAILED",
         finishedAt: new Date(),
         durationMs: Date.now() - start,
-        error: (error as Error).message,
+        error: message,
       },
     });
     return NextResponse.json(
-      { success: false, error: (error as Error).message },
+      { success: false, error: message },
       { status: 500 }
     );
   }

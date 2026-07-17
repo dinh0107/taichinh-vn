@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   ]);
   if (!article) return { title: "Không tìm thấy" };
 
-  const siteName = s.site_name || "TaiChinh.vn";
+  const siteName = s.site_name || "Giá Hôm Nay";
   const v = s.brand_asset_version || "0";
   const icon = `/api/brand/icon?v=${v}`;
   const title = article.seoTitle || article.title;
@@ -85,7 +85,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   if (!article) notFound();
 
   const related = await getRelatedArticles(slug, article.category);
-  const siteName = settings.site_name || "TaiChinh.vn";
+  const siteName = settings.site_name || "Giá Hôm Nay";
   const publishedLabel = formatDateVi(article.publishedAt);
 
   const jsonLd = [

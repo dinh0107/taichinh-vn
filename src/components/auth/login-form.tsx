@@ -59,7 +59,7 @@ export function LoginForm({ next }: { next?: string }) {
           type="email"
           autoComplete="username"
           required
-          placeholder="admin@taichinh.vn"
+          placeholder="admin@giahomnay.site"
           className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-slate-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20"
         />
       </label>

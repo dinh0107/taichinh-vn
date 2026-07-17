@@ -162,6 +162,8 @@ export async function syncGscToDatabase(): Promise<{
   start.setDate(start.getDate() - 28);
 
   let analytics = new Map<string, { clicks: number; impressions: number; position: number }>();
+  const errorSamples: string[] = [];
+  let analyticsError: string | null = null;
   try {
     analytics = await fetchPageAnalytics(
       creds,
@@ -170,7 +172,8 @@ export async function syncGscToDatabase(): Promise<{
       2500
     );
   } catch (e) {
-    logger.warn({ e }, "GSC analytics fetch failed — continuing with inspection only");
+    analyticsError = e instanceof Error ? e.message : String(e);
+    logger.warn({ err: e }, "GSC analytics fetch failed — continuing with inspection only");
   }
 
   let inspected = 0;
@@ -189,7 +192,12 @@ export async function syncGscToDatabase(): Promise<{
       const result = await inspectUrl(creds, pageUrl);
       inspected++;
       if (result.status === "INDEXED") indexed++;
-      if (result.status === "ERROR") errors++;
+      if (result.status === "ERROR") {
+        errors++;
+        if (result.coverageState && errorSamples.length < 3) {
+          errorSamples.push(`${page.slug}: ${result.coverageState}`);
+        }
+      }
 
       await prisma.seoPage.update({
         where: { id: page.id },
@@ -205,12 +213,14 @@ export async function syncGscToDatabase(): Promise<{
       });
     } catch (e) {
       errors++;
-      logger.error({ e, slug: page.slug }, "GSC inspect failed");
+      const msg = e instanceof Error ? e.message : String(e);
+      if (errorSamples.length < 3) errorSamples.push(`${page.slug}: ${msg}`);
+      logger.error({ err: e, slug: page.slug }, "GSC inspect failed");
       await prisma.seoPage.update({
         where: { id: page.id },
         data: {
           gscIndexStatus: "ERROR",
-          gscCoverageState: clipCoverage((e as Error).message),
+          gscCoverageState: clipCoverage(msg),
           gscSyncedAt: syncedAt,
         },
       });
@@ -219,10 +229,16 @@ export async function syncGscToDatabase(): Promise<{
     await sleep(350);
   }
 
+  const parts = [
+    `GSC: đã kiểm tra ${inspected} URL — ${indexed} indexed, ${errors} lỗi.`,
+  ];
+  if (analyticsError) parts.push(`Analytics lỗi: ${analyticsError}`);
+  if (errorSamples.length > 0) parts.push(errorSamples.join(" | "));
+
   return {
     inspected,
     indexed,
     errors,
-    message: `GSC: đã kiểm tra ${inspected} URL — ${indexed} indexed, ${errors} lỗi.`,
+    message: parts.join(" "),
   };
 }

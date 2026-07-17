@@ -21,7 +21,7 @@ export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSiteSettings();
-  const name = s.site_name || "TaiChinh.vn";
+  const name = s.site_name || "Giá Hôm Nay";
   const description =
     s.site_description ||
     "Tra cứu giá vàng SJC, tỷ giá USD, lãi suất ngân hàng, chứng khoán VNINDEX và giá xăng dầu — cập nhật liên tục, miễn phí.";
@@ -47,7 +47,7 @@ export default async function HomePage() {
 
   void getCurrentGoldPrices();
 
-  const siteName = settings.site_name || "TaiChinh.vn";
+  const siteName = settings.site_name || "Giá Hôm Nay";
   const siteDesc =
     settings.site_description ||
     "Theo dõi giá vàng SJC, vàng 9999, DOJI, PNJ, tỷ giá ngoại tệ, giá xăng dầu và lãi suất ngân hàng được cập nhật liên tục nhanh và chính xác.";

@@ -31,7 +31,7 @@ export default async function AdminLayout({
               href="/admin"
               className="text-sm font-bold text-slate-900 lg:hidden"
             >
-              TaiChinh.vn Admin
+              Quản trị viên
             </Link>
             <span className="hidden text-sm text-slate-400 lg:inline">
               Bảng điều khiển quản trị

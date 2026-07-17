@@ -518,6 +518,7 @@ export async function getCronOverview() {
           : "—",
       status: latest ? uiStatus : ("success" as const),
       recordsSync: latest?.recordsSync ?? 0,
+      error: latest?.error ?? null,
     };
   });
 
@@ -554,15 +555,19 @@ export async function getSystemLogs() {
     const level =
       log.status === "FAILED"
         ? "error"
-        : log.status === "RUNNING"
-          ? "info"
-          : "info";
+        : log.error
+          ? "warn"
+          : log.status === "RUNNING"
+            ? "info"
+            : "info";
     const message =
-      log.status === "SUCCESS"
-        ? `Đồng bộ ${log.recordsSync} bản ghi (${log.durationMs ?? 0}ms)`
-        : log.status === "FAILED"
-          ? log.error ?? "Cron thất bại"
-          : "Đang chạy...";
+      log.status === "FAILED"
+        ? log.error ?? "Cron thất bại"
+        : log.status === "RUNNING"
+          ? "Đang chạy..."
+          : log.error
+            ? log.error
+            : `Đồng bộ ${log.recordsSync} bản ghi (${log.durationMs ?? 0}ms)`;
     lines.push({
       at: log.startedAt,
       time: formatRelativeTime(log.startedAt),

@@ -14,8 +14,8 @@ export type SaveSettingsState = {
 };
 
 export const SETTING_DEFAULTS: SiteSettings = {
-  site_name: "TaiChinh.vn",
-  site_url: "https://taichinh.vn",
+  site_name: "Giá Hôm Nay",
+  site_url: "https://giahomnay.site",
   site_description: "Nền tảng tài chính cá nhân Việt Nam",
   brand_asset_version: "0",
   gold_api_endpoint: "https://giavang.now/en/api",

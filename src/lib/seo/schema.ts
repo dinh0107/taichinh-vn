@@ -35,7 +35,7 @@ export function buildFaqSchema(faqs: { question: string; answer: string }[]): Js
 export function buildFinancialServiceSchema(
   name: string,
   description: string,
-  siteName = "TaiChinh.vn"
+  siteName = "Giá Hôm Nay"
 ): JsonLd {
   return {
     "@context": "https://schema.org",
@@ -111,12 +111,12 @@ export function generateGoldFaqs(prices: GoldPriceItem[]): { question: string; a
     {
       question: "Nên mua vàng SJC hay DOJI?",
       answer:
-        "Tùy thuộc vào mục đích đầu tư và vị trí địa lý. SJC là thương hiệu quốc gia, thanh khoản cao. DOJI có mạng lưới rộng. So sánh giá mua/bán tại TaiChinh.vn trước khi quyết định.",
+        "Tùy thuộc vào mục đích đầu tư và vị trí địa lý. SJC là thương hiệu quốc gia, thanh khoản cao. DOJI có mạng lưới rộng. Hãy so sánh giá mua/bán trước khi quyết định.",
     },
     {
       question: "Giá vàng cập nhật bao lâu một lần?",
       answer:
-        "Giá vàng trên TaiChinh.vn được cập nhật mỗi 5 phút từ các nguồn dữ liệu uy tín.",
+        "Giá vàng được cập nhật mỗi 5 phút từ các nguồn dữ liệu uy tín.",
     },
   ];
 }
@@ -129,7 +129,7 @@ export function buildNewsArticleSchema(input: {
   publishedAt?: Date | null;
   siteName?: string;
 }): JsonLd {
-  const siteName = input.siteName || "TaiChinh.vn";
+  const siteName = input.siteName || "Giá Hôm Nay";
   return {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -154,7 +154,7 @@ export function buildNewsArticleSchema(input: {
 export function buildGoldSeoMetadata(
   title: string,
   prices: GoldPriceItem[],
-  siteName = "TaiChinh.vn"
+  siteName = "Giá Hôm Nay"
 ) {
   const sjc = prices.find((p) => p.code === "SJL1L10");
   const dateStr = todayDateVi();
