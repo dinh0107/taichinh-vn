@@ -20,7 +20,6 @@ import { pageArticleDefBySlug } from "@/modules/admin/page-articles";
 import { isGscEnabled } from "@/lib/gsc/feature";
 import { withHtmlExtension } from "@/lib/seo/html-path";
 import type { SeoPageType } from "@prisma/client";
-import { formatRelativeTime } from "@/lib/time";
 
 const TYPE_TONE: Record<SeoPageType, "amber" | "sky" | "violet" | "slate"> = {
   GOLD_TODAY: "amber",
