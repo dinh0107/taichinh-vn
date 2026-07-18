@@ -77,7 +77,6 @@ export function buildArticleSchema(input: {
 }): JsonLd {
   const siteName = input.siteName || "Giá Hôm Nay";
   const logoUrl = absoluteUrl("/api/brand/logo");
-  const imageUrl = toAbsoluteAssetUrl(input.image) || logoUrl;
   const published = toIso(input.publishedAt);
   const modified = toIso(input.modifiedAt) || published;
   const authorName = input.authorName?.trim() || siteName;
@@ -99,17 +98,10 @@ export function buildArticleSchema(input: {
       "@type": "Organization",
       name: siteName,
       url: absoluteUrl("/"),
-      logo: {
-        "@type": "ImageObject",
-        url: logoUrl,
-      },
+      logo: brandLogoImageObject(logoUrl),
     },
-    image: [
-      {
-        "@type": "ImageObject",
-        url: imageUrl,
-      },
-    ],
+    // Always include crawlable on-site image (Googlebot often can't fetch hotlinked CDN images).
+    image: buildArticleImages(input.image, logoUrl),
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": input.url,
@@ -336,7 +328,6 @@ export function buildNewsArticleSchema(input: {
   const published = input.publishedAt?.toISOString();
   const modified =
     input.modifiedAt?.toISOString() || published;
-  const imageUrl = toAbsoluteAssetUrl(input.image);
   const logoUrl = absoluteUrl("/api/brand/logo");
 
   const authorName = input.authorName?.trim() || siteName;
@@ -365,43 +356,71 @@ export function buildNewsArticleSchema(input: {
       "@type": "Organization",
       name: siteName,
       url: absoluteUrl("/"),
-      logo: {
-        "@type": "ImageObject",
-        url: logoUrl,
-        width: 1024,
-        height: 410,
-      },
+      logo: brandLogoImageObject(logoUrl),
     },
+    // Required by Google Article; always include on-site crawlable logo.
+    image: buildArticleImages(input.image, logoUrl),
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": input.url,
     },
   };
 
-  if (imageUrl) {
-    schema.image = [
-      {
-        "@type": "ImageObject",
-        url: imageUrl,
-      },
-    ];
-  } else {
-    // Google Article requires image — fall back to site logo
-    schema.image = [
-      {
-        "@type": "ImageObject",
-        url: logoUrl,
-        width: 1024,
-        height: 410,
-      },
-    ];
-  }
-
   if (input.articleSection?.trim()) {
     schema.articleSection = input.articleSection.trim();
   }
 
   return schema;
+}
+
+function brandLogoImageObject(logoUrl: string): JsonLd {
+  return {
+    "@type": "ImageObject",
+    url: logoUrl,
+    width: 1024,
+    height: 410,
+  };
+}
+
+/**
+ * Google Article requires a crawlable `image`. Hotlinked CDNs often fail Googlebot,
+ * which GSC reports as "Trường image bị thiếu". Always include our /api/brand/logo.
+ */
+function buildArticleImages(
+  primary: string | null | undefined,
+  logoUrl: string
+): JsonLd[] {
+  const images: JsonLd[] = [];
+  const primaryAbs = toAbsoluteAssetUrl(primary);
+  if (primaryAbs && normalizeAssetKey(primaryAbs) !== normalizeAssetKey(logoUrl)) {
+    const dims = guessImageDimensions(primaryAbs);
+    images.push({
+      "@type": "ImageObject",
+      url: primaryAbs,
+      width: dims.width,
+      height: dims.height,
+    });
+  }
+  images.push(brandLogoImageObject(logoUrl));
+  return images;
+}
+
+function normalizeAssetKey(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return url.split("?")[0] || url;
+  }
+}
+
+/** Parse width/height from common CDN filenames; else use Article-safe defaults. */
+function guessImageDimensions(url: string): { width: number; height: number } {
+  const m = url.match(/width(\d+).*?height(\d+)/i);
+  if (m) {
+    return { width: Number(m[1]), height: Number(m[2]) };
+  }
+  return { width: 1200, height: 675 };
 }
 
 /** Absolute URL for assets; do not force .html on image/API paths. */

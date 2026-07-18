@@ -23,10 +23,10 @@ assert.ok(schema.author);
 assert.equal((schema.author as { name: string }).name, "24h");
 assert.equal((schema.author as { "@type": string })["@type"], "Organization");
 assert.ok(Array.isArray(schema.image));
-assert.equal(
-  (schema.image as { url: string }[])[0].url,
-  "https://example.com/cover.jpg"
-);
+const images = schema.image as { url: string; width?: number; height?: number }[];
+assert.equal(images[0].url, "https://example.com/cover.jpg");
+assert.ok(images[0].width && images[0].height);
+assert.ok(images.some((i) => /\/api\/brand\/logo/.test(i.url)), "on-site logo fallback");
 assert.equal(schema.articleSection, "Giá vàng");
 assert.equal(schema.inLanguage, "vi");
 assert.equal(
@@ -41,9 +41,11 @@ const noImage = buildNewsArticleSchema({
   siteName: "Giá Hôm Nay",
 });
 assert.ok(Array.isArray(noImage.image));
+assert.equal((noImage.image as unknown[]).length, 1);
 assert.match(
   (noImage.image as { url: string }[])[0].url,
   /\/api\/brand\/logo/
 );
+assert.equal((noImage.image as { width: number }[])[0].width, 1024);
 
 console.log("schema-article.check ok");
