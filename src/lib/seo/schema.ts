@@ -164,13 +164,8 @@ export function buildFinancialServiceSchema(
       "@type": "Country",
       name: "Vietnam",
     },
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "VND",
-      availability: "https://schema.org/InStock",
-      description: "Miễn phí",
-    },
+    // No `offers` — site is free lookup, not a storefront.
+    // Offer triggers GSC merchant warnings (shippingDetails, gtin, return policy…).
   };
 }
 

@@ -22,7 +22,7 @@ assert.equal(
 assert.ok(typeof s.image === "string" && String(s.image).length > 0, "image");
 assert.equal(s.url, "https://example.com/gia-vang");
 assert.equal(s.alternateName, "Giá Hôm Nay");
-assert.equal((s.offers as { price?: string }).price, "0");
+assert.equal(s.offers, undefined, "no Offer — avoid merchant GSC warnings");
 
 const noPhone = buildFinancialServiceSchema("A", "B");
 assert.equal(
@@ -30,7 +30,7 @@ assert.equal(
   undefined
 );
 assert.ok(noPhone.image);
-assert.ok(noPhone.offers);
+assert.equal(noPhone.offers, undefined);
 
 const gold = buildGoldPriceSchema([
   {
