@@ -16,7 +16,7 @@ export type SaveSettingsState = {
 export const SETTING_DEFAULTS: SiteSettings = {
   site_name: "Giá Hôm Nay",
   site_url: "https://giahomnay.site",
-  site_description: "Nền tảng tài chính cá nhân Việt Nam",
+  site_description: "Theo dõi giá vàng, giá xăng, chứng khoán, tỷ giá ngoại tệ hôm nay. Dữ liệu cập nhật liên tục, tra cứu nhanh, chính xác và miễn phí.",
   /** SĐT công khai — schema FinancialService (hết cảnh báo telephone). */
   site_phone: "",
   brand_asset_version: "0",

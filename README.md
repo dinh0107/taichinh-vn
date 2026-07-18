@@ -1,4 +1,4 @@
-# TaiChinh.vn — Nền tảng Tài chính Cá nhân Việt Nam
+# TaiChinh.vn — Theo dõi giá vàng, giá xăng, chứng khoán, tỷ giá ngoại tệ hôm nay. Dữ liệu cập nhật liên tục, tra cứu nhanh, chính xác và miễn phí.
 
 Next.js 15 · TypeScript · MySQL · Prisma · Redis
 
