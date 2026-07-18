@@ -41,23 +41,21 @@ export function buildFinancialServiceSchema(
 ): JsonLd {
   const image = opts?.image?.trim() || absoluteUrl("/api/brand/logo");
   const telephone = opts?.telephone?.trim() || undefined;
-  const org: JsonLd = {
-    "@type": "Organization",
-    name: siteName,
-    url: absoluteUrl("/"),
-    logo: image,
-    image,
-  };
-  if (telephone) org.telephone = telephone;
 
+  // FinancialService extends LocalBusiness — do NOT set `provider`
+  // (provider is for schema.org/Service; Google flags it as unrecognized here).
   const schema: JsonLd = {
     "@context": "https://schema.org",
     "@type": "FinancialService",
     name,
+    alternateName: siteName,
     description,
     url: absoluteUrl("/"),
     image,
-    logo: image,
+    logo: {
+      "@type": "ImageObject",
+      url: image,
+    },
     // Tra cứu giá miễn phí — không bán hàng tại cửa hàng
     priceRange: "Miễn phí",
     address: {
@@ -70,7 +68,6 @@ export function buildFinancialServiceSchema(
       "@type": "Country",
       name: "Vietnam",
     },
-    provider: org,
   };
   if (telephone) schema.telephone = telephone;
   return schema;

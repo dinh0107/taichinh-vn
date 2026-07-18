@@ -13,11 +13,14 @@ const s = buildFinancialServiceSchema(
 );
 
 assert.equal(s["@type"], "FinancialService");
+assert.equal(s.provider, undefined, "provider is invalid on FinancialService");
 assert.ok(typeof s.image === "string" && String(s.image).length > 0, "image");
+assert.equal((s.logo as { "@type"?: string })["@type"], "ImageObject");
 assert.equal(s.priceRange, "Miễn phí");
 assert.ok(s.address && typeof s.address === "object", "address");
 assert.equal((s.address as { addressCountry?: string }).addressCountry, "VN");
 assert.equal(s.telephone, "+84 28 1234 5678");
+assert.equal(s.alternateName, "Giá Hôm Nay");
 
 const noPhone = buildFinancialServiceSchema("A", "B");
 assert.equal(noPhone.telephone, undefined);
