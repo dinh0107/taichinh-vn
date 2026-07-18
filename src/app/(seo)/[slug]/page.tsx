@@ -60,6 +60,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         ? [{ url: page.ogImage }]
         : [{ url: `/api/brand/logo?v=${v}`, alt: siteName }],
     },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [page.ogImage || `/api/brand/logo?v=${v}`],
+    },
   };
 
   if (!page.isIndexed) {
@@ -81,16 +87,26 @@ export default async function SeoLandingPage({ params }: Props) {
 
   const pageUrl = page.canonicalUrl ?? canonicalUrlSync(`/${slug}`);
   const homeUrl = canonicalUrlSync("/");
-  const goldHubUrl = canonicalUrlSync("/gia-vang");
   const siteName = s.site_name || "Giá Hôm Nay";
   const v = s.brand_asset_version || "0";
+
+  const hubCrumb =
+    page.pageType.startsWith("GOLD")
+      ? { name: "Giá vàng", url: canonicalUrlSync("/gia-vang") }
+      : page.pageType.startsWith("FX")
+        ? { name: "Tỷ giá", url: canonicalUrlSync("/ty-gia") }
+        : page.pageType.startsWith("INTEREST")
+          ? { name: "Lãi suất", url: canonicalUrlSync("/lai-suat") }
+          : page.pageType.startsWith("STOCK")
+            ? { name: "Chứng khoán", url: canonicalUrlSync("/chung-khoan") }
+            : page.pageType.startsWith("FUEL")
+              ? { name: "Xăng dầu", url: canonicalUrlSync("/gia-xang") }
+              : null;
 
   const jsonLd = [
     buildBreadcrumbSchema([
       { name: "Trang chủ", url: homeUrl },
-      ...(page.pageType.startsWith("GOLD")
-        ? [{ name: "Giá vàng", url: goldHubUrl }]
-        : []),
+      ...(hubCrumb ? [hubCrumb] : []),
       { name: page.title, url: pageUrl },
     ]),
     buildFinancialServiceSchema(page.title, page.metaDescription, siteName, {

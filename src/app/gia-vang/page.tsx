@@ -38,14 +38,23 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteName = s.site_name || "Giá Hôm Nay";
   const v = s.brand_asset_version || "0";
   const seo = buildGoldSeoMetadata("Giá vàng hôm nay", prices, siteName);
+  const url = await canonicalUrl("/gia-vang");
+  const image = `/api/brand/logo?v=${v}`;
   return {
     title: { absolute: seo.title },
     description: seo.description,
+    alternates: { canonical: url },
     openGraph: {
       ...seo.openGraph,
-      images: [{ url: `/api/brand/logo?v=${v}`, alt: siteName }],
+      url,
+      images: [{ url: image, alt: siteName }],
     },
-    alternates: { canonical: await canonicalUrl("/gia-vang") },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.title,
+      description: seo.description,
+      images: [image],
+    },
   };
 }
 

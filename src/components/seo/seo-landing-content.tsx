@@ -290,15 +290,47 @@ function LandingShell({
   faqs: { question: string; answer: string }[];
   children: React.ReactNode;
 }) {
+  const breadcrumb = page.pageType.startsWith("GOLD")
+    ? [
+        { label: "Trang chủ", href: "/" },
+        { label: "Giá vàng", href: "/gia-vang" },
+        { label: page.h1 },
+      ]
+    : page.pageType.startsWith("FX")
+      ? [
+          { label: "Trang chủ", href: "/" },
+          { label: "Tỷ giá", href: "/ty-gia" },
+          { label: page.h1 },
+        ]
+      : page.pageType.startsWith("INTEREST")
+        ? [
+            { label: "Trang chủ", href: "/" },
+            { label: "Lãi suất", href: "/lai-suat" },
+            { label: page.h1 },
+          ]
+        : page.pageType.startsWith("STOCK")
+          ? [
+              { label: "Trang chủ", href: "/" },
+              { label: "Chứng khoán", href: "/chung-khoan" },
+              { label: page.h1 },
+            ]
+          : page.pageType.startsWith("FUEL")
+            ? [
+                { label: "Trang chủ", href: "/" },
+                { label: "Xăng dầu", href: "/gia-xang" },
+                { label: page.h1 },
+              ]
+            : [
+                { label: "Trang chủ", href: "/" },
+                { label: page.h1 },
+              ];
+
   return (
     <MarketPageShell>
       <PageHeader
         title={page.h1}
         description={`Cập nhật lúc ${updated} — Dữ liệu tham khảo`}
-        breadcrumb={[
-          { label: "Trang chủ", href: "/" },
-          { label: page.h1 },
-        ]}
+        breadcrumb={breadcrumb}
       />
 
       {children}

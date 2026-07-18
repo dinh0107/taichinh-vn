@@ -3,6 +3,7 @@ import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import { SiteChrome } from "@/components/layout/site-chrome";
 import { SiteScripts } from "@/components/layout/site-scripts";
+import { SiteJsonLd } from "@/components/seo/site-json-ld";
 import { getSiteSettings } from "@/modules/admin/settings-service";
 import { SETTING_DEFAULTS } from "@/modules/admin/settings-shared";
 import { getSiteBaseUrl } from "@/lib/seo/site-url";
@@ -54,7 +55,14 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: name,
       title: `${name} — Giá vàng, Tỷ giá, Lãi suất, Chứng khoán`,
       description,
+      url,
       images: [{ url: wordmark, width: 1024, height: 410, alt: name }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${name} — Giá vàng, Tỷ giá, Lãi suất, Chứng khoán`,
+      description,
+      images: [wordmark],
     },
     icons: {
       // /favicon.ico is stable + crawlable (Google SERP). Versioned API busts browser cache.
@@ -91,6 +99,7 @@ export default async function RootLayout({
       <body
         className={`${beVietnamPro.className} flex min-h-screen flex-col text-[var(--text-primary)] antialiased`}
       >
+        <SiteJsonLd />
         <SiteChrome
           siteName={s.site_name || SETTING_DEFAULTS.site_name}
           siteDescription={s.site_description || SETTING_DEFAULTS.site_description}

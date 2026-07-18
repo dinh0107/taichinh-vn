@@ -91,6 +91,12 @@ export async function buildPageMetadata({
       siteName: brand.siteName,
       images: [{ url: brand.wordmark, width: 1024, height: 410, alt: siteName }],
     },
+    twitter: {
+      card: "summary_large_image",
+      title: fullTitle,
+      description,
+      images: [brand.wordmark],
+    },
     icons: brand.icons,
   };
 }

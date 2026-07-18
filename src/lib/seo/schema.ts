@@ -76,6 +76,57 @@ export function buildFinancialServiceSchema(
   return schema;
 }
 
+/** Sitewide Organization — logo, name, homepage. */
+export function buildOrganizationSchema(
+  siteName = "Giá Hôm Nay",
+  opts?: { image?: string; telephone?: string; description?: string }
+): JsonLd {
+  const image = opts?.image?.trim() || absoluteUrl("/api/brand/logo");
+  const schema: JsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: siteName,
+    url: absoluteUrl("/"),
+    logo: {
+      "@type": "ImageObject",
+      url: image,
+    },
+    image,
+  };
+  if (opts?.description?.trim()) schema.description = opts.description.trim();
+  if (opts?.telephone?.trim()) schema.telephone = opts.telephone.trim();
+  return schema;
+}
+
+/** Sitewide WebSite + SearchAction pointing at /tin-tuc. */
+export function buildWebSiteSchema(
+  siteName = "Giá Hôm Nay",
+  opts?: { description?: string }
+): JsonLd {
+  const home = absoluteUrl("/");
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteName,
+    url: home,
+    description: opts?.description?.trim() || undefined,
+    inLanguage: "vi",
+    publisher: {
+      "@type": "Organization",
+      name: siteName,
+      url: home,
+    },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${absoluteUrl("/tin-tuc")}?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+}
+
 export function buildGoldPriceSchema(prices: GoldPriceItem[]): JsonLd {
   const sjc = prices.find((p) => p.code === "SJL1L10");
   return {
