@@ -102,6 +102,7 @@ export default async function GoldPage() {
     buildFinancialServiceSchema("Giá vàng Việt Nam", goldDesc, siteName, {
       image: brandImage,
       telephone: settings.site_phone?.trim() || undefined,
+      url: pageUrl,
     }),
     buildGoldPriceSchema(prices),
     buildFaqSchema(faqs),

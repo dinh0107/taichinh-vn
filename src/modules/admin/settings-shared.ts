@@ -17,7 +17,7 @@ export const SETTING_DEFAULTS: SiteSettings = {
   site_name: "Giá Hôm Nay",
   site_url: "https://giahomnay.site",
   site_description: "Theo dõi giá vàng, giá xăng, chứng khoán, tỷ giá ngoại tệ hôm nay. Dữ liệu cập nhật liên tục, tra cứu nhanh, chính xác và miễn phí.",
-  /** SĐT công khai — schema FinancialService (hết cảnh báo telephone). */
+  /** SĐT công khai — schema Service / Organization. */
   site_phone: "",
   brand_asset_version: "0",
   gold_api_endpoint: "https://giavang.now/en/api",

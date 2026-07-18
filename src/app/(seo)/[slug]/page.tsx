@@ -154,6 +154,7 @@ export default async function SeoLandingPage({ params }: Props) {
     buildFinancialServiceSchema(page.title, page.metaDescription, siteName, {
       image: brandImage,
       telephone: s.site_phone?.trim() || undefined,
+      url: pageUrl,
     }),
     ...(faqs.length > 0 ? [buildFaqSchema(faqs)] : []),
   ];

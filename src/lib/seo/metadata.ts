@@ -153,7 +153,7 @@ export function buildModulePageJsonLd(input: {
       input.serviceName,
       input.serviceDescription,
       input.siteName,
-      { image: input.image, telephone: input.telephone }
+      { image: input.image, telephone: input.telephone, url: pageUrl }
     ),
     buildWebPageSchema({
       name: input.serviceName,

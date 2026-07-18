@@ -133,44 +133,53 @@ function toIso(value?: Date | string | null): string | undefined {
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
 }
 
+/**
+ * Free price-lookup service (not a storefront LocalBusiness).
+ * Avoid FinancialService/LocalBusiness — Google flags missing review/aggregateRating.
+ */
 export function buildFinancialServiceSchema(
   name: string,
   description: string,
   siteName = "Giá Hôm Nay",
-  opts?: { image?: string; telephone?: string }
+  opts?: { image?: string; telephone?: string; url?: string }
 ): JsonLd {
   const image = opts?.image?.trim() || absoluteUrl("/api/brand/logo");
   const telephone = opts?.telephone?.trim() || undefined;
+  const pageUrl = opts?.url?.trim() || absoluteUrl("/");
 
-  // FinancialService extends LocalBusiness — do NOT set `provider`
-  // (provider is for schema.org/Service; Google flags it as unrecognized here).
-  const schema: JsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FinancialService",
-    name,
-    alternateName: siteName,
-    description,
+  const provider: JsonLd = {
+    "@type": "Organization",
+    name: siteName,
     url: absoluteUrl("/"),
-    image,
     logo: {
       "@type": "ImageObject",
       url: image,
     },
-    // Tra cứu giá miễn phí — không bán hàng tại cửa hàng
-    priceRange: "Miễn phí",
-    address: {
-      "@type": "PostalAddress",
-      addressCountry: "VN",
-      addressLocality: "Toàn quốc",
-      addressRegion: "Việt Nam",
-    },
+  };
+  if (telephone) provider.telephone = telephone;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name,
+    alternateName: siteName,
+    description,
+    url: pageUrl,
+    image,
+    serviceType: "Tra cứu giá tài chính",
+    provider,
     areaServed: {
       "@type": "Country",
       name: "Vietnam",
     },
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "VND",
+      availability: "https://schema.org/InStock",
+      description: "Miễn phí",
+    },
   };
-  if (telephone) schema.telephone = telephone;
-  return schema;
 }
 
 /** Sitewide Organization — logo, name, homepage. */
@@ -224,22 +233,41 @@ export function buildWebSiteSchema(
   };
 }
 
+/** Gold quotes as Dataset — avoid Product (GSC wants fake review/aggregateRating). */
 export function buildGoldPriceSchema(prices: GoldPriceItem[]): JsonLd {
   const sjc = prices.find((p) => p.code === "SJL1L10");
+  const formatVnd = (n: number) =>
+    new Intl.NumberFormat("vi-VN").format(n) + " đ/lượng";
+
   return {
     "@context": "https://schema.org",
-    "@type": "Product",
-    name: "Vàng SJC 9999",
-    description: "Giá vàng SJC 9999 mới nhất tại Việt Nam",
-    offers: sjc
-      ? {
-          "@type": "Offer",
-          price: sjc.sell,
-          priceCurrency: "VND",
-          availability: "https://schema.org/InStock",
-          priceValidUntil: new Date(Date.now() + 86400000).toISOString().split("T")[0],
-        }
-      : undefined,
+    "@type": "Dataset",
+    name: "Giá vàng SJC 9999 Việt Nam",
+    description: sjc
+      ? `Giá vàng SJC 9999 mới nhất: mua ${formatVnd(sjc.buy)}, bán ${formatVnd(sjc.sell)}.`
+      : "Giá vàng SJC 9999 mới nhất tại Việt Nam",
+    url: absoluteUrl("/gia-vang"),
+    inLanguage: "vi",
+    creator: {
+      "@type": "Organization",
+      name: "Giá Hôm Nay",
+      url: absoluteUrl("/"),
+    },
+    temporalCoverage: new Date().toISOString().slice(0, 10),
+    variableMeasured: [
+      {
+        "@type": "PropertyValue",
+        name: "Giá mua SJC",
+        value: sjc?.buy,
+        unitText: "VND/lượng",
+      },
+      {
+        "@type": "PropertyValue",
+        name: "Giá bán SJC",
+        value: sjc?.sell,
+        unitText: "VND/lượng",
+      },
+    ].filter((v) => v.value != null),
   };
 }
 
