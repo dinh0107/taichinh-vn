@@ -86,16 +86,23 @@ export function SiteFooter({
             ]}
           />
           <FooterCol
-            title="CÔNG CỤ"
-            links={[["So sánh lãi suất ngân hàng", "/lai-suat"]]}
+            title="THÔNG TIN"
+            links={[
+              ["Giới thiệu", "/gioi-thieu"],
+              ["Liên hệ", "/lien-he"],
+              ["Tác giả", "/tac-gia"],
+              ["Nguồn dữ liệu", "/nguon-du-lieu"],
+              ["Ngày cập nhật", "/ngay-cap-nhat"],
+              ["RSS Feed", "/feed.xml"],
+              ["Feed News", "/feed/news.xml"],
+            ]}
           />
           <FooterCol
-            title="HỖ TRỢ"
+            title="CHÍNH SÁCH"
             links={[
-              ["Tin tức", "/tin-tuc"],
-              ["Giá vàng hôm nay", "/gia-vang"],
-              ["Giá xăng hôm nay", "/gia-xang"],
-              ["Tỷ giá USD", "/ty-gia-usd-hom-nay"],
+              ["Chính sách bảo mật", "/chinh-sach-bao-mat"],
+              ["Điều khoản sử dụng", "/dieu-khoan"],
+              ["Chính sách biên tập", "/chinh-sach-bien-tap"],
             ]}
           />
           <section>
@@ -107,20 +114,20 @@ export function SiteFooter({
                 {siteDescription}
               </p>
               <div className="flex justify-center gap-3 lg:justify-start">
-                <span
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/10 text-white/80"
-                  aria-hidden
+                <Link
+                  href="/lien-he"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white"
+                  aria-label="Liên hệ"
                 >
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-                    <path d="M14.1 8.1V6.6c0-.7.5-1.1 1.2-1.1h1.2V2.8c-.6-.1-1.5-.2-2.5-.2-2.5 0-4.1 1.5-4.1 4.2v1.3H7.4v3h2.5v10.3h3.2V11.1h2.7l.4-3h-3.1Z" />
-                  </svg>
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/10 text-white/80">
                   <Mail className="h-5 w-5" />
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/10 text-white/80">
+                </Link>
+                <Link
+                  href="/lien-he"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white"
+                  aria-label="Liên hệ điện thoại"
+                >
                   <Phone className="h-5 w-5" />
-                </span>
+                </Link>
               </div>
             </div>
           </section>

@@ -65,12 +65,13 @@ function goldTemplates(): SeoTemplate[] {
     else if ("purity" in g) pageType = "GOLD_PURITY";
 
     const lower = g.title.toLowerCase();
+    const metaPhrase = /\bmới nhất\b/i.test(lower) ? lower : `${lower} mới nhất`;
     return {
       slug: g.slug,
       pageType,
       title: g.title,
       h1: g.title,
-      metaDescription: `Cập nhật ${lower} mới nhất. So sánh giá mua/bán, biểu đồ và FAQ — Giá Hôm Nay.`,
+      metaDescription: `Cập nhật ${metaPhrase}. So sánh giá mua/bán, biểu đồ và FAQ — Giá Hôm Nay.`,
       config,
     };
   });

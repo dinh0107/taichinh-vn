@@ -131,6 +131,8 @@ function revalidateArticlePaths(slug: string, previousSlug?: string) {
   revalidatePath("/admin/bai-viet");
   revalidatePath("/tin-tuc");
   revalidatePath(`/tin-tuc/${slug}`);
+  revalidatePath("/feed.xml");
+  revalidatePath("/feed/news.xml");
   revalidatePath("/", "layout");
   if (previousSlug && previousSlug !== slug) {
     revalidatePath(`/tin-tuc/${previousSlug}`);

@@ -121,7 +121,7 @@ export function ArticleDetailView({
       <PageMain>
         <div className="mx-auto max-w-3xl space-y-10">
           <article className="rounded border border-finance-200 bg-white p-6 shadow-sm md:p-10">
-            <ArticleBody html={article.content} />
+            <ArticleBody html={article.content} imageAltFallback={article.title} />
           </article>
 
           {article.faqs.length > 0 && (

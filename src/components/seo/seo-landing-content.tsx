@@ -337,7 +337,7 @@ function LandingShell({
 
       {page.content ? (
         <section className="surface-card overflow-hidden px-5 py-6 md:px-8 md:py-8">
-          <ArticleBody html={page.content} />
+          <ArticleBody html={page.content} imageAltFallback={page.h1} />
         </section>
       ) : null}
 

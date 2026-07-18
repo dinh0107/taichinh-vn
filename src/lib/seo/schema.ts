@@ -1,6 +1,6 @@
 import { absoluteUrl } from "@/lib/utils";
 import { siteBaseUrlSync } from "@/lib/seo/site-url";
-import { todayDateVi, withHomNayTitlePrefix } from "@/lib/time";
+import { todayDateVi, goldMoiNhatTitle, GOLD_MOI_NHAT_TITLE_BASE } from "@/lib/time";
 import type { GoldPriceItem } from "@/modules/gold/types";
 
 export type JsonLd = Record<string, unknown>;
@@ -31,6 +31,106 @@ export function buildFaqSchema(faqs: { question: string; answer: string }[]): Js
       },
     })),
   };
+}
+
+/** Standalone WebPage — pairs with Breadcrumb / Article on content pages. */
+export function buildWebPageSchema(input: {
+  name: string;
+  description: string;
+  url: string;
+  siteName?: string;
+  dateModified?: Date | string | null;
+  datePublished?: Date | string | null;
+}): JsonLd {
+  const siteName = input.siteName || "Giá Hôm Nay";
+  const schema: JsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: input.name,
+    description: input.description,
+    url: input.url,
+    inLanguage: "vi",
+    isPartOf: {
+      "@type": "WebSite",
+      name: siteName,
+      url: absoluteUrl("/"),
+    },
+  };
+  const published = toIso(input.datePublished);
+  const modified = toIso(input.dateModified) || published;
+  if (published) schema.datePublished = published;
+  if (modified) schema.dateModified = modified;
+  return schema;
+}
+
+/** Generic Article (programmatic SEO / info pages). News uses NewsArticle. */
+export function buildArticleSchema(input: {
+  title: string;
+  description: string;
+  url: string;
+  image?: string | null;
+  publishedAt?: Date | string | null;
+  modifiedAt?: Date | string | null;
+  siteName?: string;
+  authorName?: string | null;
+  articleSection?: string | null;
+}): JsonLd {
+  const siteName = input.siteName || "Giá Hôm Nay";
+  const logoUrl = absoluteUrl("/api/brand/logo");
+  const imageUrl = toAbsoluteAssetUrl(input.image) || logoUrl;
+  const published = toIso(input.publishedAt);
+  const modified = toIso(input.modifiedAt) || published;
+  const authorName = input.authorName?.trim() || siteName;
+
+  const schema: JsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.title,
+    description: input.description,
+    url: input.url,
+    inLanguage: "vi",
+    isAccessibleForFree: true,
+    author: {
+      "@type": "Organization",
+      name: authorName,
+      url: absoluteUrl("/"),
+    },
+    publisher: {
+      "@type": "Organization",
+      name: siteName,
+      url: absoluteUrl("/"),
+      logo: {
+        "@type": "ImageObject",
+        url: logoUrl,
+      },
+    },
+    image: [
+      {
+        "@type": "ImageObject",
+        url: imageUrl,
+      },
+    ],
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": input.url,
+    },
+  };
+  if (published) schema.datePublished = published;
+  if (modified) schema.dateModified = modified;
+  if (input.articleSection?.trim()) {
+    schema.articleSection = input.articleSection.trim();
+  }
+  return schema;
+}
+
+function toIso(value?: Date | string | null): string | undefined {
+  if (!value) return undefined;
+  if (value instanceof Date) return value.toISOString();
+  const s = String(value).trim();
+  if (!s) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T00:00:00.000Z`;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
 }
 
 export function buildFinancialServiceSchema(
@@ -286,7 +386,7 @@ function toAbsoluteAssetUrl(src?: string | null): string | undefined {
 }
 
 export function buildGoldSeoMetadata(
-  title: string,
+  _title: string,
   prices: GoldPriceItem[],
   siteName = "Giá Hôm Nay"
 ) {
@@ -295,15 +395,14 @@ export function buildGoldSeoMetadata(
   const priceText = sjc
     ? `SJC mua ${new Intl.NumberFormat("vi-VN").format(sjc.buy)}đ, bán ${new Intl.NumberFormat("vi-VN").format(sjc.sell)}đ`
     : "";
-  const dated = withHomNayTitlePrefix(title, undefined, siteName);
-  const fullTitle = dated;
+  const fullTitle = goldMoiNhatTitle();
 
   return {
     title: fullTitle,
-    description: `Cập nhật ${title.toLowerCase()} mới nhất ${dateStr}. ${priceText}. So sánh SJC, DOJI, PNJ, vàng 9999, 24K. Biểu đồ lịch sử, cảnh báo giá.`,
+    description: `Cập nhật ${GOLD_MOI_NHAT_TITLE_BASE.toLowerCase()} ${dateStr}. ${priceText}. So sánh SJC, DOJI, PNJ, vàng 9999, 24K. Biểu đồ lịch sử, cảnh báo giá.`,
     openGraph: {
       title: fullTitle,
-      description: `${title} — ${priceText}. Dữ liệu realtime, biểu đồ, so sánh thương hiệu.`,
+      description: `${fullTitle} — ${priceText}. Dữ liệu realtime, biểu đồ, so sánh thương hiệu.`,
       type: "website" as const,
       locale: "vi_VN",
       siteName,

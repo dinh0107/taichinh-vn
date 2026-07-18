@@ -12,6 +12,7 @@ import {
   buildBreadcrumbSchema,
   buildFaqSchema,
   buildNewsArticleSchema,
+  buildWebPageSchema,
 } from "@/lib/seo/schema";
 import { absoluteUrl, cn } from "@/lib/utils";
 import { formatDateVi } from "@/lib/time";
@@ -96,18 +97,25 @@ export default async function ArticleDetailPage({ params }: Props) {
   const pageUrl = absoluteUrl(`/tin-tuc/${slug}`);
   const brandV = settings.brand_asset_version || "0";
 
+  const description =
+    article.excerpt || article.seoDescription || article.title;
   const jsonLd = [
     buildBreadcrumbSchema([
       { name: "Trang chủ", url: absoluteUrl("/") },
       { name: "Tin tức", url: absoluteUrl("/tin-tuc") },
       { name: article.title, url: pageUrl },
     ]),
+    buildWebPageSchema({
+      name: article.title,
+      description,
+      url: pageUrl,
+      siteName,
+      datePublished: article.publishedAt,
+      dateModified: article.updatedAt,
+    }),
     buildNewsArticleSchema({
       title: article.title,
-      description:
-        article.excerpt ||
-        article.seoDescription ||
-        article.title,
+      description,
       url: pageUrl,
       image:
         article.ogImage ||
@@ -208,7 +216,7 @@ export default async function ArticleDetailPage({ params }: Props) {
       )}
 
       <article className="surface-card p-6 md:p-10">
-        <ArticleBody html={article.content} />
+        <ArticleBody html={article.content} imageAltFallback={article.title} />
       </article>
 
       {article.faqs.length > 0 && (

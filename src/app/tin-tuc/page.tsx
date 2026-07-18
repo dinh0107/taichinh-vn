@@ -18,11 +18,23 @@ const PAGE_DESC =
   "Tin tức mới nhất về thị trường vàng, ngoại tệ, xăng dầu, lãi suất và hàng hóa.";
 
 export async function generateMetadata() {
-  return buildPageMetadata({
+  const meta = await buildPageMetadata({
     title: PAGE_TITLE,
     description: PAGE_DESC,
     path: "/tin-tuc",
   });
+  return {
+    ...meta,
+    alternates: {
+      ...meta.alternates,
+      types: {
+        "application/rss+xml": [
+          { url: "/feed/news.xml", title: "Feed News" },
+          { url: "/feed.xml", title: "RSS Feed" },
+        ],
+      },
+    },
+  };
 }
 
 export default async function NewsPage() {
@@ -50,6 +62,21 @@ export default async function NewsPage() {
         }
       />
 
+      <p className="mb-4 text-sm text-[var(--text-secondary)]">
+        <Link
+          href="/feed/news.xml"
+          className="font-semibold text-blue-700 hover:underline"
+        >
+          Feed News (RSS)
+        </Link>
+        {" · "}
+        <Link
+          href="/feed.xml"
+          className="font-semibold text-blue-700 hover:underline"
+        >
+          RSS Feed
+        </Link>
+      </p>
       {articles.length === 0 ? (
         <section className="surface-card px-6 py-16 text-center">
           <p className="text-base font-semibold text-[var(--text-primary)]">

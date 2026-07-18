@@ -3,6 +3,7 @@ import {
   buildBreadcrumbSchema,
   buildFaqSchema,
   buildFinancialServiceSchema,
+  buildWebPageSchema,
   type JsonLd,
 } from "@/lib/seo/schema";
 import { canonicalUrl, canonicalUrlSync } from "@/lib/seo/site-url";
@@ -37,13 +38,26 @@ function brandMeta(siteName: string, version: string) {
   };
 }
 
-/** Public child pages get "… hôm nay ngày dd/MM/yyyy". Exceptions: home, news article detail. */
+/** Public child pages get "… hôm nay ngày dd/MM/yyyy". Exceptions: home, news articles, info/legal. */
 export function shouldUseHomNayTitlePrefix(path: string): boolean {
   const p = (path.replace(/\/+$/, "") || "/").toLowerCase();
   if (p === "/") return false;
   if (/^\/tin-tuc\/.+/.test(p)) return false;
-  // Admin / login are not public child pages
   if (p.startsWith("/admin") || p === "/dang-nhap") return false;
+  if (
+    [
+      "/gioi-thieu",
+      "/lien-he",
+      "/chinh-sach-bao-mat",
+      "/dieu-khoan",
+      "/chinh-sach-bien-tap",
+      "/nguon-du-lieu",
+      "/tac-gia",
+      "/ngay-cap-nhat",
+    ].includes(p)
+  ) {
+    return false;
+  }
   return true;
 }
 
@@ -141,6 +155,12 @@ export function buildModulePageJsonLd(input: {
       input.siteName,
       { image: input.image, telephone: input.telephone }
     ),
+    buildWebPageSchema({
+      name: input.serviceName,
+      description: input.serviceDescription,
+      url: pageUrl,
+      siteName: input.siteName,
+    }),
   ];
   if (input.path !== "/") {
     schemas.unshift(

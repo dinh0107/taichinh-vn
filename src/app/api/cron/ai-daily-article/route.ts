@@ -63,6 +63,8 @@ export async function POST(request: NextRequest) {
     if (result.created && result.status === "PUBLISHED") {
       revalidatePath("/tin-tuc");
       revalidatePath("/");
+      revalidatePath("/feed.xml");
+      revalidatePath("/feed/news.xml");
       if (result.slug) revalidatePath(`/tin-tuc/${result.slug}`);
     }
 

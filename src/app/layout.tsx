@@ -77,6 +77,14 @@ export async function generateMetadata(): Promise<Metadata> {
       "msapplication-TileImage": icon,
     },
     robots: { index: true, follow: true },
+    alternates: {
+      types: {
+        "application/rss+xml": [
+          { url: "/feed.xml", title: "RSS Feed" },
+          { url: "/feed/news.xml", title: "Feed News" },
+        ],
+      },
+    },
   };
 }
 

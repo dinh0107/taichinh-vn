@@ -1,7 +1,10 @@
 import {
+  buildArticleSchema,
   buildBreadcrumbSchema,
   buildFaqSchema,
   buildFinancialServiceSchema,
+  buildWebPageSchema,
+  generateGoldFaqs,
 } from "@/lib/seo/schema";
 import { canonicalUrlSync } from "@/lib/seo/site-url";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
@@ -12,6 +15,11 @@ import {
   resolveSeoPage,
 } from "@/modules/seo/service";
 import { getSiteSettings } from "@/modules/admin/settings-service";
+import {
+  filterGoldPrices,
+  getCurrentGoldPrices,
+} from "@/modules/gold/service";
+import { GoldBrandCode, GoldPurity } from "@prisma/client";
 import { withHomNayTitlePrefix } from "@/lib/time";
 import { absoluteUrl } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -89,6 +97,7 @@ export default async function SeoLandingPage({ params }: Props) {
   const homeUrl = canonicalUrlSync("/");
   const siteName = s.site_name || "Giá Hôm Nay";
   const v = s.brand_asset_version || "0";
+  const brandImage = absoluteUrl(`/api/brand/logo?v=${v}`);
 
   const hubCrumb =
     page.pageType.startsWith("GOLD")
@@ -103,17 +112,50 @@ export default async function SeoLandingPage({ params }: Props) {
               ? { name: "Xăng dầu", url: canonicalUrlSync("/gia-xang") }
               : null;
 
+  let faqs = page.faqs;
+  if (faqs.length === 0 && page.pageType.startsWith("GOLD")) {
+    const all = await getCurrentGoldPrices();
+    const filtered = filterGoldPrices(all, {
+      brand: page.config.brand as GoldBrandCode | undefined,
+      purity: page.config.purity as GoldPurity | undefined,
+    });
+    faqs = generateGoldFaqs(filtered.length > 0 ? filtered : all);
+  } else if (faqs.length === 0 && page.config.currency) {
+    const c = page.config.currency;
+    faqs = [
+      {
+        question: `Tỷ giá ${c}/VND hôm nay?`,
+        answer: `Xem bảng tỷ giá mua/bán ${c} tại các ngân hàng trên trang này.`,
+      },
+    ];
+  }
+
   const jsonLd = [
     buildBreadcrumbSchema([
       { name: "Trang chủ", url: homeUrl },
       ...(hubCrumb ? [hubCrumb] : []),
       { name: page.title, url: pageUrl },
     ]),
+    buildWebPageSchema({
+      name: page.h1 || page.title,
+      description: page.metaDescription,
+      url: pageUrl,
+      siteName,
+    }),
+    buildArticleSchema({
+      title: page.title,
+      description: page.metaDescription,
+      url: pageUrl,
+      image: page.ogImage || brandImage,
+      siteName,
+      authorName: siteName,
+      articleSection: hubCrumb?.name,
+    }),
     buildFinancialServiceSchema(page.title, page.metaDescription, siteName, {
-      image: absoluteUrl(`/api/brand/logo?v=${v}`),
+      image: brandImage,
       telephone: s.site_phone?.trim() || undefined,
     }),
-    ...(page.faqs.length > 0 ? [buildFaqSchema(page.faqs)] : []),
+    ...(faqs.length > 0 ? [buildFaqSchema(faqs)] : []),
   ];
 
   return (

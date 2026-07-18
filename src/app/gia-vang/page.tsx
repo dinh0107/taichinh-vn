@@ -9,16 +9,18 @@ import { GoldChartSection } from "@/modules/gold/components/gold-chart-section";
 import { GoldComparePanel } from "@/modules/gold/components/gold-compare-panel";
 import { HomeGoldTable } from "@/components/home/home-gold-table";
 import {
+  buildArticleSchema,
   buildBreadcrumbSchema,
   buildFaqSchema,
   buildFinancialServiceSchema,
   buildGoldPriceSchema,
   buildGoldSeoMetadata,
+  buildWebPageSchema,
   generateGoldFaqs,
 } from "@/lib/seo/schema";
 import { canonicalUrl } from "@/lib/seo/site-url";
 import { formatNumber, formatUsd, cn, absoluteUrl } from "@/lib/utils";
-import { formatDateTimeVi } from "@/lib/time";
+import { formatDateTimeVi, goldMoiNhatTitle, GOLD_MOI_NHAT_TITLE_BASE } from "@/lib/time";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { PageBottomArticle } from "@/components/seo/page-bottom-article";
 import { PageHeader, ModuleSection } from "@/components/layout/page-header";
@@ -37,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
   ]);
   const siteName = s.site_name || "Giá Hôm Nay";
   const v = s.brand_asset_version || "0";
-  const seo = buildGoldSeoMetadata("Giá vàng hôm nay", prices, siteName);
+  const seo = buildGoldSeoMetadata(GOLD_MOI_NHAT_TITLE_BASE, prices, siteName);
   const url = await canonicalUrl("/gia-vang");
   const image = `/api/brand/logo?v=${v}`;
   return {
@@ -75,28 +77,43 @@ export default async function GoldPage() {
   const v = settings.brand_asset_version || "0";
   const brandImage = absoluteUrl(`/api/brand/logo?v=${v}`);
 
+  const goldDesc =
+    "Dịch vụ tra cứu giá vàng SJC, DOJI, PNJ realtime";
+  const goldTitle = goldMoiNhatTitle();
   const jsonLd = [
     buildBreadcrumbSchema([
       { name: "Trang chủ", url: homeUrl },
       { name: "Giá vàng", url: pageUrl },
     ]),
-    buildFinancialServiceSchema(
-      "Giá vàng Việt Nam",
-      "Dịch vụ tra cứu giá vàng SJC, DOJI, PNJ realtime",
+    buildWebPageSchema({
+      name: goldTitle,
+      description: goldDesc,
+      url: pageUrl,
       siteName,
-      {
-        image: brandImage,
-        telephone: settings.site_phone?.trim() || undefined,
-      }
-    ),
+    }),
+    buildArticleSchema({
+      title: goldTitle,
+      description: goldDesc,
+      url: pageUrl,
+      image: brandImage,
+      siteName,
+      articleSection: "Giá vàng",
+    }),
+    buildFinancialServiceSchema("Giá vàng Việt Nam", goldDesc, siteName, {
+      image: brandImage,
+      telephone: settings.site_phone?.trim() || undefined,
+    }),
     buildGoldPriceSchema(prices),
     buildFaqSchema(faqs),
   ];
 
   const detailLinks = [
-    { label: "SJC", href: "/gia-vang-sjc-hom-nay", featured: true },
-    { label: "DOJI", href: "/gia-vang-doji-hom-nay" },
-    { label: "PNJ", href: "/gia-vang-pnj-hom-nay" },
+    { label: "SJC hôm nay mới nhất", href: "/gia-vang-sjc-hom-nay", featured: true },
+    { label: "SJC mới nhất", href: "/gia-vang-sjc-moi-nhat", featured: true },
+    { label: "DOJI hôm nay mới nhất", href: "/gia-vang-doji-hom-nay" },
+    { label: "DOJI mới nhất", href: "/gia-vang-doji-moi-nhat" },
+    { label: "PNJ hôm nay mới nhất", href: "/gia-vang-pnj-hom-nay" },
+    { label: "PNJ mới nhất", href: "/gia-vang-pnj-moi-nhat" },
     { label: "Bảo Tín", href: "/gia-vang-bao-tin-hom-nay" },
     { label: "Thế giới", href: "/gia-vang-the-gioi-hom-nay", featured: true },
   ];
@@ -106,7 +123,7 @@ export default async function GoldPage() {
       <JsonLdScript data={jsonLd} />
 
       <PageHeader
-        title="Giá vàng hôm nay theo thương hiệu và khu vực"
+        title={goldTitle}
         description="Cập nhật giá vàng hôm nay mới nhất trong nước và quốc tế theo thời gian thực, bao gồm giá vàng SJC, DOJI, PNJ, vàng 9999 và giá vàng thế giới. Dữ liệu được tổng hợp liên tục từ các nguồn uy tín, kèm biểu đồ giá vàng và lịch sử biến động."
         breadcrumb={[{ label: "Trang chủ", href: "/" }, { label: "Giá vàng" }]}
         categoryLabel="Giá vàng"

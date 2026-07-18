@@ -75,10 +75,13 @@ export const HISTORY_RANGE_DAYS: Record<HistoryRange, number> = {
 };
 
 export const SEO_GOLD_SLUGS = [
-  { slug: "gia-vang-hom-nay", title: "Giá vàng hôm nay", codes: Object.keys(GOLD_API_CODES) },
-  { slug: "gia-vang-sjc-hom-nay", title: "Giá vàng SJC hôm nay", brand: "SJC" },
-  { slug: "gia-vang-doji-hom-nay", title: "Giá vàng DOJI hôm nay", brand: "DOJI" },
-  { slug: "gia-vang-pnj-hom-nay", title: "Giá vàng PNJ hôm nay", brand: "PNJ" },
+  { slug: "gia-vang-hom-nay", title: "Giá vàng hôm nay mới nhất - SJC, DOJI, PNJ", codes: Object.keys(GOLD_API_CODES) },
+  { slug: "gia-vang-sjc-hom-nay", title: "Giá vàng hôm nay mới nhất - SJC, DOJI, PNJ", brand: "SJC" },
+  { slug: "gia-vang-doji-hom-nay", title: "Giá vàng hôm nay mới nhất - SJC, DOJI, PNJ", brand: "DOJI" },
+  { slug: "gia-vang-pnj-hom-nay", title: "Giá vàng hôm nay mới nhất - SJC, DOJI, PNJ", brand: "PNJ" },
+  { slug: "gia-vang-sjc-moi-nhat", title: "Giá vàng hôm nay mới nhất - SJC, DOJI, PNJ", brand: "SJC" },
+  { slug: "gia-vang-doji-moi-nhat", title: "Giá vàng hôm nay mới nhất - SJC, DOJI, PNJ", brand: "DOJI" },
+  { slug: "gia-vang-pnj-moi-nhat", title: "Giá vàng hôm nay mới nhất - SJC, DOJI, PNJ", brand: "PNJ" },
   { slug: "gia-vang-bao-tin-hom-nay", title: "Giá vàng Bảo Tín hôm nay", brand: "BAO_TIN" },
   { slug: "gia-vang-9999-hom-nay", title: "Giá vàng 9999 hôm nay", purity: "K9999" },
   { slug: "gia-vang-24k-hom-nay", title: "Giá vàng 24K hôm nay", purity: "K24" },

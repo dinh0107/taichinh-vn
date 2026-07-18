@@ -45,8 +45,9 @@ export function todayDateVi(now: Date = new Date()): string {
 
 /**
  * Child-page title date: "… hôm nay ngày dd/MM/yyyy"
+ * - "Giá vàng hôm nay mới nhất - SJC, DOJI, PNJ"
+ *   → "Giá vàng hôm nay 18/07/2026 mới nhất - SJC, DOJI, PNJ"
  * - "Giá vàng DOJI hôm nay" → "Giá vàng DOJI hôm nay ngày 15/07/2026"
- * - "Lãi suất ngân hàng" → "Lãi suất ngân hàng hôm nay ngày 15/07/2026"
  * Idempotent if already dated. Strips trailing "| siteName" when provided.
  */
 export function withHomNayTitlePrefix(
@@ -64,18 +65,51 @@ export function withHomNayTitlePrefix(
   }
   // Fix legacy double "hôm nay hôm nay ngày …"
   trimmed = trimmed.replace(/\bhôm nay\s+hôm nay ngày\b/gi, "hôm nay ngày").trim();
+
+  // Preferred: "hôm nay dd/MM/yyyy mới nhất" (no "ngày") — refresh date
+  if (/hôm nay\s+\d{2}\/\d{2}\/\d{4}\s+mới nhất\b/i.test(trimmed)) {
+    return trimmed.replace(
+      /hôm nay\s+\d{2}\/\d{2}\/\d{4}\s+mới nhất/i,
+      `hôm nay ${todayDateVi(now)} mới nhất`
+    );
+  }
+  // Legacy: "hôm nay ngày dd/MM/yyyy mới nhất" → drop "ngày"
+  if (/hôm nay ngày\s+\d{2}\/\d{2}\/\d{4}\s+mới nhất\b/i.test(trimmed)) {
+    return trimmed.replace(
+      /hôm nay ngày\s+\d{2}\/\d{2}\/\d{4}\s+mới nhất/i,
+      `hôm nay ${todayDateVi(now)} mới nhất`
+    );
+  }
+  // Undated: "hôm nay mới nhất …" → insert dd/MM/yyyy
+  if (/hôm nay\s+mới nhất\b/i.test(trimmed)) {
+    return trimmed.replace(
+      /hôm nay\s+mới nhất/i,
+      `hôm nay ${todayDateVi(now)} mới nhất`
+    );
+  }
+
   if (/hôm nay ngày\s+\d{2}\/\d{2}\/\d{4}\s*$/i.test(trimmed)) {
-    // Refresh date to today if already dated
     return trimmed.replace(
       /hôm nay ngày\s+\d{2}\/\d{2}\/\d{4}\s*$/i,
       `hôm nay ngày ${todayDateVi(now)}`
     );
   }
-  // Avoid "hôm nay hôm nay ngày …" when title already ends with "hôm nay"
   if (/hôm nay\s*$/i.test(trimmed)) {
     return `${trimmed} ngày ${todayDateVi(now)}`;
   }
   return `${trimmed} hôm nay ngày ${todayDateVi(now)}`;
+}
+
+/** Canonical gold SERP title: Giá vàng hôm nay {dd/MM/yyyy} mới nhất - SJC, DOJI, PNJ */
+export const GOLD_MOI_NHAT_BRANDS = "SJC, DOJI, PNJ";
+export const GOLD_MOI_NHAT_TITLE_BASE =
+  `Giá vàng hôm nay mới nhất - ${GOLD_MOI_NHAT_BRANDS}`;
+
+export function goldMoiNhatTitle(
+  now: Date = new Date(),
+  brands: string = GOLD_MOI_NHAT_BRANDS
+): string {
+  return `Giá vàng hôm nay ${todayDateVi(now)} mới nhất - ${brands}`;
 }
 
 export function formatTimeVi(date: Date): string {

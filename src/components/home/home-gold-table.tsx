@@ -26,7 +26,7 @@ export function HomeGoldTable({ prices }: { prices: GoldPriceItem[] }) {
       <div className="mb-4 flex items-start justify-between gap-3 md:items-center">
         <div>
           <h2 className="text-xl font-bold text-[var(--text-primary)]">
-            Giá vàng SJC hôm nay{" "}
+            Giá vàng hôm nay mới nhất - SJC, DOJI, PNJ{" "}
             <small className="text-sm font-normal text-[var(--text-secondary)]">
               - Cập nhật lúc: {updated}
             </small>

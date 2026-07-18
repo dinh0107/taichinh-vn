@@ -24,6 +24,8 @@ export async function POST(request: NextRequest) {
     revalidatePath("/tin-tuc");
     revalidatePath("/");
     revalidatePath("/gia-vang");
+    revalidatePath("/feed.xml");
+    revalidatePath("/feed/news.xml");
 
     await prisma.cronJobLog.update({
       where: { id: log.id },

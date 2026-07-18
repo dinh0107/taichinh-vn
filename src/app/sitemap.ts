@@ -17,6 +17,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/chung-khoan",
     "/gia-xang",
     "/tin-tuc",
+    "/feed.xml",
+    "/feed/news.xml",
+    "/gioi-thieu",
+    "/lien-he",
+    "/chinh-sach-bao-mat",
+    "/dieu-khoan",
+    "/chinh-sach-bien-tap",
+    "/nguon-du-lieu",
+    "/tac-gia",
+    "/ngay-cap-nhat",
   ];
 
   const seoPaths = await getIndexedSeoPaths();
@@ -39,13 +49,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return {
       url,
       lastModified: new Date(),
-      changeFrequency: path.includes("hom-nay")
-        ? ("hourly" as const)
-        : ("daily" as const),
+      changeFrequency:
+        path.includes("hom-nay") || path.includes("moi-nhat")
+          ? ("hourly" as const)
+          : ("daily" as const),
       priority:
         path === ""
           ? 1
-          : path.includes("gia-vang") || path.includes("hom-nay")
+          : path.includes("gia-vang") ||
+              path.includes("hom-nay") ||
+              path.includes("moi-nhat")
             ? 0.9
             : 0.7,
     };
