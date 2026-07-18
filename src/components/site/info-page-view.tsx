@@ -63,7 +63,7 @@ export function InfoPageView({
 
   return (
     <div className="pb-8 pt-5 md:pt-6">
-      <div className="container-page max-w-3xl">
+      <div className="container-page ">
         <JsonLdScript data={jsonLd} />
 
         <PageHeader
@@ -76,7 +76,7 @@ export function InfoPageView({
           categoryLabel="Thông tin"
         />
 
-        <div className="surface-card mb-5 flex flex-wrap items-center gap-4 px-5 py-3 text-sm text-[var(--text-secondary)]">
+        <div className="surface-card mb-5  mt-5flex flex-wrap items-center gap-4 px-5 py-3 text-sm text-[var(--text-secondary)]">
           <p className="inline-flex items-center gap-1.5">
             <User className="h-4 w-4 text-blue-600" aria-hidden />
             <span>
