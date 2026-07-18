@@ -16,19 +16,10 @@ export const SITE_SETTINGS_TAG = "site-settings";
 async function fetchSiteSettingsFromDb(): Promise<SiteSettings> {
   try {
     const rows = await prisma.siteSetting.findMany();
+    // Start from code defaults, then overlay every DB row (Admin → Cài đặt).
     const map: SiteSettings = { ...SETTING_DEFAULTS };
     for (const row of rows) {
-      const legacyValue = row.value.trim().toLowerCase();
-      if (row.key === "site_name" && legacyValue === "taichinh.vn") {
-        map[row.key] = SETTING_DEFAULTS.site_name;
-      } else if (
-        row.key === "site_url" &&
-        /^https?:\/\/(www\.)?taichinh\.vn\/?$/.test(legacyValue)
-      ) {
-        map[row.key] = SETTING_DEFAULTS.site_url;
-      } else {
-        map[row.key] = row.value;
-      }
+      map[row.key] = row.value;
     }
     return map;
   } catch {

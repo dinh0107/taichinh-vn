@@ -2,7 +2,7 @@
 
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/db";
@@ -14,7 +14,9 @@ import {
 import { readPngSize } from "@/lib/png-size";
 
 function revalidatePublicSite() {
-  revalidateTag(SITE_SETTINGS_TAG, "max");
+  // updateTag = expire immediately (read-your-own-writes). revalidateTag('max')
+  // only marks stale and can keep serving SETTING_DEFAULTS / old values briefly.
+  updateTag(SITE_SETTINGS_TAG);
   revalidatePath("/", "layout");
   revalidatePath("/");
   revalidatePath("/gia-vang");
