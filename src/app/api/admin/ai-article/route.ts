@@ -32,6 +32,10 @@ export async function POST(request: NextRequest) {
     // force: skip autoWrite flag + hour gate so Admin always can generate.
     const result = await writeDailyAiArticle({ force: true, category });
 
+    if (result.prompts) {
+      console.log("[AI article prompts]", result.prompts);
+    }
+
     if (result.skipped) {
       return NextResponse.json(
         { success: false, error: result.reason || "Bỏ qua", ...result },
@@ -58,11 +62,14 @@ export async function POST(request: NextRequest) {
         : undefined,
     });
   } catch (error) {
+    const prompts = (error as { prompts?: unknown }).prompts;
+    if (prompts) console.log("[AI article prompts]", prompts);
     logger.error({ error }, "Admin AI article failed");
     return NextResponse.json(
       {
         success: false,
         error: (error as Error).message || "Sinh bài AI thất bại",
+        ...(prompts ? { prompts } : {}),
       },
       { status: 500 }
     );

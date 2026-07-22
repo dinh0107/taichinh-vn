@@ -36,6 +36,15 @@ export type DailyAiArticleResult = {
   slug?: string;
   category?: NewsCategoryCode;
   status?: ArticleStatus;
+  /** Filled prompts actually sent to the model (Admin debug). */
+  prompts?: {
+    model: string;
+    system: string;
+    user: string;
+    articlePromptTemplate: string;
+    topic: string;
+    date: string;
+  };
 };
 
 export function fillArticlePrompt(
@@ -217,21 +226,35 @@ export async function writeDailyAiArticle(opts?: {
   const topic = NEWS_CATEGORY_LABELS[category];
   const data = await buildMarketData(category);
   const messages = buildAiArticleMessages(cfg, { topic, date, data });
+  const prompts = {
+    model: cfg.model,
+    system: messages[0]?.content ?? cfg.systemPrompt,
+    user: messages[1]?.content ?? "",
+    articlePromptTemplate: cfg.articlePrompt,
+    topic,
+    date,
+  };
 
   // 600–900 từ tiếng Việt + HTML/JSON dễ vượt 2k tokens — floor để khỏi cắt cụt prompt.
   const maxTokens = Math.max(cfg.maxTokens, 3500);
 
-  const raw = await chatCompletion({
-    apiKey: cfg.apiKey,
-    model: cfg.model,
-    baseUrl: cfg.baseUrl,
-    referer: cfg.provider === "openrouter" ? cfg.siteUrl : undefined,
-    title: cfg.provider === "openrouter" ? "GiaHomNay AI" : undefined,
-    temperature: cfg.temperature,
-    maxTokens,
-    json: true,
-    messages,
-  });
+  let raw: string;
+  try {
+    raw = await chatCompletion({
+      apiKey: cfg.apiKey,
+      model: cfg.model,
+      baseUrl: cfg.baseUrl,
+      referer: cfg.provider === "openrouter" ? cfg.siteUrl : undefined,
+      title: cfg.provider === "openrouter" ? "GiaHomNay AI" : undefined,
+      temperature: cfg.temperature,
+      maxTokens,
+      json: true,
+      messages,
+    });
+  } catch (e) {
+    (e as Error & { prompts?: typeof prompts }).prompts = prompts;
+    throw e;
+  }
 
   const parsed = parseArticleJson(raw);
   const status =
@@ -281,5 +304,6 @@ export async function writeDailyAiArticle(opts?: {
     slug: article.slug,
     category,
     status,
+    prompts,
   };
 }

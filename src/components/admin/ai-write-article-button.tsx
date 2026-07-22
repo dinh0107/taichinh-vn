@@ -33,7 +33,30 @@ export function AiWriteArticleButton() {
         slug?: string;
         editUrl?: string;
         status?: string;
+        prompts?: {
+          model: string;
+          system: string;
+          user: string;
+          articlePromptTemplate: string;
+          topic: string;
+          date: string;
+        };
       };
+
+      if (data.prompts) {
+        console.group("[Tạo bài AI] Prompt hiện tại");
+        console.log("model:", data.prompts.model);
+        console.log("topic:", data.prompts.topic);
+        console.log("date:", data.prompts.date);
+        console.log(
+          "articlePromptTemplate (Admin):",
+          data.prompts.articlePromptTemplate
+        );
+        console.log("system:", data.prompts.system);
+        console.log("user:", data.prompts.user);
+        console.groupEnd();
+      }
+
       if (!res.ok || !data.success) {
         throw new Error(data.error || data.reason || "Sinh bài thất bại");
       }
