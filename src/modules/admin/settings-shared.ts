@@ -31,7 +31,7 @@ export const SETTING_DEFAULTS: SiteSettings = {
   ai_base_url: "",
   ai_model: "openai/gpt-4o-mini",
   ai_temperature: "0.7",
-  ai_max_tokens: "2000",
+  ai_max_tokens: "4096",
   ai_cron_hour: "7",
   ai_publish_mode: "DRAFT",
   ai_write_categories: "GOLD,ECONOMY",

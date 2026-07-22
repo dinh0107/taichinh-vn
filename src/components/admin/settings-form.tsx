@@ -373,7 +373,8 @@ export function SettingsForm({
               min={256}
               max={8000}
               step="any"
-              defaultValue={initial.ai_max_tokens || "2000"}
+              defaultValue={initial.ai_max_tokens || "4096"}
+              hint="Khuyến nghị ≥3500 để bài 600–900 từ không bị cắt cụt."
             />
             <Field
               label="Giờ chạy cron (0–23)"
@@ -439,7 +440,7 @@ export function SettingsForm({
             defaultValue={initial.ai_article_prompt}
             textarea
             rows={4}
-            hint="Placeholder: {{topic}}, {{date}}, {{data}}."
+            hint="Placeholder: {{topic}}, {{date}}, {{data}} (hoặc {topic}…). Đây là brief chính — model phải tuân thủ."
           />
 
           <div className="divide-y divide-slate-100 border-t border-slate-100 pt-2">

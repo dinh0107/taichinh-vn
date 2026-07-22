@@ -42,10 +42,43 @@ export function fillArticlePrompt(
   template: string,
   vars: { topic: string; date: string; data: string }
 ): string {
-  return template
-    .replaceAll("{{topic}}", vars.topic)
-    .replaceAll("{{date}}", vars.date)
-    .replaceAll("{{data}}", vars.data);
+  let out = template;
+  for (const [key, val] of Object.entries(vars)) {
+    // Support {{topic}} and {topic} (admins often type single braces).
+    out = out.replaceAll(`{{${key}}}`, val).replaceAll(`{${key}}`, val);
+  }
+  return out;
+}
+
+/** Assemble chat messages so Admin prompts drive content; JSON is output only. */
+export function buildAiArticleMessages(
+  cfg: { systemPrompt: string; articlePrompt: string },
+  vars: { topic: string; date: string; data: string }
+): { role: "system" | "user"; content: string }[] {
+  const filled = fillArticlePrompt(cfg.articlePrompt, vars);
+  // If the template omitted {{data}}, still inject live numbers (otherwise model invents).
+  const dataAlreadyInPrompt =
+    vars.data.trim().length > 0 && filled.includes(vars.data.trim().slice(0, 48));
+  const dataBlock = dataAlreadyInPrompt
+    ? ""
+    : `\n\n--- SỐ LIỆU THỊ TRƯỜNG (bắt buộc dùng đúng, không bịa thêm) ---\n${vars.data}\n--- HẾT SỐ LIỆU ---`;
+
+  const formatBlock = `
+
+Trả lời DUY NHẤT một JSON object hợp lệ (không bọc markdown) đúng schema:
+{"title":"string","excerpt":"string","contentHtml":"HTML tiếng Việt","seoDescription":"≤155 ký tự","faqs":[{"question":"...","answer":"..."}]}
+contentHtml chỉ dùng p, h2, ul, li, strong (không h1). Tuân thủ yêu cầu viết bài ở trên (cấu trúc, độ dài, giọng văn); mọi số liệu chỉ lấy từ phần số liệu đã cung cấp.`;
+
+  return [
+    {
+      role: "system",
+      content: cfg.systemPrompt.trim(),
+    },
+    {
+      role: "user",
+      content: `${filled}${dataBlock}${formatBlock}`,
+    },
+  ];
 }
 
 export function parseArticleJson(raw: string) {
@@ -55,19 +88,6 @@ export function parseArticleJson(raw: string) {
     .replace(/\s*```$/i, "")
     .trim();
   return ArticleJsonSchema.parse(JSON.parse(cleaned));
-}
-
-function startOfTodayVn(now = new Date()): Date {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-  const y = parts.find((p) => p.type === "year")!.value;
-  const m = parts.find((p) => p.type === "month")!.value;
-  const d = parts.find((p) => p.type === "day")!.value;
-  return new Date(`${y}-${m}-${d}T00:00:00+07:00`);
 }
 
 function pickCategory(categories: string[], now = new Date()): NewsCategoryCode {
@@ -164,7 +184,7 @@ async function uniqueSlug(base: string): Promise<string> {
 
 /**
  * Generate one SEO article from live market data + admin AI settings.
- * Idempotent: at most one AI article per category per Vietnam calendar day.
+ * No per-day cap — cron + Admin may create as many as needed.
  */
 export async function writeDailyAiArticle(opts?: {
   force?: boolean;
@@ -192,37 +212,14 @@ export async function writeDailyAiArticle(opts?: {
 
   const category =
     opts?.category ?? pickCategory(cfg.categories);
-  const since = startOfTodayVn();
-
-  const existing = await prisma.newsArticle.findFirst({
-    where: {
-      isAiGenerated: true,
-      category,
-      createdAt: { gte: since },
-    },
-    select: { id: true, slug: true, status: true },
-  });
-  if (existing && !opts?.force) {
-    return {
-      skipped: true,
-      reason: "Đã có bài AI cùng chuyên mục hôm nay",
-      articleId: existing.id,
-      slug: existing.slug,
-      category,
-      status: existing.status,
-    };
-  }
 
   const date = todayDateVi();
   const topic = NEWS_CATEGORY_LABELS[category];
   const data = await buildMarketData(category);
-  const userPrompt = fillArticlePrompt(cfg.articlePrompt, { topic, date, data });
+  const messages = buildAiArticleMessages(cfg, { topic, date, data });
 
-  const system = `${cfg.systemPrompt}
-
-Trả lời DUY NHẤT một JSON object (không markdown) với schema:
-{"title":"string","excerpt":"string","contentHtml":"HTML tiếng Việt","seoDescription":"≤155 ký tự","faqs":[{"question":"...","answer":"..."}]}
-contentHtml dùng p, h2, ul, li, strong. Không bịa số liệu ngoài phần {{data}}.`;
+  // 600–900 từ tiếng Việt + HTML/JSON dễ vượt 2k tokens — floor để khỏi cắt cụt prompt.
+  const maxTokens = Math.max(cfg.maxTokens, 3500);
 
   const raw = await chatCompletion({
     apiKey: cfg.apiKey,
@@ -231,12 +228,9 @@ contentHtml dùng p, h2, ul, li, strong. Không bịa số liệu ngoài phần 
     referer: cfg.provider === "openrouter" ? cfg.siteUrl : undefined,
     title: cfg.provider === "openrouter" ? "GiaHomNay AI" : undefined,
     temperature: cfg.temperature,
-    maxTokens: cfg.maxTokens,
+    maxTokens,
     json: true,
-    messages: [
-      { role: "system", content: system },
-      { role: "user", content: userPrompt },
-    ],
+    messages,
   });
 
   const parsed = parseArticleJson(raw);
@@ -251,14 +245,12 @@ contentHtml dùng p, h2, ul, li, strong. Không bịa số liệu ngoài phần 
     parsed.title
   ).slice(0, 160);
 
-  const faqs =
-    cfg.autoFaq && parsed.faqs.length > 0
-      ? parsed.faqs.slice(0, 5).map((f, i) => ({
-          question: f.question.slice(0, 200),
-          answer: f.answer.slice(0, 2000),
-          sortOrder: i,
-        }))
-      : [];
+  // Lưu FAQ khi model trả về (prompt Admin thường yêu cầu) — không phụ thuộc toggle.
+  const faqs = parsed.faqs.slice(0, 5).map((f, i) => ({
+    question: f.question.slice(0, 200),
+    answer: f.answer.slice(0, 2000),
+    sortOrder: i,
+  }));
 
   const createData: Prisma.NewsArticleCreateInput = {
     title: parsed.title.slice(0, 200),
@@ -272,9 +264,7 @@ contentHtml dùng p, h2, ul, li, strong. Không bịa số liệu ngoài phần 
     seoTitle: parsed.title.slice(0, 70),
     seoDescription,
     publishedAt: status === ArticleStatus.PUBLISHED ? new Date() : null,
-    ...(faqs.length > 0
-      ? { faqs: { create: faqs } }
-      : {}),
+    ...(faqs.length > 0 ? { faqs: { create: faqs } } : {}),
   };
 
   const article = await prisma.newsArticle.create({ data: createData });

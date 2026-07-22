@@ -98,17 +98,17 @@ call C:\path\to\httpdocs\scripts\cron-call.bat ai-daily-article
 ## AI Daily Article
 
 - Endpoint: `POST /api/cron/ai-daily-article` + `Authorization: Bearer {CRON_SECRET}`
-- Body tuỳ chọn: `{ "force": true, "category": "GOLD" }` — `force` bỏ qua cờ auto + dedupe trong ngày
+- Body tuỳ chọn: `{ "force": true, "category": "GOLD" }` — `force` bỏ qua cờ auto + kiểm tra giờ
 - `{ "scheduled": true }` — tick Task Scheduler; chỉ viết đúng `ai_cron_hour` (giờ VN)
-- Body rỗng / không `scheduled` — chạy thủ công bất kỳ giờ nào (vẫn tôn trọng auto + dedupe trừ khi `force`)
+- Body rỗng / không `scheduled` — chạy thủ công bất kỳ giờ nào (vẫn tôn trọng `ai_auto_write` trừ khi `force`)
 - Đọc Admin → Cài đặt → **Nội dung AI** (`getAiConfig`)
-- Bỏ qua nếu `ai_auto_write` tắt hoặc thiếu API key (vẫn log SUCCESS + reason)
-- Mỗi chuyên mục tối đa **1 bài AI / ngày** (Asia/Ho_Chi_Minh)
+- Bỏ qua nếu `ai_auto_write` tắt hoặc thiếu API key (vẫn log SUCCESS + reason) — trừ khi `force`
+- **Không giới hạn** số bài AI / ngày; Admin → Bài viết có nút **Tạo bài AI** (`POST /api/admin/ai-article`)
 - Số liệu: giá vàng / lãi suất / tỷ giá tùy category
-- Lưu `NewsArticle` (`isAiGenerated`, `source: AI`); FAQ nếu bật `ai_auto_faq`
+- Lưu `NewsArticle` (`isAiGenerated`, `source: AI`); FAQ nếu model trả về
 - Chế độ đăng: `ai_publish_mode` = `DRAFT` | `PUBLISHED`
 - Task: `giahomnay-ai-daily-article` **mỗi giờ** với body `scheduled`; job chỉ viết khi giờ VN = Admin `ai_cron_hour`
-- `force: true` bỏ qua kiểm tra giờ + auto + dedupe
+- `force: true` bỏ qua kiểm tra giờ + auto
 
 ### Bật nhanh
 
@@ -119,7 +119,7 @@ call C:\path\to\httpdocs\scripts\cron-call.bat ai-daily-article
 scripts\cron-call.bat ai-daily-article
 ```
 
-Hoặc ép ghi đè dedupe:
+Hoặc từ Admin → Bài viết → **Tạo bài AI**, hoặc ép bỏ qua auto:
 
 ```bat
 scripts\cron-call.bat ai-daily-article force

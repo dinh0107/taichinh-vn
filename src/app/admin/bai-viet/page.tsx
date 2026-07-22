@@ -8,6 +8,7 @@ import {
   EmptyState,
 } from "@/components/admin/ui";
 import { DeleteArticleButton } from "@/components/admin/delete-article-button";
+import { AiWriteArticleButton } from "@/components/admin/ai-write-article-button";
 import { getArticles, getArticleStats } from "@/modules/admin/service";
 import {
   NEWS_CATEGORY_LABELS,
@@ -52,12 +53,15 @@ export default async function AdminArticlesPage() {
         title="Quản lý bài viết"
         description="Bài viết tổng hợp và nội dung do AI tự sinh."
         action={
-          <Link
-            href="/admin/bai-viet/moi"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-700"
-          >
-            <Plus className="h-4 w-4" /> Bài viết mới
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <AiWriteArticleButton />
+            <Link
+              href="/admin/bai-viet/moi"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+            >
+              <Plus className="h-4 w-4" /> Bài viết mới
+            </Link>
+          </div>
         }
       />
 
