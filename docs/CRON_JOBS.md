@@ -99,25 +99,39 @@ call C:\path\to\httpdocs\scripts\cron-call.bat ai-daily-article
 
 - Endpoint: `POST /api/cron/ai-daily-article` + `Authorization: Bearer {CRON_SECRET}`
 - Body tuỳ chọn: `{ "force": true, "category": "GOLD" }` — `force` bỏ qua cờ auto + dedupe trong ngày
+- `{ "scheduled": true }` — tick Task Scheduler; chỉ viết đúng `ai_cron_hour` (giờ VN)
+- Body rỗng / không `scheduled` — chạy thủ công bất kỳ giờ nào (vẫn tôn trọng auto + dedupe trừ khi `force`)
 - Đọc Admin → Cài đặt → **Nội dung AI** (`getAiConfig`)
 - Bỏ qua nếu `ai_auto_write` tắt hoặc thiếu API key (vẫn log SUCCESS + reason)
 - Mỗi chuyên mục tối đa **1 bài AI / ngày** (Asia/Ho_Chi_Minh)
 - Số liệu: giá vàng / lãi suất / tỷ giá tùy category
 - Lưu `NewsArticle` (`isAiGenerated`, `source: AI`); FAQ nếu bật `ai_auto_faq`
 - Chế độ đăng: `ai_publish_mode` = `DRAFT` | `PUBLISHED`
-- Task: `giahomnay-ai-daily-article` **mỗi giờ**; job chỉ viết khi giờ VN = Admin `ai_cron_hour` (đổi giờ trong Cài đặt là đủ, không cần sửa schtasks)
+- Task: `giahomnay-ai-daily-article` **mỗi giờ** với body `scheduled`; job chỉ viết khi giờ VN = Admin `ai_cron_hour`
 - `force: true` bỏ qua kiểm tra giờ + auto + dedupe
 
 ### Bật nhanh
 
 1. Admin → Cài đặt → dán OpenAI key, bật **Tự động viết bài SEO hằng ngày**, Lưu
-2. `schtasks /Run /TN giahomnay-ai-daily-article` hoặc:
+2. Chạy thủ công (không cần đúng giờ):
 
 ```bat
-curl -X POST -H "Authorization: Bearer %CRON_SECRET%" -H "Content-Type: application/json" -d "{\"force\":true}" https://giahomnay.site/api/cron/ai-daily-article
+scripts\cron-call.bat ai-daily-article
+```
+
+Hoặc ép ghi đè dedupe:
+
+```bat
+scripts\cron-call.bat ai-daily-article force
 ```
 
 3. Admin → Bài viết / Cron & Logs
+
+Sau khi pull code mới, đăng ký lại task để hourly gửi `scheduled`:
+
+```bat
+call scripts\setup-windows-cron.bat
+```
 
 ## Generate Sitemap
 

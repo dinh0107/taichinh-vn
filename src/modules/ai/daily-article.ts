@@ -168,6 +168,8 @@ async function uniqueSlug(base: string): Promise<string> {
  */
 export async function writeDailyAiArticle(opts?: {
   force?: boolean;
+  /** Hourly Task Scheduler tick — enforce Admin `ai_cron_hour`. Manual runs omit this. */
+  scheduled?: boolean;
   category?: NewsCategoryCode;
 }): Promise<DailyAiArticleResult> {
   const cfg = await getAiConfig();
@@ -179,9 +181,9 @@ export async function writeDailyAiArticle(opts?: {
     return { skipped: true, reason: "Thiếu OpenAI API Key" };
   }
 
-  // Task Scheduler gọi mỗi giờ; chỉ chạy thật đúng ai_cron_hour (giờ VN).
+  // Hourly scheduler only — manual / force bỏ qua kiểm tra giờ.
   const nowHour = hourVn();
-  if (!opts?.force && nowHour !== cfg.cronHour) {
+  if (opts?.scheduled && !opts?.force && nowHour !== cfg.cronHour) {
     return {
       skipped: true,
       reason: `Chưa tới giờ (VN ${nowHour}:00, cấu hình ${cfg.cronHour}:00)`,

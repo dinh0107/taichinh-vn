@@ -446,7 +446,7 @@ export function SettingsForm({
             <Toggle
               label="Tự động viết bài SEO hằng ngày"
               name="ai_auto_write"
-              hint={`Mỗi ngày lúc ${initial.ai_cron_hour || "7"}:00 (giờ VN) — Task Scheduler gọi mỗi giờ, job tự bỏ qua giờ khác.`}
+              hint={`Lịch tự động: Task Scheduler mỗi giờ + chỉ viết lúc ${initial.ai_cron_hour || "7"}:00 (giờ VN). Chạy thủ công: scripts\\cron-call.bat ai-daily-article (không cần đúng giờ).`}
               defaultChecked={initial.ai_auto_write === "true"}
             />
             <Toggle
