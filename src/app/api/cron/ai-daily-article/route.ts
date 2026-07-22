@@ -33,13 +33,16 @@ export async function POST(request: NextRequest) {
   }
 
   let force = false;
+  let scheduled = false;
   let category: NewsCategoryCode | undefined;
   try {
     const body = (await request.json()) as {
       force?: boolean;
+      scheduled?: boolean;
       category?: string;
     };
     force = Boolean(body.force);
+    scheduled = Boolean(body.scheduled);
     if (
       body.category &&
       Object.values(NewsCategoryCode).includes(body.category as NewsCategoryCode)
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
       category = body.category as NewsCategoryCode;
     }
   } catch {
-    // empty body is fine
+    // empty body is fine — treated as manual (no hour gate)
   }
 
   const log = await prisma.cronJobLog.create({
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const cfg = await getAiConfig();
-    const result = await writeDailyAiArticle({ force, category });
+    const result = await writeDailyAiArticle({ force, scheduled, category });
 
     if (result.created && result.status === "PUBLISHED") {
       revalidatePath("/tin-tuc");
